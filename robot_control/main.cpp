@@ -4,6 +4,7 @@
 
 #include <opencv2/opencv.hpp>
 #include "fl/Headers.h"
+#include "fuzzycontroller.h"
 
 #include <iostream>
 
@@ -131,9 +132,10 @@ int main(int _argc, char **_argv) {
   gazebo::transport::SubscriberPtr statSubscriber =
       node->Subscribe("~/world_stats", statCallback);
 
+  /*
   gazebo::transport::SubscriberPtr poseSubscriber =
-      node->Subscribe("~/pose/info", poseCallback);
-
+      node->Subscribe("~/pose/info", poseCallback);     // UNCOMMENT THIS
+*/
   gazebo::transport::SubscriberPtr cameraSubscriber =
       node->Subscribe("~/pioneer2dx/camera/link/camera/image", cameraCallback);
 
@@ -268,6 +270,12 @@ int main(int _argc, char **_argv) {
   float speed = 0.0;
   float dir = 0.0;
 
+    FuzzyController* controller = new FuzzyController();
+    controller->calcRelativeVectorToGoal(0.5,1,2,4);
+    vector ans = controller->getRelativeVectorToGoal();
+    std::cout << "Vector length: " << ans.length << std::endl;
+    std::cout << "Vector angle: " <<  ans.angle << std::endl;
+
   // Loop
   while (true) {
     gazebo::common::Time::MSleep(10);
@@ -284,10 +292,10 @@ int main(int _argc, char **_argv) {
 
     //FL_LOG("Distance.input = " << Op::str(distance->getValue()) << " Obstacle.input = " << Op::str(obstacle->getValue()) << " Speed.output =  " << Op::str(Speed->getValue()) << "Direction.output = " << Op::str(direction->getValue()) );
 
-    std::cout << "Speed: " << speed << std::endl;
-    std::cout << "Direction: " << dir << std::endl;
-    std::cout << "angle: " << angle << std::endl;
-    std::cout << "range: " << range << std::endl;
+    //std::cout << "Speed: " << speed << std::endl;
+    //std::cout << "Direction: " << dir << std::endl;
+    //std::cout << "angle: " << angle << std::endl;
+    //std::cout << "range: " << range << std::endl;
 
 
     mutex.lock();
