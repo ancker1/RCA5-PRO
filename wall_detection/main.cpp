@@ -13,8 +13,8 @@ int main(int argc, char** argv)
 {
     // Declare the output variables
     Mat dst, cdst, cdstP;
-//    const char* default_file = "../WallDetection/floor_plan.png";
-    const char* default_file = "../WallDetection/big_floor_plan.png";
+//    const char* default_file = "../wall_detection/floor_plan.png";
+    const char* default_file = "../wall_detection/big_floor_plan.png";
     const char* filename = argc >=2 ? argv[1] : default_file;
     // Loads an image
     Mat src = imread( filename, IMREAD_GRAYSCALE );
