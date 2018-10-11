@@ -4,7 +4,7 @@
 #include "opencv2/ximgproc.hpp"
 
 #include <iostream>
-
+#include <algorithm>
 using namespace cv;
 using namespace std;
 using namespace cv::ximgproc;
@@ -13,8 +13,8 @@ int main(int argc, char** argv)
 {
     // Declare the output variables
     Mat dst, cdst, cdstP;
-//    const char* default_file = "../wall_detection/floor_plan.png";
-    const char* default_file = "../wall_detection/big_floor_plan.png";
+    const char* default_file = "../wall_detection/floor_plan.png";
+//    const char* default_file = "../wall_detection/big_floor_plan.png";
     const char* filename = argc >=2 ? argv[1] : default_file;
     // Loads an image
     Mat src = imread( filename, IMREAD_GRAYSCALE );
@@ -28,7 +28,7 @@ int main(int argc, char** argv)
     Canny(src, dst, 50, 200, 3);
     // Copy edges to the images that will display the results in BGR
     cvtColor(dst, cdst, COLOR_GRAY2BGR);
-    cdstP = cdst.clone();
+    cdstP = src.clone();
 
     // Standard Hough Line Transform
     vector<Vec2f> lines; // will hold the results of the detection
@@ -58,15 +58,18 @@ int main(int argc, char** argv)
      *      threshold = the minimum number of intersections to detect a line
      *      minLinLength = the minimum number of points that can form a line
      *      maxLinGap = the maximum gap between two points */
-    HoughLinesP(dst, linesP, 1, CV_PI/180, 1, 0, 10 ); // runs the actual detection
+    bitwise_not(src,src);
+    HoughLinesP(src, linesP, 1, CV_PI/180, 0, 0, 2 ); // runs the actual detection
 
     // Draw the lines
+    Mat test1(Size(src.cols,src.rows),CV_64FC1);
+
     for( size_t i = 0; i < linesP.size(); i++ )
     {
         Vec4i l = linesP[i];
-        line( cdstP, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 3, LINE_AA);
-    }
 
+        line( test1, Point(l[0], l[1]), Point(l[2], l[3]), 255, 1, LINE_AA);
+    }
     // Create LSD detector
     Ptr<LineSegmentDetector> lsd = createLineSegmentDetector();
     vector<Vec4f> lines_lsd;
@@ -100,6 +103,7 @@ int main(int argc, char** argv)
     // an algorithm takes much longer. So here we run both of the algorithmes 10
     // times to see each algorithm's processing time with sufficiently warmed-up
     // CPU performance.
+    /*
     for(int run_count = 0; run_count < 10; run_count++) {
         lines_lsd.clear();
         int64 start_lsd = getTickCount();
@@ -115,21 +119,83 @@ int main(int argc, char** argv)
         double duration_ms = double(getTickCount() - start) * 1000 / freq;
         std::cout << "Ealpsed time for FLD " << duration_ms << " ms." << std::endl;
     }
-
+    */
     // Show results
-    imshow("Source", src);
-    imshow("Detected Lines (in red) - Standard Hough Line Transform", cdst);
-    imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP);
+    imshow("Source", cdst);
+    //imshow("Detected Lines (in red) - Standard Hough Line Transform", cdst);
+    Size size(100,100);//the dst image size,e.g.100x100
+    Mat temppic;
+    resize(cdstP,temppic,size);//resize image
+
+    imshow("Detected Lines (in red) - Probabilistic Line Transform", test1);
 
     // Show found lines with LSD
     Mat line_image_lsd(src);
     lsd->drawSegments(line_image_lsd, lines_lsd);
-    imshow("LSD result", line_image_lsd);
+    //imshow("LSD result", line_image_lsd);
     // Show found lines with FLD
     Mat line_image_fld(src);
     fld->drawSegments(line_image_fld, lines_fld);
-    imshow("FLD result", line_image_fld);
+    //imshow("FLD result", line_image_fld);
 
+    struct myclass {
+        bool operator() (cv::Vec4i ystart, cv::Vec4i yend) { return (ystart[0] < yend[2]) ;}
+    } myobject;
+    Mat square(Size(src.cols,src.rows),CV_64FC1);;
+    vector<Vec4i> horisontal;
+
+    for(int i = 0; i < linesP.size(); i++)
+    {
+        Vec4i l = linesP[i];
+        if(l[0] != l[2] || l[1] != l[3])
+        {
+            horisontal.push_back(l);
+        }
+    }
+
+    sort(horisontal.begin(), horisontal.end(), myobject);
+
+    for(int i = 0; i< horisontal.size(); i++)
+    {
+        Vec4i l = horisontal[i];
+
+            cout << "start x: " << l[0] << " start y: " << l[1] << endl;
+            cout << "end x: " << l[2] << " end y: " << l[3] << endl;
+
+
+    }
+    int tempi = 0;
+    Vec4i l1;
+    for(int i = 0; i < horisontal.size(); i++)
+    {
+        Vec4i l = linesP[i];
+
+            l1 = linesP[++tempi];
+
+        rectangle(square, Point(l[0],l[1]), Point(l1[2],l1[3]), 255, 1, 8, 0);
+    }
+    imshow("Tegnede firkanter", square);
+    sort(linesP.begin(), linesP.end(), myobject);
+    //Show the coordinates for houghlines
+    /*
+    for(int i = 0; i< linesP.size(); i++)
+    {
+        Vec4i l = linesP[i];
+        if(l[0] != l[2] || l[1] != l[3])
+        {
+            cout << "horisontal" << endl;
+            cout << "start x: " << l[0] << " start y: " << l[1] << endl;
+            cout << "end x: " << l[2] << " end y: " << l[3] << endl;
+        }
+        else
+        {
+            cout << "vertical" << endl;
+            cout << "start x: " << l[0] << " start y: " << l[1] << endl;
+            cout << "end x: " << l[2] << " end y: " << l[3] << endl;
+        }
+
+    }
+    */
     // Wait and Exit
     waitKey();
     return 0;
