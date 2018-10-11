@@ -1,26 +1,20 @@
 #ifndef HELPSTRUCTS_H
 #define HELPSTRUCTS_H
 
-namespace poolS
+struct vector
 {
-    struct vector {
-        vector(lengthIn,angleIn)
-        {
-            length = lengthIn;
-            angle = angleIn;
-        }
-        float length;
-        float angle;
-    };
+    float length;
+    float angle;
+};
 
-    struct coordinate {
-        float x;
-        float y;
-    };
-}
+struct coordinate
+{
+    float x;
+    float y;
+};
 
-poolS::vector vec(1.5,3);
-float x = vec.angle;
+#define GO_TO_GOAL  0
+#define FOLLOW_WALL 1
 
 
 #endif // HELPSTRUCTS_H
