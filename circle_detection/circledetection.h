@@ -20,7 +20,7 @@ public:
 	~CircleDetection();
 
 	vector<Vec3f>detectCircles(Mat& image);
-	void         drawCircles(Mat          & image,
+	void         drawCircles(Mat            image,
 													 vector<Vec3f>& circles);
 
 private:

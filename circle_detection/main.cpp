@@ -1,18 +1,18 @@
 #include "circledetection.h"
-#include <string>
-using std::string;
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
-	Mat image = imread("../smarties.png", IMREAD_COLOR);
-	CircleDetection cd;
+	Mat image = imread(
+		"/home/seht97/Desktop/RCA5-PRO/circle_detection/smarties.png",
+		IMREAD_COLOR);
 
 	if (!image.data) {
-		cout << "Error reading image";
+		cout << "Error reading image" << endl;
 		return 1;
 	}
 
-	vector<Vec3f> circles = cd.detectCircles(image);
+	CircleDetection cd;
+	vector<Vec3f>   circles = cd.detectCircles(image);
 	cd.drawCircles(image, circles);
 
 	return 0;
