@@ -3,7 +3,7 @@
 int main(int argc, char **argv)
 {
 	Mat image = imread(
-		"/home/seht97/Desktop/RCA5-PRO/circle_detection/smarties.png",
+		"/home/seht97/Desktop/RCA5-PRO/circle_detection/sample.png",
 		IMREAD_COLOR);
 
 	if (!image.data) {
@@ -13,6 +13,7 @@ int main(int argc, char **argv)
 
 	CircleDetection cd;
 	vector<Vec3f>   circles = cd.detectCircles(image);
+
 	cd.drawCircles(image, circles);
 
 	return 0;
