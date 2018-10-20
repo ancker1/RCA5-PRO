@@ -25,8 +25,26 @@ int main(int argc, char** argv)
 
     smallMap.printMap();
     smallMap.drawNShowPoints("Detected Corners", detectedCorners);
+    /* SHOWS UPPER AND LOWER SEPARATELY
     smallMap.drawNShowPoints("Upper Goals", smallMap.getUpperTrapezoidalGoals());
     smallMap.drawNShowPoints("Lower Goals", smallMap.getLowerTrapezoidalGoals());
+    */
+    /* SHOWS UPPER AND LOWER TOGETHER
+    Mat tempMap = smallWorld;
+    cvtColor(smallWorld, tempMap, COLOR_GRAY2BGR);
+    vector<Point> upper = smallMap.getUpperTrapezoidalGoals();
+    vector<Point> lower = smallMap.getLowerTrapezoidalGoals();
+    for(int i = 0; i < upper.size(); i++) // Upper goal green
+    {
+        tempMap.at<Vec3b>(upper[i].y,upper[i].x)[1] = 255;
+    }
+    for(int i = 0; i < lower.size(); i++)
+    {
+        tempMap.at<Vec3b>(lower[i].y,lower[i].x)[2] = 255; // Lower goal red
+    }
+    resize(tempMap,tempMap,tempMap.size()*10,0,0,INTER_NEAREST);
+    imshow("Goals", tempMap);
+    */
     waitKey(0);
     return 0;
 }

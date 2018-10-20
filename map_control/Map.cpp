@@ -119,34 +119,36 @@ void Map::trapezoidalLines(vector<Point> criticalPoints)
     {
         rowi = criticalPoints[i].y;
         colj = criticalPoints[i].x;
-        // Line up
-
-        while(map.at<uchar>(rowi-1,colj) != 255)
+        // Not obstacle up and left and up and right
+        while(map.at<uchar>(rowi-1,colj-1) != 255 && map.at<uchar>(rowi-1,colj+1) != 255)
         {
             Linelength++;
             rowi -= 1;
         }
-
-        // Point half in line up
-        goal.x = colj;
-        goal.y = criticalPoints[i].y-Linelength/2;
-        upperTrapezoidalGoals.push_back(goal);
-        Linelength = 0;
-
-        // Line down
+        // Point half in line up if line not zero
+        if(Linelength != 0)
+        {
+            goal.x = colj;
+            goal.y = criticalPoints[i].y-Linelength/2;
+            upperTrapezoidalGoals.push_back(goal);
+            Linelength = 0;
+        }
         rowi = criticalPoints[i].y;
         colj = criticalPoints[i].x;
-        while(map.at<uchar>(rowi+1,colj) != 255)
+        // Not obstacle up and left and up and right
+        while(map.at<uchar>(rowi+1,colj-1) != 255 && map.at<uchar>(rowi+1,colj+1) != 255)
         {
             Linelength++;
             rowi += 1;
         }
-        // Point half in line down
-        goal.x = colj;
-        goal.y = criticalPoints[i].y+Linelength/2;
-        lowerTrapezoidalGoals.push_back(goal);
-        Linelength = 0;
-
+        // Point half in line down if line not zero
+        if(Linelength != 0)
+        {
+            goal.x = colj;
+            goal.y = criticalPoints[i].y+Linelength/2;
+            lowerTrapezoidalGoals.push_back(goal);
+            Linelength = 0;
+        }
     }
 }
 
