@@ -1,7 +1,8 @@
 #ifndef MAP_H
 #define MAP_H
-#include<iostream>
-#include<vector>
+#include <iostream>
+#include <vector>
+#include <math.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 
@@ -14,20 +15,29 @@ public:
     Map();
     Map(Mat picture);
 
+    //GET FUNCTIONS
     int getMapRows();
     int getMapCols();
+    vector<Point> getUpperTrapezoidalGoals();
+    vector<Point> getLowerTrapezoidalGoals();
+
+    vector<Point> cornerDetection();
+    void trapezoidalLines(vector<Point> criticalPoints);
+
+    //ILLUSTRATIVE FUNCTIONS
     void printMap();
-    void findMiddleOfRooms(int threshold);
+    void drawNShowPoints(string pictureText, vector<Point> points);
+
     ~Map();
 
 
 
 private:
+
+    //Atributes
     Mat map;
-    struct wall{
-        Point start;
-        Point end;
-    };
+    vector<Point> upperTrapezoidalGoals;
+    vector<Point> lowerTrapezoidalGoals;
 };
 
 #endif // MAP_H
