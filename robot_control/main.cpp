@@ -24,15 +24,18 @@ void poseCallback(ConstPosesStampedPtr &_msg) {
 
   for (int i = 0; i < _msg->pose_size(); i++) {
     if (_msg->pose(i).name() == "pioneer2dx") {
+      double x = _msg->pose(i).orientation().x();
+      double y = _msg->pose(i).orientation().y();
+      double z = _msg->pose(i).orientation().z();
+      double w = _msg->pose(i).orientation().w();
+      double siny_cosp = 2*(w*z+x*y);
+      double cosy_cosp = 1-2*(y*y+z*z);
 
+      double yaw = atan2(siny_cosp,cosy_cosp);
       std::cout << std::setprecision(2) << std::fixed << std::setw(6)
-                << _msg->pose(i).position().x() << std::setw(6)
-                << _msg->pose(i).position().y() << std::setw(6)
-                << _msg->pose(i).position().z() << std::setw(6)
-                << _msg->pose(i).orientation().w() << std::setw(6)
-                << _msg->pose(i).orientation().x() << std::setw(6)
-                << _msg->pose(i).orientation().y() << std::setw(6)
-                << _msg->pose(i).orientation().z() << std::endl;
+                <<"z: " <<(asin(double(_msg->pose(i).orientation().z()))*2*180)/3.14
+      <<" w: "<< (acos(double(_msg->pose(i).orientation().w()))*2*180)/3.14 << std::endl <<
+      "yaw: " << yaw << std::endl;
     }
   }
 }
@@ -283,12 +286,6 @@ int main(int _argc, char **_argv) {
     dir = direction->getValue();
 
     //FL_LOG("Distance.input = " << Op::str(distance->getValue()) << " Obstacle.input = " << Op::str(obstacle->getValue()) << " Speed.output =  " << Op::str(Speed->getValue()) << "Direction.output = " << Op::str(direction->getValue()) );
-
-    std::cout << "Speed: " << speed << std::endl;
-    std::cout << "Direction: " << dir << std::endl;
-    std::cout << "angle: " << angle << std::endl;
-    std::cout << "range: " << range << std::endl;
-
 
     mutex.lock();
     int key = cv::waitKey(1);

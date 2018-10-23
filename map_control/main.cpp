@@ -29,7 +29,7 @@ int main(int argc, char** argv)
     smallMap.drawNShowPoints("Upper Goals", smallMap.getUpperTrapezoidalGoals());
     smallMap.drawNShowPoints("Lower Goals", smallMap.getLowerTrapezoidalGoals());
     */
-    /* SHOWS UPPER AND LOWER TOGETHER
+     //SHOWS UPPER AND LOWER TOGETHER
     Mat tempMap = smallWorld;
     cvtColor(smallWorld, tempMap, COLOR_GRAY2BGR);
     vector<Point> upper = smallMap.getUpperTrapezoidalGoals();
@@ -44,7 +44,7 @@ int main(int argc, char** argv)
     }
     resize(tempMap,tempMap,tempMap.size()*10,0,0,INTER_NEAREST);
     imshow("Goals", tempMap);
-    */
+
     waitKey(0);
     return 0;
 }
