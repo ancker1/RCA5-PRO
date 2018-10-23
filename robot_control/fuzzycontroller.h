@@ -14,20 +14,17 @@ public:
     FuzzyController(int mode);
     void setDistanceToClosestObstacle(float distance);
     void setAngleToClosestObstacle(float angle);
+    void setRelativeAngleToGoal(double angle);
+    void setRelativeDistanceToGoal(double dist);
+    double getRelativeAngleToGoal();
+    double getRelativeDistanceToGoal();
     float getDirection();
     float getSpeed();
-    //void setRobotPosition(float x, float y);
-    //void setGoalPosition(float x, float y);
-    //int getRelativeOrientationToGoal(float robot_x, float robot_y, float goal_x, float goal_y);
-    //int getRelativeDistanceToGoal(float robot_x, float robot_y, float goal_x, float goal_y);
-    void calcRelativeVectorToGoal(float robot_x, float robot_y, float goal_x, float goal_y);
+    void calcRelativeVectorToGoal(coordinate robot, coordinate goal);
     vector getRelativeVectorToGoal();
     void process();
+
 private:
-    float speed;
-    float dir;
-    float distanceToClosestObstacle;
-    float angleToClosestObstacle;
     vector relativeVector;
     float left_border = M_PI/6;
     float left_border2 = M_PI/2;
@@ -39,12 +36,16 @@ private:
     float range_min = 0.08;
     float range_max = 10;
 
-    Engine* engine              = nullptr;
-    InputVariable* obstacle     = nullptr;
-    InputVariable* distance     = nullptr;
-    OutputVariable* Speed       = nullptr;
-    OutputVariable* direction   = nullptr;
-    RuleBlock* mamdani          = nullptr;
+    Engine* engine                  = nullptr;
+
+    InputVariable* obstacle         = nullptr;  // This is used to define the angle to the closest obstacle     |   LIDAR
+    InputVariable* distance         = nullptr;  // Distance to the closest obstacle                             |   LIDAR
+    InputVariable* rel_angle        = nullptr;  // Relative angle between the robot and the goal                |   CALCULATED
+    InputVariable* rel_dist         = nullptr;  // Relative distance between the robot and the goal             |   CALCULATED
+
+    OutputVariable* Speed           = nullptr;
+    OutputVariable* direction       = nullptr;
+    RuleBlock* mamdani              = nullptr;
 
 };
 

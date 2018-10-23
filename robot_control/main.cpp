@@ -11,6 +11,9 @@
 #include <math.h>
 
 static boost::mutex mutex;
+float arr[7] = { 0 };
+coordinate robot;
+double robot_oz;
 
 void statCallback(ConstWorldStatisticsPtr &_msg) {
   (void)_msg;
@@ -25,7 +28,7 @@ void poseCallback(ConstPosesStampedPtr &_msg) {
 
   for (int i = 0; i < _msg->pose_size(); i++) {
     if (_msg->pose(i).name() == "pioneer2dx") {
-
+/*
       std::cout << std::setprecision(2) << std::fixed << std::setw(6)
                 << _msg->pose(i).position().x() << std::setw(6)
                 << _msg->pose(i).position().y() << std::setw(6)
@@ -34,6 +37,30 @@ void poseCallback(ConstPosesStampedPtr &_msg) {
                 << _msg->pose(i).orientation().x() << std::setw(6)
                 << _msg->pose(i).orientation().y() << std::setw(6)
                 << _msg->pose(i).orientation().z() << std::endl;
+                */
+      //std::cout << "_________________________________" << std::endl;
+      //std::cout << "X: " << _msg->pose(i).position().x() << std::endl << "Y: " << _msg->pose(i).position().y() << std::endl << "Z: " << _msg->pose(i).position().z() << std::endl;
+      //std::cout << "O_X: " << _msg->pose(i).orientation().x() << std::endl << "O_Y: " << _msg->pose(i).orientation().y() << std::endl << "O_Z: " << _msg->pose(i).orientation().z() << std::endl << "O_W: " << _msg->pose(i).orientation().w() << std::endl;
+    //std::cout << "O_Z: " << _msg->pose(i).orientation().z() << std::endl;
+    //std::cout << "O_W: " << _msg->pose(i).orientation().w() << std::endl;
+
+    double x = double(_msg->pose(i).orientation().x());
+    double y = double(_msg->pose(i).orientation().y());
+    double z = double(_msg->pose(i).orientation().z());
+    double w = double(_msg->pose(i).orientation().w());
+
+    double siny_cosp = 2*(w*z+x*y);
+    double cosy_cosp = 1-2*(y*y+z*z);
+
+    double yaw = atan2(siny_cosp,cosy_cosp); // Convert quaternion to roll-pitch-yaw.
+    robot_oz = yaw; // Testing purposes.     MAKE A CLASS CALLED ROBOT?
+    //std::cout << "yaw: " << yaw << std::endl;  // This is the rotation about the z-axis. Going from -Pi to Pi.
+    //std::cout << "x: " << _msg->pose(i).position().x() << std::endl;
+    //std::cout << "y: " << _msg->pose(i).position().y() << std::endl;
+    robot.x = double(_msg->pose(i).position().x()); // This will get the current coordinate of the robot
+    robot.y = double(_msg->pose(i).position().y()); // This will get the current coordinate of the robot
+
+
     }
   }
 }
@@ -52,8 +79,6 @@ void cameraCallback(ConstImageStampedPtr &msg) {
   cv::imshow("camera", im);
   mutex.unlock();
 }
-
-float arr[7] = { 0 };
 
 void lidarCallback(ConstLaserScanStampedPtr &msg) {
 
@@ -132,10 +157,10 @@ int main(int _argc, char **_argv) {
   gazebo::transport::SubscriberPtr statSubscriber =
       node->Subscribe("~/world_stats", statCallback);
 
-  /*
+
   gazebo::transport::SubscriberPtr poseSubscriber =
-      node->Subscribe("~/pose/info", poseCallback);     // UNCOMMENT THIS
-*/
+      node->Subscribe("~/pose/info", poseCallback);
+
   gazebo::transport::SubscriberPtr cameraSubscriber =
       node->Subscribe("~/pioneer2dx/camera/link/camera/image", cameraCallback);
 
@@ -183,32 +208,53 @@ int main(int _argc, char **_argv) {
   float speed = 0.0;
   float dir = 0.0;
 
-    FuzzyController* controller = new FuzzyController();
+    FuzzyController* controller = new FuzzyController(GO_TO_GOAL);
 
-    controller->calcRelativeVectorToGoal(0.5,1,2,4);
+    coordinate goal;    // TEST
+    goal.x = -3;        // TEST
+    goal.y = 2;         // TEST
 
-    vector ans = controller->getRelativeVectorToGoal();
-    std::cout << "Vector length: " << ans.length << std::endl;
-    std::cout << "Vector angle: " <<  ans.angle << std::endl;
+    controller->calcRelativeVectorToGoal(robot, goal);          // TEST
+    vector ans = controller->getRelativeVectorToGoal();         // TEST
+    std::cout << "Vector length: " << ans.length << std::endl;  // TEST
+    std::cout << "Vector angle: " <<  ans.angle << std::endl;   // TEST
 
   // Loop
   while (true) {
-    gazebo::common::Time::MSleep(10);
+    gazebo::common::Time::MSleep(10);   // MSleep(10) - 10 [ms] sleep?
 
     float angle = arr[5];
     float range = arr[6];
 
+    /*************************************************************/
+    /*       Input variables of Fuzzy Controller is set          */
+    /*************************************************************/
     controller->setDistanceToClosestObstacle(range);
     controller->setAngleToClosestObstacle(angle);
+
+    controller->calcRelativeVectorToGoal(robot, goal);          // Create method that takes robot orient, pos and goal pos.
+    vector ans = controller->getRelativeVectorToGoal();         // ^ should calculate the rel dist and angle directly.
+    double relang = ans.angle - robot_oz;                       // Comment out when not using GO_TO_GOAL
+    std::cout << "relang " << relang << std::endl               // Comment out when not using GO_TO_GOAL
+              << "ans " << ans.angle << std::endl               // Comment out when not using GO_TO_GOAL
+              << "rob " << robot_oz << std::endl;               // Comment out when not using GO_TO_GOAL
+    controller->setRelativeAngleToGoal(relang);                 // Comment out when not using GO_TO_GOAL
+    controller->setRelativeDistanceToGoal(ans.length);          // Comment out when not using GO_TO_GOAL
+
     controller->process();
+    /*************************************************************/
+    /*       Output variables of Fuzzy Controller is set         */
+    /*************************************************************/
     speed = controller->getSpeed();
     dir = controller->getDirection();
 
-    std::cout << "Speed: " << speed << std::endl;
-    std::cout << "Direction: " << dir << std::endl;
-    std::cout << "angle: " << angle << std::endl;
-    std::cout << "range: " << range << std::endl;
+    std::cout << "RelAngle: " << controller->getRelativeAngleToGoal() << std::endl
+              << "RelDist: "  << controller->getRelativeDistanceToGoal() << std::endl;
 
+    std::cout << "Dir: " << dir << std::endl;
+    /*************************************************************/
+    /*       The following is used for testing purposes          */
+    /*************************************************************/
 
     mutex.lock();
     int key = cv::waitKey(1);

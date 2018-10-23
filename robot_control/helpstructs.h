@@ -3,14 +3,14 @@
 
 struct vector
 {
-    float length;
-    float angle;
+    double length;
+    double angle;
 };
 
 struct coordinate
 {
-    float x;
-    float y;
+    double x;
+    double y;
 };
 
 #define GO_TO_GOAL  0
