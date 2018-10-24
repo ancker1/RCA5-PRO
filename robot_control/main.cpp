@@ -4,12 +4,16 @@
 
 #include <opencv2/opencv.hpp>
 #include "fl/Headers.h"
+#include "fuzzycontroller.h"
 
 #include <iostream>
 
 #include <math.h>
 
 static boost::mutex mutex;
+float arr[7] = { 0 };
+coordinate robot;
+double robot_oz;
 
 void statCallback(ConstWorldStatisticsPtr &_msg) {
   (void)_msg;
@@ -24,7 +28,7 @@ void poseCallback(ConstPosesStampedPtr &_msg) {
 
   for (int i = 0; i < _msg->pose_size(); i++) {
     if (_msg->pose(i).name() == "pioneer2dx") {
-
+/*
       std::cout << std::setprecision(2) << std::fixed << std::setw(6)
                 << _msg->pose(i).position().x() << std::setw(6)
                 << _msg->pose(i).position().y() << std::setw(6)
@@ -33,6 +37,30 @@ void poseCallback(ConstPosesStampedPtr &_msg) {
                 << _msg->pose(i).orientation().x() << std::setw(6)
                 << _msg->pose(i).orientation().y() << std::setw(6)
                 << _msg->pose(i).orientation().z() << std::endl;
+                */
+      //std::cout << "_________________________________" << std::endl;
+      //std::cout << "X: " << _msg->pose(i).position().x() << std::endl << "Y: " << _msg->pose(i).position().y() << std::endl << "Z: " << _msg->pose(i).position().z() << std::endl;
+      //std::cout << "O_X: " << _msg->pose(i).orientation().x() << std::endl << "O_Y: " << _msg->pose(i).orientation().y() << std::endl << "O_Z: " << _msg->pose(i).orientation().z() << std::endl << "O_W: " << _msg->pose(i).orientation().w() << std::endl;
+    //std::cout << "O_Z: " << _msg->pose(i).orientation().z() << std::endl;
+    //std::cout << "O_W: " << _msg->pose(i).orientation().w() << std::endl;
+
+    double x = double(_msg->pose(i).orientation().x());
+    double y = double(_msg->pose(i).orientation().y());
+    double z = double(_msg->pose(i).orientation().z());
+    double w = double(_msg->pose(i).orientation().w());
+
+    double siny_cosp = 2*(w*z+x*y);
+    double cosy_cosp = 1-2*(y*y+z*z);
+
+    double yaw = atan2(siny_cosp,cosy_cosp); // Convert quaternion to roll-pitch-yaw.
+    robot_oz = yaw; // Testing purposes.     MAKE A CLASS CALLED ROBOT?
+    //std::cout << "yaw: " << yaw << std::endl;  // This is the rotation about the z-axis. Going from -Pi to Pi.
+    //std::cout << "x: " << _msg->pose(i).position().x() << std::endl;
+    //std::cout << "y: " << _msg->pose(i).position().y() << std::endl;
+    robot.x = double(_msg->pose(i).position().x()); // This will get the current coordinate of the robot
+    robot.y = double(_msg->pose(i).position().y()); // This will get the current coordinate of the robot
+
+
     }
   }
 }
@@ -51,8 +79,6 @@ void cameraCallback(ConstImageStampedPtr &msg) {
   cv::imshow("camera", im);
   mutex.unlock();
 }
-
-float arr[7] = { 0 };
 
 void lidarCallback(ConstLaserScanStampedPtr &msg) {
 
@@ -131,6 +157,7 @@ int main(int _argc, char **_argv) {
   gazebo::transport::SubscriberPtr statSubscriber =
       node->Subscribe("~/world_stats", statCallback);
 
+
   gazebo::transport::SubscriberPtr poseSubscriber =
       node->Subscribe("~/pose/info", poseCallback);
 
@@ -160,104 +187,17 @@ int main(int _argc, char **_argv) {
   float angle_min = arr[1];
   float range_min = arr[2];
   float range_max = arr[3];
+
+  std::cout << "angle_max: " << angle_max << std::endl;
+  std::cout << "angle_min: " << angle_min << std::endl;
+  std::cout << "range_min: " << range_min << std::endl;
+  std::cout << "range_max: " << range_max << std::endl;
+
   float left_border = M_PI/6;
   float left_border2 = M_PI/2;
   float right_border = -M_PI/6;
   float right_border2 = -M_PI/2;
   float range_border = 0.35;
-  using namespace fl;
-  Engine* engine = new Engine;
-  engine->setName("SimpleTest");
-  engine->setDescription("First test of a Fuzzy Controller");
-
-  /*   INPUT VARIABLES   */
-  InputVariable* obstacle = new InputVariable;
-  obstacle->setName("Obstacle");
-  obstacle->setDescription("Indicates relative position of nearest obstacle");
-  obstacle->setEnabled(true);
-  obstacle->setRange(angle_min, angle_max);
-  obstacle->setLockValueInRange(false);
-  /*
-  obstacle->addTerm(new Rectangle("Left", left_border, left_border2));
-  obstacle->addTerm(new Rectangle("OKLeft", left_border2, angle_max));
-  obstacle->addTerm(new Rectangle("Front", right_border, left_border));
-  obstacle->addTerm(new Rectangle("Right", right_border2, right_border));
-  obstacle->addTerm(new Rectangle("OKRight", angle_min, right_border2));
-  */
-  obstacle->addTerm(new Rectangle("OKLeft", left_border2, angle_max));
-  obstacle->addTerm(new Ramp("Left", float(M_PI/60), left_border2));
-
-  obstacle->addTerm(new Rectangle("OKRight", angle_min, right_border2));
-  obstacle->addTerm(new Rectangle("Right", right_border2, float(-M_PI/60)));
-
-  obstacle->addTerm(new Trapezoid("Front", right_border, float(-M_PI/60), float(M_PI/60), left_border));
-
-  engine->addInputVariable(obstacle);
-
-  InputVariable* distance = new InputVariable;
-  distance->setName("Distance");
-  distance->setDescription("Distance to nearest obstacle");
-  distance->setEnabled(true);
-  distance->setRange(range_min, range_max);
-  distance->setLockValueInRange(false);
-  /*
-  distance->addTerm(new Rectangle("Close", range_min, range_border));
-  distance->addTerm(new Rectangle("Far", range_border, range_max));
-  */
-  distance->addTerm(new Rectangle("Close", range_min, range_border));
-  distance->addTerm(new Triangle("Medium", range_border, 1));
-  distance->addTerm(new Ramp("Far", 0.8, range_max));
-  engine->addInputVariable(distance);
-
-  /*   OUTPUT VARIABLES  */
-  OutputVariable* Speed = new OutputVariable;
-  Speed->setName("Speed");
-  Speed->setDescription("Translational speed of robot");
-  Speed->setEnabled(true);
-  Speed->setRange(0,1);
-  Speed->setLockValueInRange(false);
-  Speed->setAggregation(new Maximum);
-  Speed->setDefuzzifier(new Centroid(100));
-  Speed->setDefaultValue(0);
-  Speed->addTerm(new Rectangle("Go", 0.01, 1));
-  Speed->addTerm(new Rectangle("Stop", 0, 0.01));
-  engine->addOutputVariable(Speed);
-
-  OutputVariable* direction = new OutputVariable;
-  direction->setName("Direction");
-  direction->setDescription("Rotational speed of the robot");
-  direction->setEnabled(true);
-  direction->setRange(0,0.5);
-  direction->setLockValueInRange(false);
-  direction->setAggregation(new Maximum);
-  direction->setDefuzzifier(new Centroid(100));
-  direction->setDefaultValue(0);
-  direction->addTerm(new Rectangle("Right", 0.01, 0.5));
-  direction->addTerm(new Rectangle("Front", 0, 0.01));
-  engine->addOutputVariable(direction);
-
-  /*   Ruleblock   */
-  RuleBlock* mamdani = new RuleBlock;
-  mamdani->setName("Mamdani");
-  mamdani->setDescription("");
-  mamdani->setEnabled(true);
-  mamdani->setConjunction(new Minimum);
-  mamdani->setDisjunction(fl::null);
-  mamdani->setImplication(new AlgebraicProduct);
-  mamdani->setActivation(new General);
-  mamdani->addRule(Rule::parse("if Distance is Far then Speed is Go and Direction is Front", engine));
-
-  mamdani->addRule(Rule::parse("if Distance is Medium and Obstacle is Front then Speed is Go and Direction is Right", engine));
-  mamdani->addRule(Rule::parse("if Distance is Medium and Obstacle is Left then Speed is Go and Direction is Front", engine)); // small_right
-  mamdani->addRule(Rule::parse("if Distance is Medium and Obstacle is Right then Speed is Go and Direction is Front", engine)); // small_left
-  mamdani->addRule(Rule::parse("if Distance is Medium and Obstacle is OKLeft then Speed is Go and Direction is Front", engine));
-  mamdani->addRule(Rule::parse("if Distance is Medium and Obstacle is OKRight then Speed is Go and Direction is Front", engine));
-
-  mamdani->addRule(Rule::parse("if Distance is Close and Obstacle is Front then Speed is Stop and Direction is Right", engine));
-  mamdani->addRule(Rule::parse("if Distance is Close and Obstacle is Left then Speed is Stop and Direction is Right", engine));
-
-  engine->addRuleBlock(mamdani);
-
 
   const int key_left = 81;
   const int key_up = 82;
@@ -268,27 +208,53 @@ int main(int _argc, char **_argv) {
   float speed = 0.0;
   float dir = 0.0;
 
+    FuzzyController* controller = new FuzzyController(GO_TO_GOAL);
+
+    coordinate goal;    // TEST
+    goal.x = 1.4;        // TEST
+    goal.y = 0.85;         // TEST
+
+    controller->calcRelativeVectorToGoal(robot, goal);          // TEST
+    vector ans = controller->getRelativeVectorToGoal();         // TEST
+    std::cout << "Vector length: " << ans.length << std::endl;  // TEST
+    std::cout << "Vector angle: " <<  ans.angle << std::endl;   // TEST
+
   // Loop
   while (true) {
-    gazebo::common::Time::MSleep(10);
+    gazebo::common::Time::MSleep(10);   // MSleep(10) - 10 [ms] sleep?
 
     float angle = arr[5];
     float range = arr[6];
 
-    distance->setValue(range);
-    obstacle->setValue(angle);
-    engine->process();
+    /*************************************************************/
+    /*       Input variables of Fuzzy Controller is set          */
+    /*************************************************************/
+    controller->setDistanceToClosestObstacle(range);
+    controller->setAngleToClosestObstacle(angle);
 
-    speed = Speed->getValue();
-    dir = direction->getValue();
+    controller->calcRelativeVectorToGoal(robot, goal);          // Create method that takes robot orient, pos and goal pos.
+    vector ans = controller->getRelativeVectorToGoal();         // ^ should calculate the rel dist and angle directly.
+    double relang = ans.angle - robot_oz;                       // Comment out when not using GO_TO_GOAL
+    std::cout << "relang " << relang << std::endl               // Comment out when not using GO_TO_GOAL
+              << "ans " << ans.angle << std::endl               // Comment out when not using GO_TO_GOAL
+              << "rob " << robot_oz << std::endl;               // Comment out when not using GO_TO_GOAL
+    controller->setRelativeAngleToGoal(relang);                 // Comment out when not using GO_TO_GOAL
+    controller->setRelativeDistanceToGoal(ans.length);          // Comment out when not using GO_TO_GOAL
 
-    //FL_LOG("Distance.input = " << Op::str(distance->getValue()) << " Obstacle.input = " << Op::str(obstacle->getValue()) << " Speed.output =  " << Op::str(Speed->getValue()) << "Direction.output = " << Op::str(direction->getValue()) );
+    controller->process();
+    /*************************************************************/
+    /*       Output variables of Fuzzy Controller is set         */
+    /*************************************************************/
+    speed = controller->getSpeed();
+    dir = controller->getDirection();
 
-    std::cout << "Speed: " << speed << std::endl;
-    std::cout << "Direction: " << dir << std::endl;
-    std::cout << "angle: " << angle << std::endl;
-    std::cout << "range: " << range << std::endl;
+    std::cout << "RelAngle: " << controller->getRelativeAngleToGoal() << std::endl
+              << "RelDist: "  << controller->getRelativeDistanceToGoal() << std::endl;
 
+    std::cout << "Dir: " << dir << std::endl;
+    /*************************************************************/
+    /*       The following is used for testing purposes          */
+    /*************************************************************/
 
     mutex.lock();
     int key = cv::waitKey(1);
@@ -310,15 +276,6 @@ int main(int _argc, char **_argv) {
       //      speed *= 0.1;
       //      dir *= 0.1;
     }
-
-    if ( key == 'w' )
-        speed += 0.5;
-    else if ( key == 's' )
-        speed -= 0.5;
-    else if (key == 'a')
-        dir -= 0.5;
-    else if (key == 'd')
-        dir += 0.5;
 
     // Generate a pose
     ignition::math::Pose3d pose(double(speed), 0, 0, 0, 0, double(dir));
