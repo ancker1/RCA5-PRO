@@ -24,6 +24,8 @@ public:
     vector<Point> cornerDetection();
     void trapezoidalLines(vector<Point> criticalPoints);
 
+    vector<Point_<double> > convertToGazeboCoordinates(vector<Point> goals);
+
     //ILLUSTRATIVE FUNCTIONS
     void printMap();
     void drawNShowPoints(string pictureText, vector<Point> points);

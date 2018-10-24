@@ -176,6 +176,23 @@ vector<Point> Map::getLowerTrapezoidalGoals()
     return lowerTrapezoidalGoals;
 }
 
+vector<Point_<double>> Map::convertToGazeboCoordinates(vector<Point> goals)
+{
+    vector<Point_<double>> convertedGoals;
+    double widthScale = 20.0/14.0;
+    double heightScale = 15.0/11.0;
+    double offsetx = 7.0;
+    double offsety = 5.0;
+    Point_<double> convertedPoint;
+    for(int i = 0; i < goals.size(); i++)
+    {
+        convertedPoint.x = ((double)goals[i].x/widthScale)-offsetx;
+        convertedPoint.y = ((double)goals[i].y/heightScale)-offsety;
+        convertedGoals.push_back(convertedPoint);
+    }
+    return convertedGoals;
+}
+
 Map::~Map()
 {
 

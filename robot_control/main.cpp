@@ -225,16 +225,6 @@ int main(int _argc, char **_argv) {
     float angle = arr[5];
     float range = arr[6];
 
-<<<<<<< HEAD
-    distance->setValue(range);
-    obstacle->setValue(angle);
-    engine->process();
-
-    speed = Speed->getValue();
-    dir = direction->getValue();
-
-    //FL_LOG("Distance.input = " << Op::str(distance->getValue()) << " Obstacle.input = " << Op::str(obstacle->getValue()) << " Speed.output =  " << Op::str(Speed->getValue()) << "Direction.output = " << Op::str(direction->getValue()) );
-=======
     /*************************************************************/
     /*       Input variables of Fuzzy Controller is set          */
     /*************************************************************/
@@ -264,7 +254,6 @@ int main(int _argc, char **_argv) {
     /*************************************************************/
     /*       The following is used for testing purposes          */
     /*************************************************************/
->>>>>>> master
 
     mutex.lock();
     int key = cv::waitKey(1);
