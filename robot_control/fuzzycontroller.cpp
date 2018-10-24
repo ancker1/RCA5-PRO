@@ -108,7 +108,7 @@ FuzzyController::FuzzyController(int mode)
         rel_dist->addTerm(new Ramp("Large", 0.8, 100));
         rel_dist->addTerm(new Rectangle("Medium", 0.4, 0.8));
         rel_dist->addTerm(new Rectangle("Small", 0.1, 0.4));
-        rel_dist->addTerm(new Ramp("Zero", 0, 0.1));
+        rel_dist->addTerm(new Rectangle("Zero", 0, 0.1));
         engine->addInputVariable(rel_dist);
 
         obstacle = new InputVariable;
@@ -173,16 +173,16 @@ FuzzyController::FuzzyController(int mode)
         mamdani->setImplication(new AlgebraicProduct);
         mamdani->setActivation(new General);
 
-        mamdani->addRule(Rule::parse("if RelAngle is L  then Direction is L ", engine));
-        mamdani->addRule(Rule::parse("if RelAngle is R  then Direction is R ", engine));
+        mamdani->addRule(Rule::parse("if RelAngle is L and RelDist is not Zero then Direction is L ", engine));
+        mamdani->addRule(Rule::parse("if RelAngle is R and RelDist is not Zero then Direction is R ", engine));
+        mamdani->addRule(Rule::parse("if RelAngle is F then Direction is F ", engine));
         //mamdani->addRule(Rule::parse("if RelAngle is SL then Direction is SL ", engine));
         //mamdani->addRule(Rule::parse("if RelAngle is SR then Direction is SR ", engine));
-        mamdani->addRule(Rule::parse("if RelAngle is F  then Direction is F ", engine));
 
         mamdani->addRule(Rule::parse("if RelAngle is F and RelDist is Large then Speed is Go ", engine));
         mamdani->addRule(Rule::parse("if RelAngle is F and RelDist is Medium then Speed is Go ", engine));
         mamdani->addRule(Rule::parse("if RelAngle is F and RelDist is Small then Speed is Go ", engine));
-        mamdani->addRule(Rule::parse("if RelAngle is F and RelDist is Zero then Speed is Stop ", engine));
+        mamdani->addRule(Rule::parse("if RelAngle is F and RelDist is Zero then Speed is Stop", engine));
 
 
         engine->addRuleBlock(mamdani);
