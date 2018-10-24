@@ -24,6 +24,7 @@ void poseCallback(ConstPosesStampedPtr &_msg) {
 
   for (int i = 0; i < _msg->pose_size(); i++) {
     if (_msg->pose(i).name() == "pioneer2dx") {
+        /*
       double x = _msg->pose(i).orientation().x();
       double y = _msg->pose(i).orientation().y();
       double z = _msg->pose(i).orientation().z();
@@ -36,6 +37,7 @@ void poseCallback(ConstPosesStampedPtr &_msg) {
                 <<"z: " <<(asin(double(_msg->pose(i).orientation().z()))*2*180)/3.14
       <<" w: "<< (acos(double(_msg->pose(i).orientation().w()))*2*180)/3.14 << std::endl <<
       "yaw: " << yaw << std::endl;
+      */
     }
   }
 }
@@ -81,7 +83,6 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 
   float c_range = range_max;
   float c_angle;
-
   cv::Mat im(height, width, CV_8UC3);
   im.setTo(0);
   for (int i = 0; i < nranges; i++) {

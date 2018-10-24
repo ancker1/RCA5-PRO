@@ -34,12 +34,26 @@ int main(int argc, char** argv)
     cvtColor(smallWorld, tempMap, COLOR_GRAY2BGR);
     vector<Point> upper = smallMap.getUpperTrapezoidalGoals();
     vector<Point> lower = smallMap.getLowerTrapezoidalGoals();
+
+    double widthScale = 20.0/14.0;
+    double heightScale = 15.0/11.0;
+    double resultX;
+    double resultY;
+
     for(int i = 0; i < upper.size(); i++) // Upper goal green
     {
+
+        resultX = (upper[i].x/widthScale)-7; // offset x = 7
+        resultY = upper[i].y/heightScale-5; // offset y = 5;
+        cout << "Upper goal "<< setprecision (15)  << i << " x: " << resultX << " y: " << resultY << endl;
         tempMap.at<Vec3b>(upper[i].y,upper[i].x)[1] = 255;
     }
     for(int i = 0; i < lower.size(); i++)
     {
+        cout.precision(17);
+        resultX = (lower[i].x/widthScale)-7;
+        resultY = (lower[i].y/heightScale)-5;
+        cout << "Lower goal " << setprecision (15) << i << " x: " << resultX << " y: " << resultY << endl;
         tempMap.at<Vec3b>(lower[i].y,lower[i].x)[2] = 255; // Lower goal red
     }
     resize(tempMap,tempMap,tempMap.size()*10,0,0,INTER_NEAREST);
