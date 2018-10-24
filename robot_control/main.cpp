@@ -211,8 +211,8 @@ int main(int _argc, char **_argv) {
     FuzzyController* controller = new FuzzyController(GO_TO_GOAL);
 
     coordinate goal;    // TEST
-    goal.x = 4;        // TEST
-    goal.y = 1;         // TEST
+    goal.x = 1.4;        // TEST
+    goal.y = 0.85;         // TEST
 
     controller->calcRelativeVectorToGoal(robot, goal);          // TEST
     vector ans = controller->getRelativeVectorToGoal();         // TEST
