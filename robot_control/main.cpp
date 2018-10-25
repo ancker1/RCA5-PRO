@@ -229,6 +229,8 @@ int main(int _argc, char **_argv) {
     /*************************************************************/
     /*       Input variables of Fuzzy Controller is set          */
     /*************************************************************/
+    controller->setPath(PATH_R);
+
     controller->setDistanceToClosestObstacle(range);
     controller->setAngleToClosestObstacle(angle);
 

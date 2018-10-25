@@ -16,6 +16,7 @@ public:
     void setAngleToClosestObstacle(float angle);
     void setRelativeAngleToGoal(double angle);
     void setRelativeDistanceToGoal(double dist);
+    void setPath(double path);
     double getRelativeAngleToGoal();
     double getRelativeDistanceToGoal();
     double getAngleToClosestObstacle();
@@ -44,6 +45,7 @@ private:
     InputVariable* distance         = nullptr;  // Distance to the closest obstacle                             |   LIDAR
     InputVariable* rel_angle        = nullptr;  // Relative angle between the robot and the goal                |   CALCULATED
     InputVariable* rel_dist         = nullptr;  // Relative distance between the robot and the goal             |   CALCULATED
+    InputVariable* path             = nullptr;  // Tell the Fuzzy Controller, what way to go around obstacle.
 
     OutputVariable* Speed           = nullptr;
     OutputVariable* direction       = nullptr;

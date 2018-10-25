@@ -88,6 +88,18 @@ FuzzyController::FuzzyController(int mode)
         engine->setName("Default engine");
         engine->setDescription("Default engine. Fuzzy Controller without mode set.");
 
+        path = new InputVariable;
+        path->setName("Path");
+        path->setDescription("Which way to go around obstacle");
+        path->setEnabled(true);
+        path->setRange(0, 4);
+        path->setLockValueInRange(false);
+        path->addTerm(new Rectangle("R",    0, 1));
+        path->addTerm(new Rectangle("L",    1, 2));
+        path->addTerm(new Rectangle("S",    2, 3));
+        path->addTerm(new Rectangle("NON",  3, 4));
+        engine->addInputVariable(path);
+
         rel_angle = new InputVariable;
         rel_angle->setName("RelAngle");
         rel_angle->setEnabled(true);
@@ -105,7 +117,7 @@ FuzzyController::FuzzyController(int mode)
         rel_dist->setEnabled(true);
         rel_dist->setRange(0, 100);
         rel_dist->setLockValueInRange(false);
-        rel_dist->addTerm(new Ramp("Large", 0.8, 100));
+        rel_dist->addTerm(new Ramp("Large", 0.6, 100));
         rel_dist->addTerm(new Triangle("Med", 0.1, 0.4, 0.8));
         rel_dist->addTerm(new Ramp("Zero", 0.1, 0));
         engine->addInputVariable(rel_dist);
@@ -130,8 +142,8 @@ FuzzyController::FuzzyController(int mode)
         distance->setRange(range_min, range_max);
         distance->setLockValueInRange(false);
         distance->addTerm(new Rectangle("Clo", range_min, range_border));
-        distance->addTerm(new Triangle("Med", range_border, 1));
-        distance->addTerm(new Rectangle("Far", 0.8, range_max));
+        distance->addTerm(new Triangle("Med", range_border, 0.4, 0.8));
+        distance->addTerm(new Rectangle("Far", 0.6, range_max));
         engine->addInputVariable(distance);
 
         Speed = new OutputVariable;
@@ -143,8 +155,9 @@ FuzzyController::FuzzyController(int mode)
         Speed->setAggregation(new Maximum);
         Speed->setDefuzzifier(new Centroid(100));
         Speed->setDefaultValue(0);
-        Speed->addTerm(new Rectangle("Go", 0.01, 1));
-        Speed->addTerm(new Rectangle("Stop", 0, 0.01));
+        Speed->addTerm(new Ramp("Go", 0.4, 1));
+        Speed->addTerm(new Triangle("Slow", 0.01, 0.3, 0.5));
+        Speed->addTerm(new Ramp("Stop", 0.01, 0));
         engine->addOutputVariable(Speed);
 
         direction = new OutputVariable;
@@ -175,21 +188,44 @@ FuzzyController::FuzzyController(int mode)
         mamdani->setActivation(new General);
 
 
-        /*  CASE:   Obstacle are far away, we are not currently at the goal: go towards goal or shift orientation toward goal   */
-        mamdani->addRule(Rule::parse("if Distance is Far and RelAngle is L and RelDist is not Zero then Direction is L and Speed is Go", engine));
-        mamdani->addRule(Rule::parse("if Distance is Far and RelAngle is R and RelDist is not Zero then Direction is R and Speed is Go", engine));
-        mamdani->addRule(Rule::parse("if Distance is Far and RelAngle is F and RelDist is not Zero then Direction is F and Speed is Go", engine));
+        mamdani->addRule(Rule::parse("if RelDist is Zero then Direction is F and Speed is Stop", engine));
 
-        /*  CASE: Obstacle med, front */
-        mamdani->addRule(Rule::parse("if Distance is Med and Obstacle is F and RelDist is not Zero then Direction is R and Speed is Go", engine));
+        /*  CASE:   Path is NON -> make robot face goal  */
+        mamdani->addRule(Rule::parse("if Path is NON and RelAngle is L then Direction is L and Speed is Stop", engine));
+        mamdani->addRule(Rule::parse("if Path is NON and RelAngle is R then Direction is R and Speed is Stop", engine));
 
-        /*  CASE: Obstacle med , Goal is left  */
-        mamdani->addRule(Rule::parse("if Distance is Med and Obstacle is L and RelAngle is L and RelDist is not Zero then Direction is VR and Speed is Go", engine));
-        mamdani->addRule(Rule::parse("if Distance is Med and Obstacle is OKL and RelAngle is L and RelDist is not Zero then Direction is VL and Speed is Go", engine));
+        /*  CASE:   PATH is S  :  Obstacle are far away, we are not currently at the goal: go towards goal or shift orientation toward goal   */
+        mamdani->addRule(Rule::parse("if Path is S and RelAngle is L and RelDist is not Zero then Direction is L and Speed is Go", engine));
+        mamdani->addRule(Rule::parse("if Path is S and RelAngle is R and RelDist is not Zero then Direction is R and Speed is Go", engine));
+        mamdani->addRule(Rule::parse("if Path is S and RelAngle is F and RelDist is not Zero then Direction is F and Speed is Go", engine));
 
-        /*  CASE: Obstacle Clo, Goal is left */
-        mamdani->addRule(Rule::parse("if Distance is Clo and Obstacle is L and RelAngle is L and RelDist is not Zero then Direction is R and Speed is Stop", engine));
-        mamdani->addRule(Rule::parse("if Distance is Clo and Obstacle is OKL and RelAngle is L and RelDist is not Zero then Direction is F and Speed is Go", engine));
+        /*  CASE: PATH is R  */
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Far and RelAngle is L and RelDist is Large then Direction is L and Speed is Go", engine));
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Far and RelAngle is R and RelDist is Large then Direction is R and Speed is Go", engine));
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Far and RelAngle is F and RelDist is Large then Direction is F and Speed is Go", engine));
+
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Far and RelAngle is L and RelDist is Med then Direction is L and Speed is Go", engine));
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Far and RelAngle is R and RelDist is Med then Direction is R and Speed is Go", engine));
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Far and RelAngle is F and RelDist is Med then Direction is F and Speed is Go", engine));
+
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Med and Obstacle is F and RelDist is not Zero then Direction is R and Speed is Slow", engine));
+
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Med and Obstacle is L and RelAngle is L and RelDist is not Zero then Direction is VR and Speed is Slow", engine));
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Med and Obstacle is OKL and RelAngle is L and RelDist is not Zero then Direction is VL and Speed is Slow", engine));
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Med and Obstacle is OKL and RelAngle is F and RelDist is not Zero then Direction is F and Speed is Slow", engine));
+
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Med and Obstacle is L and RelAngle is F and RelDist is not Zero then Direction is VR and Speed is Slow", engine));
+
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Clo and Obstacle is L and RelAngle is L and RelDist is not Zero then Direction is R and Speed is Stop", engine));
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Clo and Obstacle is OKL and RelAngle is L and RelDist is not Zero then Direction is F and Speed is Slow", engine));
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Clo and Obstacle is OKL and RelAngle is F and RelDist is not Zero then Direction is F and Speed is Slow", engine));
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Clo and Obstacle is F and RelDist is not Zero then Direction is R and Speed is Stop", engine));
+
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Med and Obstacle is L and RelAngle is R and RelDist is Large then Direction is VR and Speed is Slow", engine));
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Med and Obstacle is OKL and RelAngle is R and RelDist is Large then Direction is F and Speed is Go", engine));
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Clo and Obstacle is L and RelAngle is R and RelDist is Large then Direction is R and Speed is Stop", engine));
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Clo and Obstacle is OKL and RelAngle is R and RelDist is Large then Direction is SR and Speed is Go", engine));
+        mamdani->addRule(Rule::parse("if Path is R and Distance is Clo and Obstacle is OKL and RelAngle is F and RelDist is Large then Direction is F and Speed is Go", engine));
 
 
 
@@ -218,6 +254,11 @@ void FuzzyController::calcRelativeVectorToGoal(coordinate robot, coordinate goal
     RelativeVector.angle = (double)atan2(DeltaY,DeltaX);
     RelativeVector.length = (double)sqrt(pow(DeltaX,2)+pow(DeltaY,2));
     this->relativeVector = RelativeVector;
+}
+
+void FuzzyController::setPath(double path_d)
+{
+    path->setValue(path_d);
 }
 
 vector FuzzyController::getRelativeVectorToGoal()
