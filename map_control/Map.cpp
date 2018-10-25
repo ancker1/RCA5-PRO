@@ -115,7 +115,7 @@ void Map::trapezoidalLines(vector<Point> criticalPoints)
     int colj;
     int Linelength = 0;
     Point goal;
-    for(int i = 0; i < criticalPoints.size(); i++)
+    for(size_t i = 0; i < criticalPoints.size(); i++)
     {
         rowi = criticalPoints[i].y;
         colj = criticalPoints[i].x;
@@ -156,7 +156,7 @@ void Map::drawNShowPoints(string pictureText, vector<Point> points)
 {
     Mat tempMap;
     cvtColor(map, tempMap, COLOR_GRAY2BGR);
-    for(int i = 0; i < points.size(); i++)
+    for(size_t i = 0; i < points.size(); i++)
     {
         tempMap.at<Vec3b>(points[i].y,points[i].x)[1] = 255;
     }
@@ -181,3 +181,152 @@ Map::~Map()
 
 }
 
+/****************************************************
+ *  BUSHFIRE
+ * *************************************************/
+
+Mat Map::bushfire_img(Mat &img) {
+    Mat binary_img = img.clone();
+    binarize_img(binary_img);
+    make_bushfire_grid(binary_img);
+    return binary_img;
+}
+
+vector<Point> Map::find_centers(Mat &img) {
+    Mat1b kernel_lm( Size(5,5), 1u);
+    Mat image_dilate;
+    dilate(img, image_dilate, kernel_lm);
+    Mat1b local_max = (img >= image_dilate);
+    vector<Point> v;
+    for (int y = 0; y < local_max.rows; y++) {
+        for (int x = 0; x < local_max.cols; x++) {
+            if ((int)local_max.at<uchar>(y,x) == 255) {
+                for (int j = 1; (int)local_max.at<uchar>(y+j,x) == 255; j++) {
+                    local_max.at<uchar>(y,x) = 0;
+                    j++;
+                }
+                for (int j = 1; (int)local_max.at<uchar>(y,x+j) == 255; j++) {
+                    local_max.at<uchar>(y,x) = 0;
+                    j++;
+                }
+            }
+        }
+    }
+
+    for (int y = 0; y < local_max.rows; y++) {
+        for (int x = 0; x < local_max.cols; x++) {
+            if ((int)local_max.at<uchar>(y,x) == 255) {
+                Point p(x,y);
+                v.push_back(p);
+            }
+        }
+    }
+
+    remove_points_in_corners(v, img);
+
+    return v;
+}
+
+void Map::binarize_img(Mat &img) {
+    Mat gray;
+    cvtColor(img, gray, CV_RGB2GRAY);
+    threshold(gray, img, 128.0, 255.0, THRESH_BINARY);
+    img = img > 128;
+}
+
+void Map::find_neighbors(vector<Point> &v, Mat &img, int x, int y) {
+    Point p;
+    if ((int)img.at<uchar>(x-1,y-1)==255) {
+        p.x=x-1;
+        p.y=y-1;
+        v.push_back(p);
+    }
+    if ((int)img.at<uchar>(x,y-1)==255) {
+        p.x=x;
+        p.y=y-1;
+        v.push_back(p);
+    }
+    if ((int)img.at<uchar>(x+1,y-1)==255) {
+        p.x=x+1;
+        p.y=y-1;
+        v.push_back(p);
+    }
+    if ((int)img.at<uchar>(x-1,y)==255) {
+        p.x=x-1;
+        p.y=y;
+        v.push_back(p);
+    }
+    if ((int)img.at<uchar>(x+1,y)==255) {
+        p.x=x+1;
+        p.y=y;
+        v.push_back(p);
+    }
+    if ((int)img.at<uchar>(x-1,y+1)==255) {
+        p.x=x-1;
+        p.y=y+1;
+        v.push_back(p);
+    }
+    if ((int)img.at<uchar>(x,y+1)==255) {
+        p.x=x;
+        p.y=y+1;
+        v.push_back(p);
+    }
+    if ((int)img.at<uchar>(x+1,y+1)==255) {
+        p.x=x+1;
+        p.y=y+1;
+        v.push_back(p);
+    }
+}
+
+void Map::make_bushfire_grid(Mat &img) {
+    vector<Point> neighbors;
+    for (int y = 0; y < img.cols; y++) {
+        for (int x = 0; x < img.rows; x++) {
+            if ((int)img.at<uchar>(x,y) == 0) {
+                find_neighbors(neighbors, img, x, y);
+            }
+        }
+    }
+
+    int color = 1;
+    while (!neighbors.empty()) {
+        vector<Point> new_neighbors;
+        for (size_t i = 0; i < neighbors.size(); i++) {
+            if (img.at<uchar>(neighbors[i].x,neighbors[i].y)==255) {
+                find_neighbors(new_neighbors, img, neighbors[i].x, neighbors[i].y);
+                img.at<uchar>(neighbors[i].x,neighbors[i].y) = color;
+            }
+        }
+        color++;
+        neighbors = new_neighbors;
+    }
+}
+
+void Map::remove_points_in_corners(vector<Point> &v, Mat &img) {
+    for (size_t i = 0; i < v.size(); i++) {
+        if ((int)img.at<uchar>(v[i].y-1,v[i].x-1)==0) {
+            v.erase(v.begin()+i);
+        }
+        if ((int)img.at<uchar>(v[i].y,v[i].x-1)==0) {
+            v.erase(v.begin()+i);
+        }
+        if ((int)img.at<uchar>(v[i].y+1,v[i].x-1)==0) {
+            v.erase(v.begin()+i);
+        }
+        if ((int)img.at<uchar>(v[i].y-1,v[i].x)==0) {
+            v.erase(v.begin()+i);
+        }
+        if ((int)img.at<uchar>(v[i].y+1,v[i].x)==0) {
+            v.erase(v.begin()+i);
+        }
+        if ((int)img.at<uchar>(v[i].y-1,v[i].x+1)==0) {
+            v.erase(v.begin()+i);
+        }
+        if ((int)img.at<uchar>(v[i].y,v[i].x+1)==0) {
+            v.erase(v.begin()+i);
+        }
+        if ((int)img.at<uchar>(v[i].y+1,v[i].x+1)==0) {
+            v.erase(v.begin()+i);
+        }
+    }
+}
