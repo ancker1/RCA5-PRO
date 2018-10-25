@@ -106,8 +106,8 @@ FuzzyController::FuzzyController(int mode)
         rel_dist->setRange(0, 100);
         rel_dist->setLockValueInRange(false);
         rel_dist->addTerm(new Ramp("Large", 0.8, 100));
-        rel_dist->addTerm(new Rectangle("Med", 0.1, 0.8));
-        rel_dist->addTerm(new Rectangle("Zero", 0, 0.1));
+        rel_dist->addTerm(new Triangle("Med", 0.1, 0.4, 0.8));
+        rel_dist->addTerm(new Ramp("Zero", 0.1, 0));
         engine->addInputVariable(rel_dist);
 
         obstacle = new InputVariable;
@@ -116,9 +116,9 @@ FuzzyController::FuzzyController(int mode)
         obstacle->setEnabled(true);
         obstacle->setRange(angle_min, angle_max);
         obstacle->setLockValueInRange(false);
-        obstacle->addTerm(new Rectangle("OKL", left_border2, angle_max));
+        obstacle->addTerm(new Ramp("OKL", left_border2, angle_max));
         obstacle->addTerm(new Rectangle("L", float(M_PI/60), left_border2));
-        obstacle->addTerm(new Rectangle("OKR", angle_min, right_border2));
+        obstacle->addTerm(new Ramp("OKR", right_border2, angle_min));
         obstacle->addTerm(new Rectangle("R", right_border2, float(-M_PI/60)));
         obstacle->addTerm(new Trapezoid("F", right_border, float(-M_PI/60), float(M_PI/60), left_border));
         engine->addInputVariable(obstacle);
@@ -156,13 +156,13 @@ FuzzyController::FuzzyController(int mode)
         direction->setAggregation(new Maximum);
         direction->setDefuzzifier(new Centroid(100));
         direction->setDefaultValue(0);
-        direction->addTerm(new Rectangle("VR",  0.5,  0.80));
-        direction->addTerm(new Rectangle("R",  0.40,  0.50));
-        direction->addTerm(new Rectangle("SR", 0.10,  0.40));
-        direction->addTerm(new Triangle("F", -0.10, 0, 0.10));
-        direction->addTerm(new Rectangle("SL",-0.40, -0.10));
-        direction->addTerm(new Rectangle("L", -0.50, -0.40));
-        direction->addTerm(new Rectangle("VL",  -0.80,  -0.50));
+        direction->addTerm(new Ramp("VR",       0.50,  0.80));
+        direction->addTerm(new Triangle("R",    0.40,  0.45,  0.50));
+        direction->addTerm(new Triangle("SR",   0.10,  0.30,  0.40));
+        direction->addTerm(new Triangle("F",   -0.10,  0.00,  0.10));
+        direction->addTerm(new Triangle("SL",  -0.40, -0.30, -0.10));
+        direction->addTerm(new Triangle("L",   -0.50, -0.45, -0.40));
+        direction->addTerm(new Ramp("VL",      -0.50, -0.80));
         engine->addOutputVariable(direction);
 
         mamdani = new RuleBlock;
