@@ -211,13 +211,13 @@ int main(int _argc, char **_argv) {
     FuzzyController* controller = new FuzzyController(GO_TO_GOAL);
 
     coordinate goal;    // TEST
-    goal.x = 1.4;        // TEST
-    goal.y = 0.85;         // TEST
+    goal.x = 4;        // TEST
+    goal.y = 1;         // TEST
 
     controller->calcRelativeVectorToGoal(robot, goal);          // TEST
     vector ans = controller->getRelativeVectorToGoal();         // TEST
-    std::cout << "Vector length: " << ans.length << std::endl;  // TEST
-    std::cout << "Vector angle: " <<  ans.angle << std::endl;   // TEST
+  //  std::cout << "Vector length: " << ans.length << std::endl;  // TEST
+  //  std::cout << "Vector angle: " <<  ans.angle << std::endl;   // TEST
 
   // Loop
   while (true) {
@@ -235,9 +235,10 @@ int main(int _argc, char **_argv) {
     controller->calcRelativeVectorToGoal(robot, goal);          // Create method that takes robot orient, pos and goal pos.
     vector ans = controller->getRelativeVectorToGoal();         // ^ should calculate the rel dist and angle directly.
     double relang = ans.angle - robot_oz;                       // Comment out when not using GO_TO_GOAL
-    std::cout << "relang " << relang << std::endl               // Comment out when not using GO_TO_GOAL
-              << "ans " << ans.angle << std::endl               // Comment out when not using GO_TO_GOAL
-              << "rob " << robot_oz << std::endl;               // Comment out when not using GO_TO_GOAL
+    std::cout << "Obstacle: " << controller->getAngleToClosestObstacle() << std::endl               // Comment out when not using GO_TO_GOAL
+              << "Distance: " << controller->getDistanceToClosestObstacle() << std::endl               // Comment out when not using GO_TO_GOAL
+              << "RelAngle: " << controller->getRelativeAngleToGoal() << std::endl
+              << "RelDist: " << controller->getRelativeDistanceToGoal() << std::endl;// Comment out when not using GO_TO_GOAL
     controller->setRelativeAngleToGoal(relang);                 // Comment out when not using GO_TO_GOAL
     controller->setRelativeDistanceToGoal(ans.length);          // Comment out when not using GO_TO_GOAL
 
