@@ -3,7 +3,7 @@
 int main(int argc, char **argv)
 {
 	Mat image = imread(
-		"/home/seht97/Desktop/RCA5-PRO/circle_detection/sample.png",
+		"/home/seht97/Desktop/RCA5-PRO/circle_detection/sample2.png",
 		IMREAD_COLOR);
 
 	if (!image.data) {
