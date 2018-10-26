@@ -180,8 +180,8 @@ vector<Point_<double>> Map::convertToGazeboCoordinates(vector<Point> goals)
 {
     double widthScale = 20.0/14.0;
     double heightScale = 15.0/11.0;
-    double offsetx = 7.0;
-    double offsety = 5.0;
+    double offsetx = 6.5;
+    double offsety = 5.5;
     vector<Point_<double>> convertedGoals;
     Point_<double> convertedPoint;
 
@@ -196,17 +196,15 @@ vector<Point_<double>> Map::convertToGazeboCoordinates(vector<Point> goals)
 
 vector<Point_<double>> Map::convertToGazeboCoordinatesTrapezoidal(vector<Point> upperGoals, vector<Point> lowerGoals)
 {
-    struct sortx {
-        bool operator() (Point pt1, Point pt2) { return (pt1.x < pt2.x);}
-    } myobjectx;
-
-    struct sorty {
-        bool operator() (Point pt1, Point pt2) { return (pt1.y < pt2.y);}
-    } myobjecty;
-
-
     vector<Point_<double>> convertedGoals;
     vector<Point> tempGoals;
+    double widthScale = 20.0/14.0;
+    double heightScale = 15.0/11.0;
+    double offsetx = 6.5;
+    double offsety = 4.5;
+    Point_<double> convertedPoint;
+    vector<Point> deletes;
+
     for(size_t i = 0; i < upperGoals.size(); i++)
     {
         tempGoals.push_back(upperGoals[i]);
@@ -215,12 +213,6 @@ vector<Point_<double>> Map::convertToGazeboCoordinatesTrapezoidal(vector<Point> 
     {
         tempGoals.push_back(lowerGoals[i]);
     }
-    double widthScale = 20.0/14.0;
-    double heightScale = 15.0/11.0;
-    double offsetx = 6.5;
-    double offsety = 4.5;
-    Point_<double> convertedPoint;
-    vector<Point> deletes;
 
     // x-coordinates beside eachother y-coordinates beside eachother
     for(size_t i = 0; i < tempGoals.size(); i++)
@@ -259,7 +251,9 @@ vector<Point_<double>> Map::convertToGazeboCoordinatesTrapezoidal(vector<Point> 
     // Adds the rest of the goals
     for(size_t i = 0; i < tempGoals.size(); i++)
     {
-        convertedGoals.push_back(tempGoals[i]);
+        convertedPoint.x = ((double)tempGoals[i].x/widthScale)-offsetx;
+        convertedPoint.y = ((double)tempGoals[i].y/heightScale)-offsety;
+        convertedGoals.push_back(convertedPoint);
     }
     return convertedGoals;
 }

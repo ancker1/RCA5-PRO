@@ -6,6 +6,8 @@
 #include "opencv2/ximgproc.hpp"
 
 #include <iostream>
+#include <fstream>
+#include <vector>
 #include <Map.h>
 
 using namespace std;
@@ -26,8 +28,8 @@ void draw_pixel_red(vector<Point> &v, Mat &img) {
 
 int main(int argc, char** argv)
 {
-//    const char* default_file = "../map_control/floor_plan.png";
-    const char* default_file = "../map_control/big_floor_plan.png";
+    const char* default_file = "../map_control/floor_plan.png";
+    //const char* default_file = "../map_control/big_floor_plan.png";
     const char* filename = argc >=2 ? argv[1] : default_file;
     Mat src = cv::imread(filename, IMREAD_COLOR);
 
@@ -57,7 +59,6 @@ int main(int argc, char** argv)
     vector<Point> lower = smallMap.getLowerTrapezoidalGoals();
 
     // DRAWS IN SAME MAP
-
     for(int i = 0; i < upper.size(); i++) // Upper goal green
     {
         cout << "Upper x: " << upper[i].x << " y: " << upper[i].y << endl;
@@ -76,10 +77,53 @@ int main(int argc, char** argv)
         cout << "Goal " << i << " x: " << gazeboGoals[i].x << " y: " << gazeboGoals[i].y << endl;
     }
 
-
     resize(tempMap,tempMap,tempMap.size()*10,0,0,INTER_NEAREST);
     imshow("Goals", tempMap);
 
+
+    // OPSTACLE
+    vector<Point> obstacle;
+    Point temp;
+    for(int i = 0; i < smallWorld.rows; i++)
+    {
+        for(int j = 0; j < smallWorld.cols; j++)
+        {
+            if(smallWorld.at<uchar>(i,j) == 255)
+            {
+                temp.x = j;
+                temp.y = i;
+                obstacle.push_back(temp);
+            }
+        }
+    }
+    vector<Point_<double>> opstaclegazebo = smallMap.convertToGazeboCoordinates(obstacle);
+    ofstream myfile1;
+    myfile1.open ("x-coordinates.txt");
+    for(size_t i = 0; i < opstaclegazebo.size(); i++)
+    {
+        myfile1 << opstaclegazebo[i].x << "\n";
+    }
+    myfile1.close();
+
+    myfile1.open ("y-coordinates.txt");
+    for(size_t i = 0; i < opstaclegazebo.size(); i++)
+    {
+        myfile1 << opstaclegazebo[i].y << "\n";
+    }
+    myfile1.close();
+
+    myfile1.open ("x-coordinates-goals.txt");
+    for(size_t i = 0; i < gazeboGoals.size(); i++)
+    {
+        myfile1 << gazeboGoals[i].x << "\n";
+    }
+    myfile1.close();
+    myfile1.open ("y-coordinates-goals.txt");
+    for(size_t i = 0; i < gazeboGoals.size(); i++)
+    {
+        myfile1 << gazeboGoals[i].y << "\n";
+    }
+    myfile1.close();
     waitKey(0);
     return 0;
 }
