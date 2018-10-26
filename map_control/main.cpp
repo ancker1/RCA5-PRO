@@ -13,8 +13,8 @@ using namespace cv;
 
 int main(int argc, char** argv)
 {
-    //const char* default_file = "../map_control/big_floor_plan.png";
-    const char* default_file = "../map_control/floor_plan.png";
+    const char* default_file = "../map_control/big_floor_plan.png";
+    //const char* default_file = "../map_control/floor_plan.png";
     const char* filename = argc >=2 ? argv[1] : default_file;
     // Loads an image
     Mat smallWorld = imread( filename, IMREAD_GRAYSCALE );
@@ -36,26 +36,25 @@ int main(int argc, char** argv)
     vector<Point> lower = smallMap.getLowerTrapezoidalGoals();
 
     // DRAWS IN SAME MAP
+
     for(int i = 0; i < upper.size(); i++) // Upper goal green
     {
+        cout << "Upper x: " << upper[i].x << " y: " << upper[i].y << endl;
         tempMap.at<Vec3b>(upper[i].y,upper[i].x)[1] = 255;
     }
     for(int i = 0; i < lower.size(); i++)
     {
+        cout << "Lower x: " << lower[i].x << " y: " << lower[i].y << endl;
         tempMap.at<Vec3b>(lower[i].y,lower[i].x)[2] = 255; // Lower goal red
     }
 
     // COUT COORDINATES FROM PIXELS TO GAZEBO
-    vector<Point_<double>> upperGazebo = smallMap.convertToGazeboCoordinates(upper);
-    vector<Point_<double>> lowerGazobo = smallMap.convertToGazeboCoordinates(lower);
-    for(int i = 0; i < upperGazebo.size(); i++)
+    vector<Point_<double>> gazeboGoals = smallMap.convertToGazeboCoordinatesTrapezoidal(upper, lower);
+    for(int i = 0; i < gazeboGoals.size(); i++)
     {
-        cout << "Upper goal " << i << " x: " << upperGazebo[i].x << " y: " << upperGazebo[i].y << endl;
+        cout << "Goal " << i << " x: " << gazeboGoals[i].x << " y: " << gazeboGoals[i].y << endl;
     }
-    for(int i = 0; i < lowerGazobo.size(); i++)
-    {
-        cout << "Lower goal " << i << " x: " << lowerGazobo[i].x << " y: " << lowerGazobo[i].y << endl;
-    }
+
 
     resize(tempMap,tempMap,tempMap.size()*10,0,0,INTER_NEAREST);
     imshow("Goals", tempMap);

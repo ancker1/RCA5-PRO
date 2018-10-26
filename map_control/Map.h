@@ -5,6 +5,7 @@
 #include <math.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
+#include <algorithm>
 
 using namespace std;
 using namespace cv;
@@ -24,8 +25,8 @@ public:
     vector<Point> cornerDetection();
     void trapezoidalLines(vector<Point> criticalPoints);
 
-    vector<Point_<double> > convertToGazeboCoordinates(vector<Point> goals);
-
+    vector<Point_<double>> convertToGazeboCoordinates(vector<Point> goals);
+    vector<Point_<double>> convertToGazeboCoordinatesTrapezoidal(vector<Point> upperGoals, vector<Point> lowerGoals);
     //ILLUSTRATIVE FUNCTIONS
     void printMap();
     void drawNShowPoints(string pictureText, vector<Point> points);

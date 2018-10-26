@@ -115,7 +115,7 @@ void Map::trapezoidalLines(vector<Point> criticalPoints)
     int colj;
     int Linelength = 0;
     Point goal;
-    for(int i = 0; i < criticalPoints.size(); i++)
+    for(size_t i = 0; i < criticalPoints.size(); i++)
     {
         rowi = criticalPoints[i].y;
         colj = criticalPoints[i].x;
@@ -156,7 +156,7 @@ void Map::drawNShowPoints(string pictureText, vector<Point> points)
 {
     Mat tempMap;
     cvtColor(map, tempMap, COLOR_GRAY2BGR);
-    for(int i = 0; i < points.size(); i++)
+    for(size_t i = 0; i < points.size(); i++)
     {
         tempMap.at<Vec3b>(points[i].y,points[i].x)[1] = 255;
     }
@@ -178,17 +178,88 @@ vector<Point> Map::getLowerTrapezoidalGoals()
 
 vector<Point_<double>> Map::convertToGazeboCoordinates(vector<Point> goals)
 {
-    vector<Point_<double>> convertedGoals;
     double widthScale = 20.0/14.0;
     double heightScale = 15.0/11.0;
     double offsetx = 7.0;
     double offsety = 5.0;
+    vector<Point_<double>> convertedGoals;
     Point_<double> convertedPoint;
-    for(int i = 0; i < goals.size(); i++)
+
+    for(size_t i = 0; i < goals.size(); i++)
     {
         convertedPoint.x = ((double)goals[i].x/widthScale)-offsetx;
         convertedPoint.y = ((double)goals[i].y/heightScale)-offsety;
         convertedGoals.push_back(convertedPoint);
+    }
+    return convertedGoals;
+}
+
+vector<Point_<double>> Map::convertToGazeboCoordinatesTrapezoidal(vector<Point> upperGoals, vector<Point> lowerGoals)
+{
+    struct sortx {
+        bool operator() (Point pt1, Point pt2) { return (pt1.x < pt2.x);}
+    } myobjectx;
+
+    struct sorty {
+        bool operator() (Point pt1, Point pt2) { return (pt1.y < pt2.y);}
+    } myobjecty;
+
+
+    vector<Point_<double>> convertedGoals;
+    vector<Point> tempGoals;
+    for(size_t i = 0; i < upperGoals.size(); i++)
+    {
+        tempGoals.push_back(upperGoals[i]);
+    }
+    for(size_t i = 0; i < lowerGoals.size(); i++)
+    {
+        tempGoals.push_back(lowerGoals[i]);
+    }
+    double widthScale = 20.0/14.0;
+    double heightScale = 15.0/11.0;
+    double offsetx = 6.5;
+    double offsety = 4.5;
+    Point_<double> convertedPoint;
+    vector<Point> deletes;
+
+    // x-coordinates beside eachother y-coordinates beside eachother
+    for(size_t i = 0; i < tempGoals.size(); i++)
+    {
+        for(size_t j = 0; j < tempGoals.size(); j++)
+        {
+            if((tempGoals[i].x == tempGoals[j].x) && tempGoals[i].y == tempGoals[j].y+1 )
+            {
+                deletes.push_back(tempGoals[i]);
+                deletes.push_back(tempGoals[j]);
+                convertedPoint.x = ((double)tempGoals[i].x/widthScale)-offsetx;
+                convertedPoint.y = (((double)tempGoals[i].y/heightScale)-offsety) - (((double)tempGoals[i].y/heightScale)-offsety) - (((double)tempGoals[j].y/heightScale)-offsety);
+                convertedGoals.push_back((convertedPoint));
+            }
+            else if((tempGoals[i].y == tempGoals[j].y) && tempGoals[i].x == tempGoals[j].x+1 )
+            {
+                deletes.push_back(tempGoals[i]);
+                deletes.push_back(tempGoals[j]);
+                convertedPoint.x = (((double)tempGoals[i].x/widthScale)-offsetx) - (((double)tempGoals[i].x/widthScale)-offsetx) - (((double)tempGoals[j].x/widthScale)-offsetx);
+                convertedPoint.y = ((double)tempGoals[i].y/heightScale)-offsety;
+                convertedGoals.push_back((convertedPoint));
+            }
+        }
+    }
+    // Removes the goals which has same x-coordiantes or y coordinates beside eachother
+    for(size_t i = 0; i < deletes.size(); i++)
+    {
+        for(size_t j = 0; j < tempGoals.size(); j++)
+        {
+            if(deletes[i] == tempGoals[j])
+            {
+                tempGoals.erase(tempGoals.begin()+j);
+            }
+        }
+    }
+    // Adds the rest of the goals
+    for(size_t i = 0; i < tempGoals.size(); i++)
+    {
+        convertedGoals.push_back(tempGoals[i]);
     }
     return convertedGoals;
 }
