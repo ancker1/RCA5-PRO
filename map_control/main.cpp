@@ -37,6 +37,48 @@ int main(int argc, char** argv)
 
     draw_pixel_red(mid_points, src);
     printMap(src);
+    // Loads an image
+    Mat smallWorld = imread( filename, IMREAD_GRAYSCALE );
+    Map smallMap(smallWorld);
+
+    vector<Point> detectedCorners = smallMap.cornerDetection();
+    smallMap.trapezoidalLines(detectedCorners);
+
+    smallMap.printMap();
+    smallMap.drawNShowPoints("Detected Corners", detectedCorners);
+    /* SHOWS UPPER AND LOWER SEPARATELY
+    smallMap.drawNShowPoints("Upper Goals", smallMap.getUpperTrapezoidalGoals());
+    smallMap.drawNShowPoints("Lower Goals", smallMap.getLowerTrapezoidalGoals());
+    */
+    //SHOWS UPPER AND LOWER TOGETHER
+    Mat tempMap = smallWorld;
+    cvtColor(smallWorld, tempMap, COLOR_GRAY2BGR);
+    vector<Point> upper = smallMap.getUpperTrapezoidalGoals();
+    vector<Point> lower = smallMap.getLowerTrapezoidalGoals();
+
+    // DRAWS IN SAME MAP
+
+    for(int i = 0; i < upper.size(); i++) // Upper goal green
+    {
+        cout << "Upper x: " << upper[i].x << " y: " << upper[i].y << endl;
+        tempMap.at<Vec3b>(upper[i].y,upper[i].x)[1] = 255;
+    }
+    for(int i = 0; i < lower.size(); i++)
+    {
+        cout << "Lower x: " << lower[i].x << " y: " << lower[i].y << endl;
+        tempMap.at<Vec3b>(lower[i].y,lower[i].x)[2] = 255; // Lower goal red
+    }
+
+    // COUT COORDINATES FROM PIXELS TO GAZEBO
+    vector<Point_<double>> gazeboGoals = smallMap.convertToGazeboCoordinatesTrapezoidal(upper, lower);
+    for(int i = 0; i < gazeboGoals.size(); i++)
+    {
+        cout << "Goal " << i << " x: " << gazeboGoals[i].x << " y: " << gazeboGoals[i].y << endl;
+    }
+
+
+    resize(tempMap,tempMap,tempMap.size()*10,0,0,INTER_NEAREST);
+    imshow("Goals", tempMap);
 
     waitKey(0);
     return 0;

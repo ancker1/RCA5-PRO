@@ -28,10 +28,11 @@ void poseCallback(ConstPosesStampedPtr &_msg) {
 
   for (int i = 0; i < _msg->pose_size(); i++) {
     if (_msg->pose(i).name() == "pioneer2dx") {
-/*
+
       std::cout << std::setprecision(2) << std::fixed << std::setw(6)
                 << _msg->pose(i).position().x() << std::setw(6)
-                << _msg->pose(i).position().y() << std::setw(6)
+                << _msg->pose(i).position().y() << std::setw(6) << std::endl;
+                   /*
                 << _msg->pose(i).position().z() << std::setw(6)
                 << _msg->pose(i).orientation().w() << std::setw(6)
                 << _msg->pose(i).orientation().x() << std::setw(6)
@@ -104,7 +105,6 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 
   float c_range = range_max;
   float c_angle;
-
   cv::Mat im(height, width, CV_8UC3);
   im.setTo(0);
   for (int i = 0; i < nranges; i++) {
@@ -187,11 +187,12 @@ int main(int _argc, char **_argv) {
   float angle_min = arr[1];
   float range_min = arr[2];
   float range_max = arr[3];
-
+/*
   std::cout << "angle_max: " << angle_max << std::endl;
   std::cout << "angle_min: " << angle_min << std::endl;
   std::cout << "range_min: " << range_min << std::endl;
   std::cout << "range_max: " << range_max << std::endl;
+*/
 
   float left_border = M_PI/6;
   float left_border2 = M_PI/2;
@@ -211,8 +212,8 @@ int main(int _argc, char **_argv) {
     FuzzyController* controller = new FuzzyController(GO_TO_GOAL);
 
     coordinate goal;    // TEST
-    goal.x = 1.4;        // TEST
-    goal.y = 0.85;         // TEST
+    goal.x = 1.9;        // TEST
+    goal.y = -0.63;         // TEST
 
     controller->calcRelativeVectorToGoal(robot, goal);          // TEST
     vector ans = controller->getRelativeVectorToGoal();         // TEST
@@ -235,9 +236,11 @@ int main(int _argc, char **_argv) {
     controller->calcRelativeVectorToGoal(robot, goal);          // Create method that takes robot orient, pos and goal pos.
     vector ans = controller->getRelativeVectorToGoal();         // ^ should calculate the rel dist and angle directly.
     double relang = ans.angle - robot_oz;                       // Comment out when not using GO_TO_GOAL
+    /*
     std::cout << "relang " << relang << std::endl               // Comment out when not using GO_TO_GOAL
               << "ans " << ans.angle << std::endl               // Comment out when not using GO_TO_GOAL
               << "rob " << robot_oz << std::endl;               // Comment out when not using GO_TO_GOAL
+              */
     controller->setRelativeAngleToGoal(relang);                 // Comment out when not using GO_TO_GOAL
     controller->setRelativeDistanceToGoal(ans.length);          // Comment out when not using GO_TO_GOAL
 
@@ -247,11 +250,12 @@ int main(int _argc, char **_argv) {
     /*************************************************************/
     speed = controller->getSpeed();
     dir = controller->getDirection();
-
+/*
     std::cout << "RelAngle: " << controller->getRelativeAngleToGoal() << std::endl
               << "RelDist: "  << controller->getRelativeDistanceToGoal() << std::endl;
 
     std::cout << "Dir: " << dir << std::endl;
+    */
     /*************************************************************/
     /*       The following is used for testing purposes          */
     /*************************************************************/

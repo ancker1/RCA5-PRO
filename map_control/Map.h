@@ -10,6 +10,7 @@
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/ximgproc.hpp"
+#include <algorithm>
 
 using namespace std;
 using namespace cv;
@@ -30,6 +31,8 @@ public:
     vector<Point> cornerDetection();
     void trapezoidalLines(vector<Point> criticalPoints);
 
+    vector<Point_<double>> convertToGazeboCoordinates(vector<Point> goals);
+    vector<Point_<double>> convertToGazeboCoordinatesTrapezoidal(vector<Point> upperGoals, vector<Point> lowerGoals);
     //ILLUSTRATIVE FUNCTIONS
     void printMap();
     void drawNShowPoints(string pictureText, vector<Point> points);
