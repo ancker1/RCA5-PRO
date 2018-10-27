@@ -11,10 +11,13 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	CircleDetection cd;
-	vector<Vec3f>   circles = cd.detectCircles(image);
-
+	CircleDetection    cd;
+	vector<circleInfo> circles = cd.detectCircles(image);
 	cd.drawCircles(image, circles);
+
+	// Display image
+	imshow("Detected circles", image);
+	waitKey();
 
 	return 0;
 }

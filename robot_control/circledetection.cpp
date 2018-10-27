@@ -39,10 +39,8 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image)
 	vector<circleInfo> circlevector;
 	float r     = 0.5;
 	float theta = 1.047;
-	float thetar;
-	float d;
 
-	for (int i = 0; i < circles.size(); i++) {
+	for (unsigned int i = 0; i < circles.size(); i++) {
 		circlevector.push_back(circleInfo());
 		circlevector[i].x0 = circles[i][0];
 		circlevector[i].y0 = circles[i][1];
@@ -50,8 +48,7 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image)
 
 		circlevector[i].angle = theta * (image.cols - circlevector[i].x0) /
 														image.cols - theta / 2;
-		thetar            = (circlevector[i].r * 2 / image.cols) * theta;
-		circlevector[i].d = r / tan(thetar);
+		circlevector[i].d = r / tan((circlevector[i].r * 2 / image.cols) * theta);
 	}
 
 	return circlevector;
