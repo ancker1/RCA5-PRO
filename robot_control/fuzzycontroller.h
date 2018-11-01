@@ -26,6 +26,7 @@ public:
     void calcRelativeVectorToGoal(coordinate robot, coordinate goal);
     vector getRelativeVectorToGoal();
     void process();
+    bool is_at_goal();
 
 private:
     vector relativeVector;
