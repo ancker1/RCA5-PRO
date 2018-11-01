@@ -212,17 +212,39 @@ int main(int _argc, char **_argv) {
     FuzzyController* controller = new FuzzyController(GO_TO_GOAL);
 
     coordinate goal;    // TEST
-    goal.x = 1.9;        // TEST
-    goal.y = -0.63;         // TEST
+
+    goal.x = -7;        // TEST
+    goal.y = 8;         // TEST
+
 
     controller->calcRelativeVectorToGoal(robot, goal);          // TEST
     vector ans = controller->getRelativeVectorToGoal();         // TEST
-    std::cout << "Vector length: " << ans.length << std::endl;  // TEST
-    std::cout << "Vector angle: " <<  ans.angle << std::endl;   // TEST
+  //  std::cout << "Vector length: " << ans.length << std::endl;  // TEST
+  //  std::cout << "Vector angle: " <<  ans.angle << std::endl;   // TEST
+
+    std::ofstream xTXT("x.txt");
+    std::ofstream yTXT("y.txt");
+    std::ofstream tTXT("t.txt");
+    std::ofstream lTXT("l.txt");
+    std::ofstream aTXT("a.txt");
+    xTXT.close();
+    yTXT.close();
+    tTXT.close();
+    lTXT.close();
+    aTXT.close();
+
+    int count = 0;
+    double time = 0;
+    double relang = 0;
+
+    controller->setPath(PATH_L);
 
   // Loop
   while (true) {
-    gazebo::common::Time::MSleep(10);   // MSleep(10) - 10 [ms] sleep?
+    gazebo::common::Time::MSleep(10);   // MSleep(10) = 10 [ms] sleep.
+
+    count++;
+    time += 0.010;
 
     float angle = arr[5];
     float range = arr[6];
@@ -230,17 +252,32 @@ int main(int _argc, char **_argv) {
     /*************************************************************/
     /*       Input variables of Fuzzy Controller is set          */
     /*************************************************************/
+
+
     controller->setDistanceToClosestObstacle(range);
     controller->setAngleToClosestObstacle(angle);
 
     controller->calcRelativeVectorToGoal(robot, goal);          // Create method that takes robot orient, pos and goal pos.
     vector ans = controller->getRelativeVectorToGoal();         // ^ should calculate the rel dist and angle directly.
-    double relang = ans.angle - robot_oz;                       // Comment out when not using GO_TO_GOAL
-    /*
-    std::cout << "relang " << relang << std::endl               // Comment out when not using GO_TO_GOAL
-              << "ans " << ans.angle << std::endl               // Comment out when not using GO_TO_GOAL
-              << "rob " << robot_oz << std::endl;               // Comment out when not using GO_TO_GOAL
-              */
+
+    std::cout << "ang. bw: " << ans.angle << std::endl;
+    std::cout << "robot orient: " << robot_oz << std::endl;
+
+
+
+    if (robot_oz > 0 && ans.angle > 0)              // Optimize this.
+        relang = ans.angle - robot_oz;
+    else if (robot_oz > 0 && ans.angle < 0)
+        relang = ans.angle + robot_oz;
+    else if (robot_oz < 0 && ans.angle > 0)
+        relang = ans.angle + robot_oz;
+    else if (robot_oz < 0 && ans.angle < 0)
+        relang = ans.angle - robot_oz;
+
+                          // Comment out when not using GO_TO_GOAL
+    std::cout << "Obstacle: " << controller->getAngleToClosestObstacle() << std::endl               // Comment out when not using GO_TO_GOAL
+              << "Distance: " << controller->getDistanceToClosestObstacle() << std::endl               // Comment out when not using GO_TO_GOAL
+              << "RelDist: " << controller->getRelativeDistanceToGoal() << std::endl;// Comment out when not using GO_TO_GOAL
     controller->setRelativeAngleToGoal(relang);                 // Comment out when not using GO_TO_GOAL
     controller->setRelativeDistanceToGoal(ans.length);          // Comment out when not using GO_TO_GOAL
 
@@ -259,6 +296,15 @@ int main(int _argc, char **_argv) {
     /*************************************************************/
     /*       The following is used for testing purposes          */
     /*************************************************************/
+
+
+    if (controller->is_at_goal())
+    {
+        controller->setPath(PATH_S);
+        goal.x = -7;        // TEST
+        goal.y = 12;         // TEST
+    }
+
 
     mutex.lock();
     int key = cv::waitKey(1);
@@ -288,6 +334,42 @@ int main(int _argc, char **_argv) {
     gazebo::msgs::Pose msg;
     gazebo::msgs::Set(&msg, pose);
     movementPublisher->Publish(msg);
+
+
+    if ( count == 10 && ans.length > 0.1 )
+    {
+        std::cout << "0.1S" << std::endl;
+        xTXT.open("x.txt", std::ios_base::app);
+        yTXT.open("y.txt", std::ios_base::app);
+        if (xTXT.is_open() && yTXT.is_open())
+        {
+            xTXT << robot.x << "\n";
+            yTXT << robot.y << "\n";
+        }
+        else
+            std::cout << "FAIL" << std::endl;
+        xTXT.close();
+        yTXT.close();
+
+        std::cout << "ALT" << std::endl;
+        tTXT.open("t.txt", std::ios_base::app);
+        lTXT.open("l.txt", std::ios_base::app);
+        aTXT.open("a.txt", std::ios_base::app);
+        if (tTXT.is_open() && lTXT.is_open() && aTXT.is_open())
+        {
+            tTXT << time << "\n";
+            lTXT << ans.length << "\n";
+            aTXT << relang << "\n";
+        }
+        else
+            std::cout << "FAIL" << std::endl;
+        count = 0;
+        tTXT.close();
+        lTXT.close();
+        aTXT.close();
+    }
+
+
   }
 
   // Make sure to shut everything down.
