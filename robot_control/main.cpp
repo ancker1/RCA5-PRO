@@ -260,7 +260,9 @@ int main(int _argc, char **_argv) {
     std::cout << "ang. bw: " << ans.angle << std::endl;
     std::cout << "robot orient: " << robot_oz << std::endl;
 
-    if (robot_oz > 0 && ans.angle > 0)
+
+
+    if (robot_oz > 0 && ans.angle > 0)              // Optimize this.
         relang = ans.angle - robot_oz;
     else if (robot_oz > 0 && ans.angle < 0)
         relang = ans.angle + robot_oz;
@@ -290,46 +292,7 @@ int main(int _argc, char **_argv) {
     /*************************************************************/
     /*       The following is used for testing purposes          */
     /*************************************************************/
-    /*
-    int a = 0;
-    switch (a) {
-    case 0:
-        controller->setPath(PATH_L);
-        goal.x = 1.9;
-        goal.y = -0.6;
-        if (controller->getRelativeDistanceToGoal() < 0.2)
-        {
-            a = 1;
-        }
-        break;
-     case 1:
-        goal.x = 3.3;
-        goal.y = -0.6;
-        if (controller->getRelativeDistanceToGoal() < 0.2)
-        {
-            a = 2;
-        }
-        break;
-    case 2:
-       goal.x = 1.9;
-       goal.y = -0.6;
-       if (controller->getRelativeDistanceToGoal() < 0.2)
-       {
-           a = 3;
-       }
-       break;
-    case 3:
-       goal.x = 0;
-       goal.y = 0;
-       if (controller->getRelativeDistanceToGoal() < 0.2)
-       {
-           a = 0;
-       }
-       break;
-    default:
-        break;
-    }
-    */
+
 
     if (controller->is_at_goal())
     {
