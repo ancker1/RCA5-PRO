@@ -16,6 +16,14 @@ using namespace std;
 using namespace cv;
 using namespace cv::ximgproc;
 
+struct cell
+{
+    int cellNumber;
+    int x;
+    int y;
+    vector<cell> neighborcells;
+};
+
 class Map
 {
 public:
@@ -25,11 +33,13 @@ public:
     //GET FUNCTIONS
     int getMapRows();
     int getMapCols();
+    Mat getSweepLineMap();
     vector<Point> getUpperTrapezoidalGoals();
     vector<Point> getLowerTrapezoidalGoals();
 
     vector<Point> cornerDetection();
     void trapezoidalLines(vector<Point> criticalPoints);
+    vector<cell> calculateCells(vector<Point> upperTrap, vector<Point> lowerTrap);
 
     vector<Point_<double>> convertToGazeboCoordinates(vector<Point> goals);
     vector<Point_<double>> convertToGazeboCoordinatesTrapezoidal(vector<Point> upperGoals, vector<Point> lowerGoals);
@@ -46,9 +56,10 @@ public:
 private:
     //Atributes
     Mat map;
+    Mat sweepLineMap;
     vector<Point> upperTrapezoidalGoals;
     vector<Point> lowerTrapezoidalGoals;
-
+    vector<cell> cells;
     // Bushfire
     void binarize_img(Mat &img);
     void find_neighbors(vector<Point> &v, Mat &img, int x, int y);

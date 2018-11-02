@@ -79,8 +79,11 @@ int main(int argc, char** argv)
 
     resize(tempMap,tempMap,tempMap.size()*10,0,0,INTER_NEAREST);
     imshow("Goals", tempMap);
-
-
+    smallMap.calculateCells(upper, lower);
+    Mat sweep = smallMap.getSweepLineMap();
+    resize(sweep,sweep,sweep.size()*10,0,0,INTER_NEAREST);
+    imshow("SweepLine",sweep );
+    /* Writes to file
     // OPSTACLE
     vector<Point> obstacle;
     Point temp;
@@ -96,6 +99,7 @@ int main(int argc, char** argv)
             }
         }
     }
+
     vector<Point_<double>> opstaclegazebo = smallMap.convertToGazeboCoordinates(obstacle);
     ofstream myfile1;
     myfile1.open ("x-coordinates.txt");
@@ -124,6 +128,7 @@ int main(int argc, char** argv)
         myfile1 << gazeboGoals[i].y << "\n";
     }
     myfile1.close();
+    */
     waitKey(0);
     return 0;
 }

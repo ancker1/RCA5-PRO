@@ -20,6 +20,10 @@ int Map::getMapCols()
     return map.cols;
 }
 
+Mat Map::getSweepLineMap()
+{
+    return sweepLineMap;
+}
 void Map::printMap()
 {
     Mat resizeMap;
@@ -39,7 +43,7 @@ vector<Point> Map::cornerDetection()
         for(int j = 0; j < map.cols-1; j++)
         {
             sum = 0;
-            sum += (map.at<uchar>(i,j)/255) * filter[0][0]; //   /255 to get binary
+            sum += (map.at<uchar>(i,j)/255) * filter[0][0]; // 255 to get binary
             sum += (map.at<uchar>(i,j+1)/255) * filter[0][1];
             sum += (map.at<uchar>(i+1,j)/255) * filter[1][0];
             sum += (map.at<uchar>(i+1,j+1)/255) * filter[1][1];
@@ -122,6 +126,7 @@ void Map::trapezoidalLines(vector<Point> criticalPoints)
         // Not obstacle up and left and up and right
         while(map.at<uchar>(rowi-1,colj-1) != 255 && map.at<uchar>(rowi-1,colj+1) != 255)
         {
+
             Linelength++;
             rowi -= 1;
         }
@@ -135,7 +140,7 @@ void Map::trapezoidalLines(vector<Point> criticalPoints)
         }
         rowi = criticalPoints[i].y;
         colj = criticalPoints[i].x;
-        // Not obstacle up and left and up and right
+        // Not obstacle down and left and down and right
         while(map.at<uchar>(rowi+1,colj-1) != 255 && map.at<uchar>(rowi+1,colj+1) != 255)
         {
             Linelength++;
@@ -164,6 +169,79 @@ void Map::drawNShowPoints(string pictureText, vector<Point> points)
     imshow(pictureText, tempMap);
 
 
+}
+
+vector<cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTrap)
+{
+    vector<cell> detectedCells;
+    vector<Point> totalTrapGoals;
+    int rowi = 0;
+    int colj = 0;
+    cvtColor(map, sweepLineMap, COLOR_GRAY2BGR);
+    // INIT SUBGOALS
+    for(size_t i = 0; i < upperTrap.size(); i++ )
+    {
+        totalTrapGoals.push_back(upperTrap[i]);
+    }
+    for(size_t i = 0; i < lowerTrap.size(); i++ )
+    {
+        totalTrapGoals.push_back(lowerTrap[i]);
+    }
+    // Draws sweeplines
+    for(size_t i = 0; i < totalTrapGoals.size(); i++)
+    {
+        rowi = totalTrapGoals[i].y;
+        colj = totalTrapGoals[i].x;
+        // Not obstacle up
+        while(map.at<uchar>(rowi,colj) != 255)
+        {
+            sweepLineMap.at<Vec3b>(rowi,colj)[0] = 255;
+            rowi -= 1;
+        }
+        rowi = totalTrapGoals[i].y;
+        // Not obstacle down
+        while(map.at<uchar>(rowi,colj) != 255)
+        {
+            sweepLineMap.at<Vec3b>(rowi,colj)[0] = 255;
+            rowi += 1;
+        }
+    }
+    // Does not need two point with same x right beside eachother
+    for(size_t i = 0; i < totalTrapGoals.size(); i++)
+    {
+        for(size_t j = 0; j < totalTrapGoals.size(); j++)
+        {
+            if(totalTrapGoals[i].x == totalTrapGoals[j].x && totalTrapGoals[i].y == totalTrapGoals[j].y - 1)
+            {
+                totalTrapGoals.erase(totalTrapGoals.begin() + i);
+            }
+        }
+    }
+    for(size_t i = 0; i < totalTrapGoals.size(); i++)
+    {
+        rowi = totalTrapGoals[i].y;
+        colj = totalTrapGoals[i].x;
+        // Not obstacle up
+
+        while(sweepLineMap.at<Vec3b>(rowi,colj-1) != Vec3b(255,255,255) && sweepLineMap.at<Vec3b>(rowi,colj-1)[0] != 255)
+        {
+            colj -= 1;
+            sweepLineMap.at<Vec3b>(rowi,colj)[1] = 255;
+
+        }
+
+        colj = totalTrapGoals[i].x;
+        // Not obstacle down
+        while(sweepLineMap.at<Vec3b>(rowi,colj+1) != Vec3b(255,255,255) && sweepLineMap.at<Vec3b>(rowi,colj+1)[0] != 255)
+        {
+            colj += 1;
+            sweepLineMap.at<Vec3b>(rowi,colj)[2] = 255;
+
+        }
+
+    }
+
+    return detectedCells;
 }
 
 vector<Point> Map::getUpperTrapezoidalGoals()
