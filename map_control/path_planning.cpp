@@ -13,7 +13,7 @@ int Path_planning::way_around_obstacle(Point start, Point goal, Mat &src) {
         vector<Point> v = get_points(it);
         Point start_left = get_p_before_obstacle(v, img);
         Point start_right = get_p_before_obstacle(v, img);
-        while (true) {
+        for (int i = 0; i < 30; i++) {
             if ( !obstacle_detected(start_left, goal, img) ) {
                 cout << "Go left" << endl;
                 return 2;
@@ -25,6 +25,7 @@ int Path_planning::way_around_obstacle(Point start, Point goal, Mat &src) {
             go_left(start_left, img);
             go_right(start_right, img);
         }
+        return 0;
     }
     else {
         cout << "No obstacle" << endl;
