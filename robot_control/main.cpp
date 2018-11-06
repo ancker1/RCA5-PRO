@@ -126,7 +126,7 @@ void lidarCallback(ConstLaserScanStampedPtr& msg) {
 
 int main(int _argc, char **_argv) {
 	// Load gazebo
-  gazebo::client::setup(_argc, _argv);
+	gazebo::client::setup(_argc, _argv);
 
   // Create our node for communication
   gazebo::transport::NodePtr node(new gazebo::transport::Node());
@@ -366,5 +366,5 @@ int main(int _argc, char **_argv) {
   }
 
   // Make sure to shut everything down.
-  gazebo::client::shutdown();
+	gazebo::client::shutdown();
 }

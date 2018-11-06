@@ -27,9 +27,8 @@ public:
 	CircleDetection();
 	~CircleDetection();
 
-	vector<circleInfo>detectCircles(Mat& image);
-	void              drawCircles(Mat                 image,
-																vector<circleInfo>& circles);
+	vector<circleInfo>	detectCircles(Mat& image);
+	void								drawCircles(Mat& image, vector<circleInfo>& circles);
 
 private:
 };
