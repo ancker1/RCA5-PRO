@@ -38,7 +38,7 @@ void Voronoi_Diagram::watershed_algorithm(Mat &src) {
     threshold(dist, dist, .4, 1., CV_THRESH_BINARY);
 
     // Dilate a bit the dist image
-    Mat kernel1 = Mat::ones(1, 5, CV_8UC1);
+    Mat kernel1 = Mat::ones(1, 1, CV_8UC1);
     dilate(dist, dist, kernel1);
 
     // Create the CV_8U version of the distance image
