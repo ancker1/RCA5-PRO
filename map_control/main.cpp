@@ -13,7 +13,7 @@
 using namespace std;
 using namespace cv;
 
-void printMap(Mat &map, string s) {
+void print_map(Mat &map, string s) {
     Mat resizeMap;
     resize( map, resizeMap, map.size()*10, 0, 0, INTER_NEAREST);
     imshow(s, resizeMap);
@@ -26,9 +26,8 @@ int main() {
     Mat big_map = cv::imread( big_map_filename, IMREAD_COLOR );
     Mat small_map = cv::imread( small_map_filename, IMREAD_COLOR );
 
-    Voronoi_Diagram v_diagram(big_map);
-    Mat img2 = v_diagram.get_rooms_map();
-    printMap(img2, "Rooms");
+    Map map;
+    vector<Point> v = map.get_centers(small_map);
 
     waitKey(0);
     return 0;

@@ -21,14 +21,16 @@ public:
     Voronoi_Diagram();
     Voronoi_Diagram(Mat &src);
 
-    void printMap(Mat &img, string s);
+    void print_map(Mat &img, string s);
 
     Mat get_brushfire_grid();
     Mat get_rooms_map();
+    vector<Point> get_voronoi_points();
 
 private:
     Mat brushfire_grid;
     Mat rooms_map;
+    vector<Point> voronoi_points;
 
     void watershed_algorithm(Mat &src);
 };
