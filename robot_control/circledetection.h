@@ -15,7 +15,7 @@ using std::endl;
 
 #include <cmath>
 
-#include <string>
+enum detection_algorithm {CD_HOUGH, CD_SPR};
 
 struct circleInfo {
 	float x0, y0, r, angle, d;
@@ -27,8 +27,9 @@ public:
 	CircleDetection();
 	~CircleDetection();
 
-	vector<circleInfo>	detectCircles(Mat& image);
+	vector<circleInfo>	detectCircles(Mat& image, detection_algorithm algo = CD_HOUGH);
 	void								drawCircles(Mat& image, vector<circleInfo>& circles);
+	void								calcCirclePosition(vector<circleInfo>& circles, int imagewidth);
 
 private:
 };
