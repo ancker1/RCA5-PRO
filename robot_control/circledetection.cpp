@@ -9,7 +9,7 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image)
 	Mat image_filtered;
 
 	// Isolate marble
-	inRange(image, Scalar(0, 0, 40), Scalar(80, 90, 120), image_filtered);
+        inRange(image, Scalar(0, 0, 40), Scalar(80, 90, 160), image_filtered);
 
 	GaussianBlur(image_filtered, image_filtered, Size(9, 9), 2, 2);
 
@@ -17,16 +17,16 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image)
 	vector<Vec3f> circles;
 
 	// Apply HoughCircles
-	HoughCircles(image_filtered,						// Input image
-							 circles,										// Vector with circle centers (a, b) and radii (r)
-							 HOUGH_GRADIENT,						// Detection method (only one available)
-							 1,													// Inverse ratio of resolution (??)
-							 image_filtered.cols / 15,	// Minimum distance between detected centers
-							 5,													// Canny edge detector upper threshold
-							 25,												// Center detection threshold
-							 0,													// Minimum radius of circles (0 = UNKNOWN)
-							 0													// Maximum radius of circles (0 = UNKNOWN)
-							 );
+        HoughCircles(image_filtered,    // Input image
+                        circles,										// Vector with circle centers (a, b) and radii (r)
+                        HOUGH_GRADIENT,						// Detection method (only one available)
+                        1,													// Inverse ratio of resolution (??)
+                        image_filtered.cols / 15,	// Minimum distance between detected centers
+                        5,													// Canny edge detector upper threshold
+                        25,												// Center detection threshold
+                        0,													// Minimum radius of circles (0 = UNKNOWN)
+                        0													// Maximum radius of circles (0 = UNKNOWN)
+                        );
 
 	vector<circleInfo> circlevector;
 	float r     = 0.5;
