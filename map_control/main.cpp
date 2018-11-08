@@ -13,10 +13,10 @@
 using namespace std;
 using namespace cv;
 
-void printMap(Mat &map) {
+void printMap(Mat &map, string s) {
     Mat resizeMap;
     resize( map, resizeMap, map.size()*10, 0, 0, INTER_NEAREST);
-    imshow("Map", resizeMap);
+    imshow(s, resizeMap);
 }
 
 int main() {
@@ -26,7 +26,15 @@ int main() {
     Mat big_map = cv::imread( big_map_filename, IMREAD_COLOR );
     Mat small_map = cv::imread( small_map_filename, IMREAD_COLOR );
 
+    printMap(big_map, "Big map");
+    printMap(small_map, "Small map");
+
     Voronoi_Diagram v_diagram(big_map);
+    Mat img1 = v_diagram.get_brushfire_grid();
+    Mat img2 = v_diagram.get_rooms_map();
+
+    printMap(img1, "Brushfire_grid");
+    printMap(img2, "Rooms");
 
     waitKey(0);
     return 0;

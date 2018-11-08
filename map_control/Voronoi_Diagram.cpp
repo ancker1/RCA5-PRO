@@ -1,125 +1,93 @@
 #include "Voronoi_Diagram.h"
 
-void Voronoi_Diagram::printMap(Mat &map) {
-    Mat resizeMap;
-    resize( map, resizeMap, map.size()*10, 0, 0, INTER_NEAREST);
-    imshow("Map", resizeMap);
-}
-
 Voronoi_Diagram::Voronoi_Diagram() {}
 
 Voronoi_Diagram::Voronoi_Diagram(Mat &src) {
-//    Map map;
-//    Mat origin_img = src.clone();
-//    Mat brushfire_img = map.brushfire_img(origin_img);
-//    cout << brushfire_img << endl;
-//    Mat1b local_max = get_local_max(brushfire_img);
-//    find_voroni_points(local_max);
-//    remove_points_in_corners(brushfire_img);
-//    connect_voroni_points(brushfire_img);
-
-    Mat bw = create_binary_img(src);
-    printMap(bw);
-    Mat dst = distance_transform(bw);
-    printMap(dst);
+    watershed_algorithm(src);
 }
 
-vector<Point> Voronoi_Diagram::get_points() {
-    return points;
+void Voronoi_Diagram::printMap(Mat &map, string s) {
+    Mat resizeMap;
+    resize( map, resizeMap, map.size()*10, 0, 0, INTER_NEAREST);
+    imshow(s, resizeMap);
 }
 
-Mat Voronoi_Diagram::get_voroni_diagram(Mat &src) {
-    Mat img = src.clone();
-    Vec3b color(0, 0, 255);
-    for (unsigned i = 0; i < points.size(); i++) {
-        img.at<Vec3b>(points[i]) = color;
+Mat Voronoi_Diagram::get_brushfire_grid() {
+    return brushfire_grid;
+}
+
+Mat Voronoi_Diagram::get_rooms_map() {
+    return rooms_map;
+}
+
+void Voronoi_Diagram::watershed_algorithm(Mat &src) {
+    // Create binary image from src img
+    Mat bw_img;
+    cvtColor(src, bw_img, CV_BGR2GRAY);
+    threshold(bw_img, bw_img, 40, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
+
+    // Perform the distance transform algorithm
+    Mat dist;
+    distanceTransform(bw_img, dist, CV_DIST_L2, 3);
+
+    // Normalize the distance image for range={0.0, 1.0}
+    normalize(dist, dist, 0, 1., NORM_MINMAX);
+    brushfire_grid = dist.clone();
+
+    // Threshold to obtain peaks
+    threshold(dist, dist, .4, 1., CV_THRESH_BINARY);
+
+    // Dilate a bit the dist image
+    Mat kernel1 = Mat::ones(1, 5, CV_8UC1);
+    dilate(dist, dist, kernel1);
+
+    // Create the CV_8U version of the distance image
+    Mat dist_8u;
+    dist.convertTo(dist_8u, CV_8U);
+
+    // Find total markers
+    vector<vector<Point>> contours;
+    findContours(dist_8u, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+    // Create the marker image for the watershed algorithm
+    Mat markers = Mat::zeros(dist_8u.size(), CV_32SC1);
+
+    // Draw the foreground markers
+    for (size_t i = 0; i < contours.size(); i++) {
+        drawContours(markers, contours, static_cast<int>(i), Scalar::all(static_cast<int>(i)+1), -1);
     }
-    return img;
-}
 
-Mat1b Voronoi_Diagram::get_local_max(Mat &brushfire_img) {
-    Mat1b kernel( Size(5,5), 1u );
-    Mat img_dilate;
-    dilate(brushfire_img, img_dilate, kernel);
-    Mat1b local_max = ( brushfire_img >= img_dilate );
-    return local_max;
-}
+    // Perform hte watershed algorithm
+    watershed(src, markers);
 
-void Voronoi_Diagram::find_voroni_points(Mat1b &img) {
-    for (int y = 0; y < img.rows; y++) {
-        for (int x = 0; x < img.cols; x++) {
-            if ( (int)img.at<uchar>(y, x)==255 ) {
-                Point p(x,y);
-                points.push_back(p);
+    Mat mark = Mat::zeros(markers.size(), CV_8UC1);
+    markers.convertTo(mark, CV_8UC1);
+    bitwise_not(mark, mark);
+
+    // Generate random colors
+    vector<Vec3b> colors;
+    for (size_t i = 0; i < contours.size(); i++) {
+        int b = theRNG().uniform(0, 255);
+        int g = theRNG().uniform(0, 255);
+        int r = theRNG().uniform(0, 255);
+        colors.push_back(Vec3b( (uchar)b, (uchar)g, (uchar)r ));
+    }
+
+    // Create the result img
+    Mat result = Mat::zeros(markers.size(), CV_8UC3);
+
+    // Fill labeled objects with random colors
+    for (int i = 0; i < markers.rows; i++) {
+        for (int j = 0; j < markers.cols; j++) {
+            int index = markers.at<int>(i,j);
+            if ( index>0 && index<=static_cast<int>(contours.size()) ) {
+                result.at<Vec3b>(i,j) = colors[ index-1 ];
+            }
+            else {
+                result.at<Vec3b>(i,j) = Vec3b(0,0,0);
             }
         }
     }
-}
 
-void Voronoi_Diagram::remove_points_in_corners(Mat &brushfire_img) {
-    for (unsigned i = 0; i < points.size(); ) {
-        Point left( points[i].x-1, points[i].y );
-        Point left_up( points[i].x-1, points[i].y-1 );
-        Point left_down( points[i].x-1, points[i].y+1 );
-        Point right( points[i].x+1, points[i].y );
-        Point right_up( points[i].x+1, points[i].y-1 );
-        Point right_down( points[i].x+1, points[i].y+1 );
-        Point up( points[i].x, points[i].y-1 );
-        Point down( points[i].x, points[i].y+1 );
-
-        int left_val = (int)brushfire_img.at<uchar>(left);
-        int right_val = (int)brushfire_img.at<uchar>(right);
-        int up_val = (int)brushfire_img.at<uchar>(up);
-        int down_val = (int)brushfire_img.at<uchar>(down);
-        int right_down_val = (int)brushfire_img.at<uchar>(right_down);
-        int left_down_val = (int)brushfire_img.at<uchar>(left_down);
-        int right_up_val = (int)brushfire_img.at<uchar>(right_up);
-        int left_up_val = (int)brushfire_img.at<uchar>(left_up);
-
-        if ( left_val==0 ) {
-            points.erase( points.begin()+i );
-        }
-        else if ( right_val==0 ) {
-            points.erase( points.begin()+i );
-        }
-        else if ( up_val==0 ) {
-            points.erase( points.begin()+i );
-        }
-        else if ( down_val==0 ) {
-            points.erase( points.begin()+i );
-        }
-        else if ( right_down_val==0 ) {
-            points.erase( points.begin()+i );
-        }
-        else if ( left_down_val==0 ) {
-            points.erase( points.begin()+i );
-        }
-        else if ( right_up_val==0 ) {
-            points.erase( points.begin()+i );
-        }
-        else if ( left_up_val==0 ) {
-            points.erase( points.begin()+i );
-        }
-        else {
-            i++;
-        }
-    }
-}
-
-void Voronoi_Diagram::connect_voroni_points(Mat &brushfire_img) {
-    return;
-}
-
-Mat Voronoi_Diagram::create_binary_img(Mat &src) {
-    Mat result;
-    cvtColor(src, result, CV_BGR2GRAY);
-    threshold(result, result, 40, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
-    return result;
-}
-
-Mat Voronoi_Diagram::distance_transform(Mat &binary_img) {
-    Mat result;
-    distanceTransform(binary_img, result, CV_DIST_L2, 3);
-    normalize(result, result, 0, 1., NORM_MINMAX);
-    return result;
+    rooms_map = result.clone();
 }
