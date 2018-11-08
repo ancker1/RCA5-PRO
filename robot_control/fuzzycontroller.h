@@ -24,12 +24,12 @@ public:
     float getDirection();
     float getSpeed();
     void calcRelativeVectorToGoal(coordinate robot, coordinate goal);
-    vector getRelativeVectorToGoal();
+		_vec getRelativeVectorToGoal();
     void process();
     bool is_at_goal();
 
 private:
-    vector relativeVector;
+		_vec relativeVector;
     float left_border = M_PI/6;
     float left_border2 = M_PI/2;
     float right_border = -M_PI/6;

@@ -296,7 +296,7 @@ void FuzzyController::process()
 
 void FuzzyController::calcRelativeVectorToGoal(coordinate robot, coordinate goal)
 {
-    vector RelativeVector;
+		_vec RelativeVector;
     double DeltaX = goal.x - robot.x;
     double DeltaY = goal.y - robot.y;
     RelativeVector.angle = (double)atan2(DeltaY,DeltaX);
@@ -309,7 +309,7 @@ void FuzzyController::setPath(double path_d)
     path->setValue(path_d);
 }
 
-vector FuzzyController::getRelativeVectorToGoal()
+_vec FuzzyController::getRelativeVectorToGoal()
 {
     return this->relativeVector;
 }

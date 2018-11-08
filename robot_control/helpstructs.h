@@ -1,7 +1,7 @@
 #ifndef HELPSTRUCTS_H
 #define HELPSTRUCTS_H
 
-struct vector
+struct _vec
 {
     double length;
     double angle;
