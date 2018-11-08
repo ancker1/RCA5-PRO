@@ -6,7 +6,7 @@ Path_planning::~Path_planning() {}
 
 int Path_planning::way_around_obstacle(Point start, Point goal, Mat &src) {
     Map grid;
-    Mat img = grid.bushfire_img(src);
+    Mat img = grid.brushfire_img(src);
     if (obstacle_detected(start, goal, img)) {
         cout << "Obstacle detected" << endl;
         LineIterator it(img, start, goal, 8);

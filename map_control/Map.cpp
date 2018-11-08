@@ -273,10 +273,10 @@ Map::~Map()
  *  BUSHFIRE
  * *************************************************/
 
-Mat Map::bushfire_img(Mat &img) {
+Mat Map::brushfire_img(Mat &img) {
     Mat binary_img = img.clone();
     binarize_img(binary_img);
-    make_bushfire_grid(binary_img);
+    make_brushfire_grid(binary_img);
     return binary_img;
 }
 
@@ -366,7 +366,7 @@ void Map::find_neighbors(vector<Point> &v, Mat &img, int x, int y) {
     }
 }
 
-void Map::make_bushfire_grid(Mat &img) {
+void Map::make_brushfire_grid(Mat &img) {
     vector<Point> neighbors;
     for (int y = 0; y < img.cols; y++) {
         for (int x = 0; x < img.rows; x++) {
