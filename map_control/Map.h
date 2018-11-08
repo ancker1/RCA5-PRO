@@ -37,8 +37,8 @@ public:
     void printMap();
     void drawNShowPoints(string pictureText, vector<Point> points);
 
-    // BUSHFIRE
-    Mat bushfire_img(Mat &img);
+    // BRUSHFIRE
+    Mat brushfire_img(Mat &img);
     vector<Point> find_centers(Mat &img);
 
     ~Map();
@@ -52,7 +52,7 @@ private:
     // Bushfire
     void binarize_img(Mat &img);
     void find_neighbors(vector<Point> &v, Mat &img, int x, int y);
-    void make_bushfire_grid(Mat &img);
+    void make_brushfire_grid(Mat &img);
     void remove_points_in_corners(vector<Point> &v, Mat &img);
 };
 
