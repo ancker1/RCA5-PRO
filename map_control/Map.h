@@ -11,17 +11,16 @@
 #include "opencv2/imgproc.hpp"
 #include "opencv2/ximgproc.hpp"
 #include <algorithm>
-
+#include <Cell.h>
+#include <Cellpoint.h>
 using namespace std;
 using namespace cv;
 using namespace cv::ximgproc;
 
 struct cell
 {
-    int cellNumber;
-    int x;
-    int y;
-    vector<cell> neighborcells;
+    Point cellPoint;
+    vector<Point> neighborcells;
 };
 
 class Map
@@ -39,14 +38,15 @@ public:
 
     vector<Point> cornerDetection();
     void trapezoidalLines(vector<Point> criticalPoints);
-    vector<cell> calculateCells(vector<Point> upperTrap, vector<Point> lowerTrap);
+    vector<Cell> calculateCells(vector<Point> upperTrap, vector<Point> lowerTrap);
 
     vector<Point_<double>> convertToGazeboCoordinates(vector<Point> goals);
     vector<Point_<double>> convertToGazeboCoordinatesTrapezoidal(vector<Point> upperGoals, vector<Point> lowerGoals);
+
     //ILLUSTRATIVE FUNCTIONS
     void printMap();
     void drawNShowPoints(string pictureText, vector<Point> points);
-
+    void drawCellsPath(string pictureText, vector<Cell> cells);
     // BUSHFIRE
     Mat bushfire_img(Mat &img);
     vector<Point> find_centers(Mat &img);
@@ -60,6 +60,16 @@ private:
     vector<Point> upperTrapezoidalGoals;
     vector<Point> lowerTrapezoidalGoals;
     vector<cell> cells;
+
+    //Functions
+    vector<Point> sortxAndRemoveDuplicate(vector<Point> list);
+    vector<Point> findSamexPointWithoutObstacle(vector<Point> list);
+    bool metObstacleDownOrUp(Point start, Point end);
+    bool metObstacleLeft(Point start, Point end);
+    bool metObstacleRight(Point start, Point end);
+    Point checkPointIfGoal(int currentPointx, int currentPointy, vector<Point> goals);
+    void deleteNonClosesPoint(cell checkCell);
+
     // Bushfire
     void binarize_img(Mat &img);
     void find_neighbors(vector<Point> &v, Mat &img, int x, int y);

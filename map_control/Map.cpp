@@ -167,13 +167,39 @@ void Map::drawNShowPoints(string pictureText, vector<Point> points)
     }
     resize(tempMap,tempMap,map.size()*10,0,0,INTER_NEAREST);
     imshow(pictureText, tempMap);
-
-
 }
 
-vector<cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTrap)
+void Map::drawCellsPath(string pictureText, vector<Cell> cells)
 {
-    vector<cell> detectedCells;
+    Mat tempMap;
+    // Line options
+    int thickness = 1;
+    int lineType = 8;
+    Scalar colorLeft = (0,0,255);
+    Scalar colorRight = (0,255,0);
+    int shift = 0;
+    cvtColor(map, tempMap, COLOR_GRAY2BGR);
+    for(size_t i = 0; i < cells.size(); i++)
+    {
+        /*
+        if(cells[i].getCellPointPointRight() != Point(0,0))
+            line(tempMap, cells[i].getCellPointOnCell(), cells[i].getCellPointPointRight(), colorRight, thickness, lineType, shift);
+            */
+        if(cells[i].getCellPointPointLeft() != Point(0,0) && cells[i].getCellPointPointRight() != Point(0,0))
+        {
+            cout << "Celle nr: " << i << " Cellepunkt: " << cells[i].getCellPointOnCell() << " Kan forbindes til venstre for: " << cells[i].getCellPointPointLeft() << " højre for " << cells[i].getCellPointPointRight() << endl;
+            line(tempMap, cells[i].getCellPointOnCell(), cells[i].getCellPointPointLeft(), colorLeft);
+        }
+
+        //tempMap.at<Vec3b>(cells[i].getCellPointOnCell().y,cells[i].getCellPointOnCell().x)[0] = 255;
+    }
+    resize(tempMap,tempMap,map.size()*10,0,0,INTER_NEAREST);
+    imshow(pictureText, tempMap);
+}
+
+vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTrap)
+{
+    vector<Cell> detectedCells;
     vector<Point> totalTrapGoals;
     int rowi = 0;
     int colj = 0;
@@ -217,28 +243,66 @@ vector<cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
             }
         }
     }
+
+    totalTrapGoals = sortxAndRemoveDuplicate(totalTrapGoals);
+    vector<Point> samexWithoutObs;
+    samexWithoutObs = findSamexPointWithoutObstacle(totalTrapGoals);
+    // Removes all same x without ostacle from totalTrapGoals
     for(size_t i = 0; i < totalTrapGoals.size(); i++)
     {
-        rowi = totalTrapGoals[i].y;
-        colj = totalTrapGoals[i].x;
-        // Not obstacle up
-
-        while(sweepLineMap.at<Vec3b>(rowi,colj-1) != Vec3b(255,255,255) && sweepLineMap.at<Vec3b>(rowi,colj-1)[0] != 255)
+        for(size_t j = 0; j < samexWithoutObs.size(); j++)
         {
-            colj -= 1;
-            sweepLineMap.at<Vec3b>(rowi,colj)[1] = 255;
-
+            if(totalTrapGoals[i] == samexWithoutObs[j])
+                totalTrapGoals.erase(totalTrapGoals.begin()+i);
         }
 
-        colj = totalTrapGoals[i].x;
-        // Not obstacle down
-        while(sweepLineMap.at<Vec3b>(rowi,colj+1) != Vec3b(255,255,255) && sweepLineMap.at<Vec3b>(rowi,colj+1)[0] != 255)
+    }
+    Point temp;
+    // Creating cell for point without same x
+    for(size_t i = 0; i < totalTrapGoals.size(); i++)
+    {
+        Cellpoint tempCellPoint(totalTrapGoals[i]);
+        for(size_t j = 0; j < totalTrapGoals.size();) // ADDING CLOSET CELL LEFT FOR CELLPOINT
         {
-            colj += 1;
-            sweepLineMap.at<Vec3b>(rowi,colj)[2] = 255;
-
+            temp = totalTrapGoals[j];
+            if(metObstacleDownOrUp(totalTrapGoals[i],temp))
+                j++;
+            else
+            {
+                temp.y = totalTrapGoals[i].y;
+                if(!metObstacleLeft(totalTrapGoals[i],temp))
+                {
+                    tempCellPoint.setPointLeft(totalTrapGoals[j]);
+                    break;
+                }
+                else
+                    j++;
+            }
         }
+        for(size_t j = 0; j < totalTrapGoals.size();) // ADDING CLOSET CELL RIGHT FOR CELLPOINT
+        {
+            temp = totalTrapGoals[j];
+            if(metObstacleDownOrUp(totalTrapGoals[i],temp))
+                j++;
+            else
+            {
+                temp.y = totalTrapGoals[i].y;
+                if(!metObstacleRight(totalTrapGoals[i],temp))
+                {
+                    tempCellPoint.setPointRight(totalTrapGoals[j]);
+                    break;
+                }
+                else
+                    j++;
+            }
+        }
+        Cell tempCell(tempCellPoint);
+        detectedCells.push_back(tempCell);
+    }
 
+    for(size_t i = 0; i < detectedCells.size(); i++)
+    {
+        cout << "Celle nr: " << i << " Cellepunkt: " << detectedCells[i].getCellPointOnCell() << " Kan forbindes til venstre for: " << detectedCells[i].getCellPointPointLeft() << " højre for " << detectedCells[i].getCellPointPointRight() << endl;
     }
 
     return detectedCells;
@@ -334,6 +398,147 @@ vector<Point_<double>> Map::convertToGazeboCoordinatesTrapezoidal(vector<Point> 
         convertedGoals.push_back(convertedPoint);
     }
     return convertedGoals;
+}
+
+vector<Point> Map::sortxAndRemoveDuplicate(vector<Point> list)
+{
+    vector<Point> t;
+    t.push_back(list[0]);
+    int samex = 0;
+    for(size_t i = 0; i < list.size(); i++)
+    {
+        samex = 0;
+        for(size_t j = 0; j < t.size(); j++)
+        {
+            if(list[i] != t[j])
+            {
+                samex++;
+            }
+        }
+        if(samex == t.size())
+            t.push_back(list[i]);
+    }
+
+    struct sortx {
+      bool operator() (Point point1, Point point2) { return (point1.x < point2.x);}
+    } sorting;
+    sort(t.begin(), t.end(), sorting);
+    return t;
+}
+
+vector<Point> Map::findSamexPointWithoutObstacle(vector<Point> list)
+{
+    int firstx;
+    vector<Point> samexWithoutObs;
+    for(size_t i = 0; i < list.size(); i++)
+    {
+        for(size_t j = 0; j < list.size(); j++)
+        {
+            if(list[i].x == list[j].x && list[i].y != list[j].y)
+            {
+                if(!metObstacleDownOrUp(list[i],list[j]))
+                {
+                    if(find(samexWithoutObs.begin(), samexWithoutObs.end(), list[i]) == samexWithoutObs.end())
+                    {
+                        samexWithoutObs.push_back(list[i]);
+                    }
+                }
+            }
+        }
+    }
+    return samexWithoutObs;
+}
+
+bool Map::metObstacleDownOrUp(Point start, Point end) // FEJL PÅ DENNE
+{
+
+    if(start.y < end.y)
+    {
+        for(int i = start.y; i < end.y; i++)
+        {
+            if((int)map.at<uchar>(i,start.x) == 255)
+                return true;
+        }
+    }
+    else
+    {
+        for(int i = start.y; i > end.y; i--)
+        {
+            if((int)map.at<uchar>(i,start.x) == 255)
+                return true;
+        }
+    }
+    return false;
+}
+
+bool Map::metObstacleLeft(Point start, Point end)
+{
+    if(start.x > end.x)
+    {
+        for(int i = start.x; i > end.y; i--)
+        {
+            if((int)map.at<uchar>(start.y,i) == 255)
+            {
+                return true;
+            }
+        }
+    }
+    else
+        return true;
+    return false;
+}
+
+bool Map::metObstacleRight(Point start, Point end)
+{
+    if(start.x < end.x)
+    {
+        for(int i = start.x; i < end.y; i++)
+        {
+            if((int)map.at<uchar>(start.y,i) == 255)
+            {
+                return true;
+            }
+        }
+    }
+    else
+        return true;
+    return false;
+}
+
+Point Map::checkPointIfGoal(int currentPointx, int currentPointy, vector<Point> goals)
+{
+    Point canConnectPoint;
+    canConnectPoint.x = -1;
+    canConnectPoint.y = -1;
+    for(size_t i = 0; i < goals.size(); i++)
+    {
+        if(goals[i].y == currentPointy && goals[i].x == currentPointx)
+        {
+            canConnectPoint = goals[i];
+        }
+    }
+    return canConnectPoint;
+}
+
+void Map::deleteNonClosesPoint(cell checkCell)
+{
+    for(size_t i = 0; i < checkCell.neighborcells.size() - 1; i++)
+    {
+        if(checkCell.cellPoint.x < checkCell.neighborcells[i].x && checkCell.cellPoint.x < checkCell.neighborcells[i+1].x)
+        {
+            if(checkCell.neighborcells[i].x > checkCell.neighborcells[i+1].x)
+                checkCell.neighborcells.erase(checkCell.neighborcells.begin()+i);
+            else
+                checkCell.neighborcells.erase(checkCell.neighborcells.begin()+i+1);
+        }
+        else if(checkCell.cellPoint.x > checkCell.neighborcells[i].x && checkCell.cellPoint.x > checkCell.neighborcells[i+1].x)
+        {
+            if(checkCell.neighborcells[i].x > checkCell.neighborcells[i+1].x)
+                checkCell.neighborcells.erase(checkCell.neighborcells.begin()+i);
+            else
+                checkCell.neighborcells.erase(checkCell.neighborcells.begin()+i+1);
+        }
+    }
 }
 
 Map::~Map()

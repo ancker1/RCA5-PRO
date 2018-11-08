@@ -9,6 +9,8 @@
 #include <fstream>
 #include <vector>
 #include <Map.h>
+#include <Cell.h>
+#include <Cellpoint.h>
 
 using namespace std;
 using namespace cv;
@@ -28,8 +30,8 @@ void draw_pixel_red(vector<Point> &v, Mat &img) {
 
 int main(int argc, char** argv)
 {
-    const char* default_file = "../map_control/floor_plan.png";
-    //const char* default_file = "../map_control/big_floor_plan.png";
+    //const char* default_file = "../map_control/floor_plan.png";
+    const char* default_file = "../map_control/big_floor_plan.png";
     const char* filename = argc >=2 ? argv[1] : default_file;
     Mat src = cv::imread(filename, IMREAD_COLOR);
 
@@ -61,12 +63,12 @@ int main(int argc, char** argv)
     // DRAWS IN SAME MAP
     for(int i = 0; i < upper.size(); i++) // Upper goal green
     {
-        cout << "Upper x: " << upper[i].x << " y: " << upper[i].y << endl;
+        //cout << "Upper x: " << upper[i].x << " y: " << upper[i].y << endl;
         tempMap.at<Vec3b>(upper[i].y,upper[i].x)[1] = 255;
     }
     for(int i = 0; i < lower.size(); i++)
     {
-        cout << "Lower x: " << lower[i].x << " y: " << lower[i].y << endl;
+        //cout << "Lower x: " << lower[i].x << " y: " << lower[i].y << endl;
         tempMap.at<Vec3b>(lower[i].y,lower[i].x)[2] = 255; // Lower goal red
     }
 
@@ -74,15 +76,22 @@ int main(int argc, char** argv)
     vector<Point_<double>> gazeboGoals = smallMap.convertToGazeboCoordinatesTrapezoidal(upper, lower);
     for(int i = 0; i < gazeboGoals.size(); i++)
     {
-        cout << "Goal " << i << " x: " << gazeboGoals[i].x << " y: " << gazeboGoals[i].y << endl;
+        //cout << "Goal " << i << " x: " << gazeboGoals[i].x << " y: " << gazeboGoals[i].y << endl;
     }
 
     resize(tempMap,tempMap,tempMap.size()*10,0,0,INTER_NEAREST);
     imshow("Goals", tempMap);
-    smallMap.calculateCells(upper, lower);
-    Mat sweep = smallMap.getSweepLineMap();
-    resize(sweep,sweep,sweep.size()*10,0,0,INTER_NEAREST);
-    imshow("SweepLine",sweep );
+    vector<Cell> t = smallMap.calculateCells(upper, lower);
+    smallMap.drawCellsPath("Cell Path", t);
+    /*
+    for(size_t i = 0; i < t.size(); i++)
+    {
+        for(size_t j = 0; j < t[i].neighborcells.size(); j++)
+        {
+            cout << "Celle 1 " << i << " Punkt x: " << t[i].cellPoint.x << " Punkt y: " << t[i].cellPoint.y << " Connected til " << j << " x: " << t[i].neighborcells[j].x << " y: " << t[i].neighborcells[j].y << endl;
+        }
+    }
+    */
     /* Writes to file
     // OPSTACLE
     vector<Point> obstacle;
