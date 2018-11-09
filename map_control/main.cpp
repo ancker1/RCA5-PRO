@@ -26,8 +26,17 @@ int main() {
     Mat big_map = cv::imread( big_map_filename, IMREAD_COLOR );
     Mat small_map = cv::imread( small_map_filename, IMREAD_COLOR );
 
-    Map map;
-    vector<Point> v = map.get_centers(small_map);
+    Voronoi_Diagram v_diagram(big_map);
+    Mat img = v_diagram.get_brushfire_grid();
+
+    Mat dx, dy;
+    Sobel(img, dx, CV_32F, 1, 0);
+    Sobel(img, dy, CV_32F, 0, 1);
+
+    Mat angle = img.clone();
+    Mat mag = img.clone();
+    cartToPolar(dx, dy, mag, angle);
+    print_map(mag, "Mag_v1");
 
     waitKey(0);
     return 0;

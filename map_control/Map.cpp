@@ -434,11 +434,5 @@ vector<Point> Map::get_centers(Mat &img) {
 }
 
 void Map::detected_rooms(Mat &img, vector<Point> &v) {
-    Mat img_invert;
-    bitwise_not(img, img_invert);
-    for (int i = 0; i < img_invert.rows; i++) {
-        for (int j = 0; j < img_invert.cols; i++) {
 
-        }
-    }
 }

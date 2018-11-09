@@ -29,6 +29,7 @@ public:
 
 private:
     Mat brushfire_grid;
+    Mat voronoi_diagram_img;
     Mat rooms_map;
     vector<Point> voronoi_points;
 
