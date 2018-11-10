@@ -28,6 +28,9 @@ int main() {
 
     Map map;
     Mat img = map.brushfire_img(small_map);
+    convertScaleAbs(img, img, 255);
+    cout << "Brushfire" << endl;
+    cout << img << endl;
 
     Voronoi_Diagram v_diagram(small_map);
     Mat brushfire_img = v_diagram.get_brushfire_grid();
@@ -39,14 +42,12 @@ int main() {
     Mat angle(big_map.size(), big_map.type());
     Mat mag(big_map.size(), big_map.type());
     cartToPolar(dx, dy, mag, angle);
+    convertScaleAbs(mag, mag, 255);
+    cout << "Mag" << endl;
+    cout << mag << endl;
 
     Mat dst;
-    convertScaleAbs(mag, dst);
-    dst = ( dst==img );
-    print_map(dst, "Map");
-
-    dst = ( dst+mag );
-    print_map(dst, "Map2");
+    bitwise_and(mag, img, dst);
     cout << dst << endl;
 
     waitKey(0);
