@@ -26,17 +26,28 @@ int main() {
     Mat big_map = cv::imread( big_map_filename, IMREAD_COLOR );
     Mat small_map = cv::imread( small_map_filename, IMREAD_COLOR );
 
-    Voronoi_Diagram v_diagram(big_map);
-    Mat img = v_diagram.get_brushfire_grid();
+    Map map;
+    Mat img = map.brushfire_img(small_map);
+
+    Voronoi_Diagram v_diagram(small_map);
+    Mat brushfire_img = v_diagram.get_brushfire_grid();
 
     Mat dx, dy;
-    Sobel(img, dx, CV_32F, 1, 0);
-    Sobel(img, dy, CV_32F, 0, 1);
+    Sobel(brushfire_img, dx, CV_32F, 1, 0);
+    Sobel(brushfire_img, dy, CV_32F, 0, 1);
 
-    Mat angle = img.clone();
-    Mat mag = img.clone();
+    Mat angle(big_map.size(), big_map.type());
+    Mat mag(big_map.size(), big_map.type());
     cartToPolar(dx, dy, mag, angle);
-    print_map(mag, "Mag_v1");
+
+    Mat dst;
+    convertScaleAbs(mag, dst);
+    dst = ( dst==img );
+    print_map(dst, "Map");
+
+    dst = ( dst+mag );
+    print_map(dst, "Map2");
+    cout << dst << endl;
 
     waitKey(0);
     return 0;

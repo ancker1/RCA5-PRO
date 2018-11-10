@@ -25,12 +25,14 @@ public:
 
     Mat get_brushfire_grid();
     Mat get_rooms_map();
+    Mat get_binary_img();
     vector<Point> get_voronoi_points();
 
 private:
     Mat brushfire_grid;
     Mat voronoi_diagram_img;
     Mat rooms_map;
+    Mat binary_img;
     vector<Point> voronoi_points;
 
     void watershed_algorithm(Mat &src);

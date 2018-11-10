@@ -20,6 +20,10 @@ Mat Voronoi_Diagram::get_rooms_map() {
     return rooms_map;
 }
 
+Mat Voronoi_Diagram::get_binary_img() {
+    return binary_img;
+}
+
 vector<Point> Voronoi_Diagram::get_voronoi_points() {
     return voronoi_points;
 }
@@ -29,6 +33,7 @@ void Voronoi_Diagram::watershed_algorithm(Mat &src) {
     Mat bw_img;
     cvtColor(src, bw_img, CV_BGR2GRAY);
     threshold(bw_img, bw_img, 40, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
+    binary_img = bw_img.clone();
 
     // Perform the distance transform algorithm
     Mat dist;
