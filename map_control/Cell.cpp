@@ -15,12 +15,12 @@ Point Cell::getCellPointOnCell()
     return this->cellpoint.getOnCell();
 }
 
-Point Cell::getCellPointPointLeft()
+vector<Point> Cell::getCellPointLeft()
 {
     return this->cellpoint.getPointLeft();
 }
 
-Point Cell::getCellPointPointRight()
+vector<Point> Cell::getCellPointRight()
 {
     return this->cellpoint.getPointRight();
 }

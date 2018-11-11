@@ -67,9 +67,10 @@ private:
     bool metObstacleDownOrUp(Point start, Point end);
     bool metObstacleLeft(Point start, Point end);
     bool metObstacleRight(Point start, Point end);
+    tuple<string,Point> getClosestPointLeft(vector<Point> samex, vector<Point> nonSamex, Point cellPoint);
+    tuple<string, Point> getClosestPointRight(vector<Point> samex, vector<Point> nonSamex, Point cellPoint);
     Point checkPointIfGoal(int currentPointx, int currentPointy, vector<Point> goals);
     void deleteNonClosesPoint(cell checkCell);
-
     // Bushfire
     void binarize_img(Mat &img);
     void find_neighbors(vector<Point> &v, Mat &img, int x, int y);

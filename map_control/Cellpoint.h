@@ -8,6 +8,7 @@
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/ximgproc.hpp"
+#include <vector>
 
 using namespace std;
 using namespace cv;
@@ -18,15 +19,16 @@ class Cellpoint
 public:
     Cellpoint();
     Cellpoint(Point onCell);
-    void setPointLeft(Point rightCell);
+    void setPointLeft(Point leftCell);
     void setPointRight(Point rightCell);
-    Point getPointLeft();
-    Point getPointRight();
+    vector<Point> getPointLeft();
+    vector<Point> getPointRight();
     Point getOnCell();
 
 protected:
     Point onCell;
-    Point connectedTo[2];
+    vector<Point> connectedToLeft;
+    vector<Point> connectedToRight;
 };
 
 #endif // CELLPOINT_H

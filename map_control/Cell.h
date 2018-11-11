@@ -21,8 +21,8 @@ public:
     Cell();
     Cell(Cellpoint);
 
-    Point getCellPointPointLeft();
-    Point getCellPointPointRight();
+    vector<Point> getCellPointLeft();
+    vector<Point> getCellPointRight();
     Point getCellPointOnCell();
 
 

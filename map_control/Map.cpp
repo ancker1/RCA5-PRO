@@ -175,23 +175,24 @@ void Map::drawCellsPath(string pictureText, vector<Cell> cells)
     // Line options
     int thickness = 1;
     int lineType = 8;
-    Scalar colorLeft = (0,0,255);
-    Scalar colorRight = (0,255,0);
     int shift = 0;
     cvtColor(map, tempMap, COLOR_GRAY2BGR);
+
     for(size_t i = 0; i < cells.size(); i++)
     {
-        /*
-        if(cells[i].getCellPointPointRight() != Point(0,0))
-            line(tempMap, cells[i].getCellPointOnCell(), cells[i].getCellPointPointRight(), colorRight, thickness, lineType, shift);
-            */
-        if(cells[i].getCellPointPointLeft() != Point(0,0) && cells[i].getCellPointPointRight() != Point(0,0))
-        {
-            cout << "Celle nr: " << i << " Cellepunkt: " << cells[i].getCellPointOnCell() << " Kan forbindes til venstre for: " << cells[i].getCellPointPointLeft() << " højre for " << cells[i].getCellPointPointRight() << endl;
-            line(tempMap, cells[i].getCellPointOnCell(), cells[i].getCellPointPointLeft(), colorLeft);
-        }
+        if(cells[i].getCellPointRight().size() > 0)
+            for(size_t j = 0; j < cells[i].getCellPointRight().size(); j++)
+            {
+                cout << "Cell Number: " << i << " CellePoint: " << cells[i].getCellPointOnCell() << "Connected on Right: " << cells[i].getCellPointRight()[j] << endl;
+                line(tempMap, cells[i].getCellPointOnCell(), cells[i].getCellPointRight()[j], Scalar(0,0,255), thickness, lineType, shift);
+            }
+        if(cells[i].getCellPointLeft().size() > 0)
+            for(size_t j = 0; j < cells[i].getCellPointLeft().size(); j++)
+            {
+                cout << "Cell Number: " << i << " CellePoint: " << cells[i].getCellPointOnCell() << "Connected on Left: " << cells[i].getCellPointLeft()[j] << endl;
+                line(tempMap, cells[i].getCellPointOnCell(), cells[i].getCellPointLeft()[j], Scalar(0,255,0), thickness, lineType, shift);
+            }
 
-        //tempMap.at<Vec3b>(cells[i].getCellPointOnCell().y,cells[i].getCellPointOnCell().x)[0] = 255;
     }
     resize(tempMap,tempMap,map.size()*10,0,0,INTER_NEAREST);
     imshow(pictureText, tempMap);
@@ -244,67 +245,90 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         }
     }
 
+
     totalTrapGoals = sortxAndRemoveDuplicate(totalTrapGoals);
-    vector<Point> samexWithoutObs;
-    samexWithoutObs = findSamexPointWithoutObstacle(totalTrapGoals);
+    vector<Point> samex;
+    vector<Point> nonSamex = totalTrapGoals;
+    samex = findSamexPointWithoutObstacle(totalTrapGoals);
     // Removes all same x without ostacle from totalTrapGoals
-    for(size_t i = 0; i < totalTrapGoals.size(); i++)
+    for(size_t i = 0; i < nonSamex.size(); i++)
     {
-        for(size_t j = 0; j < samexWithoutObs.size(); j++)
+        for(size_t j = 0; j < samex.size(); j++)
         {
-            if(totalTrapGoals[i] == samexWithoutObs[j])
-                totalTrapGoals.erase(totalTrapGoals.begin()+i);
+            if(nonSamex[i] == samex[j])
+                nonSamex.erase(nonSamex.begin()+i);
+        }
+    }
+
+    //drawNShowPoints("No same x", nonSamex);
+    //drawNShowPoints("Same x", samex);
+
+    Point closest;
+    string answer;
+    tie(answer,closest) = getClosestPointLeft(samex, nonSamex, nonSamex[17]);
+    cout << answer << " punkt " << closest << endl;
+    for(size_t i = 0; i < nonSamex.size(); i++)
+    {
+        Cellpoint tempCellePoint(nonSamex[i]);
+        // LEFT FOR CELLEPOINT
+        tie(answer,closest) = getClosestPointLeft(samex, nonSamex, nonSamex[i]);
+        if(answer == "No Point")
+        {
+            cout << "Ingen til venstre for i punktet: " << nonSamex[i] << endl;
+        }
+        else if(answer == "Non Same x")
+        {
+            tempCellePoint.setPointLeft(closest);
+        }
+        else if(answer == "Same x")
+        {
+            for(size_t j = 0; j < samex.size(); j++)
+            {
+                if(closest.x == samex[j].x)
+                {
+                    if(!metObstacleDownOrUp(tempCellePoint.getOnCell(),samex[j]))
+                        if(!metObstacleLeft(tempCellePoint.getOnCell(),samex[j]))
+                            tempCellePoint.setPointRight(samex[j]);
+                }
+            }
         }
 
-    }
-    Point temp;
-    // Creating cell for point without same x
-    for(size_t i = 0; i < totalTrapGoals.size(); i++)
-    {
-        Cellpoint tempCellPoint(totalTrapGoals[i]);
-        for(size_t j = 0; j < totalTrapGoals.size();) // ADDING CLOSET CELL LEFT FOR CELLPOINT
+        // RIGHT FOR CELLEPOINT
+        tie(answer,closest) = getClosestPointRight(samex, nonSamex, nonSamex[i]);
+        if(answer == "No Point")
         {
-            temp = totalTrapGoals[j];
-            if(metObstacleDownOrUp(totalTrapGoals[i],temp))
-                j++;
-            else
+            cout << "Ingen til højre for i punktet: " << nonSamex[i] << endl;
+        }
+        else if(answer == "Non Same x")
+        {
+            tempCellePoint.setPointRight(closest);
+        }
+        else if(answer == "Same x")
+        {
+            for(size_t j = 0; j < samex.size(); j++)
             {
-                temp.y = totalTrapGoals[i].y;
-                if(!metObstacleLeft(totalTrapGoals[i],temp))
+                if(closest.x == samex[j].x)
                 {
-                    tempCellPoint.setPointLeft(totalTrapGoals[j]);
-                    break;
+                    if(!metObstacleDownOrUp(tempCellePoint.getOnCell(),samex[j]))
+                        if(!metObstacleRight(tempCellePoint.getOnCell(),samex[j]))
+                            tempCellePoint.setPointRight(samex[j]);
                 }
-                else
-                    j++;
             }
         }
-        for(size_t j = 0; j < totalTrapGoals.size();) // ADDING CLOSET CELL RIGHT FOR CELLPOINT
-        {
-            temp = totalTrapGoals[j];
-            if(metObstacleDownOrUp(totalTrapGoals[i],temp))
-                j++;
-            else
-            {
-                temp.y = totalTrapGoals[i].y;
-                if(!metObstacleRight(totalTrapGoals[i],temp))
-                {
-                    tempCellPoint.setPointRight(totalTrapGoals[j]);
-                    break;
-                }
-                else
-                    j++;
-            }
-        }
-        Cell tempCell(tempCellPoint);
+        Cell tempCell(tempCellePoint);
         detectedCells.push_back(tempCell);
     }
-
-    for(size_t i = 0; i < detectedCells.size(); i++)
-    {
-        cout << "Celle nr: " << i << " Cellepunkt: " << detectedCells[i].getCellPointOnCell() << " Kan forbindes til venstre for: " << detectedCells[i].getCellPointPointLeft() << " højre for " << detectedCells[i].getCellPointPointRight() << endl;
-    }
-
+    drawCellsPath("t",detectedCells);
+    /*
+    vector<Point> confirm;
+    int t = 17;
+    confirm.push_back(detectedCells[t].getCellPointOnCell());
+    for(size_t i = 0; i < detectedCells[t].getCellPointLeft().size(); i++)
+        confirm.push_back(detectedCells[t].getCellPointLeft()[i]);
+    for(size_t i = 0; i < detectedCells[t].getCellPointRight().size(); i++)
+        confirm.push_back(detectedCells[t].getCellPointRight()[i]);
+    drawNShowPoints("Confirm", confirm);
+    */
     return detectedCells;
 }
 
@@ -449,7 +473,7 @@ vector<Point> Map::findSamexPointWithoutObstacle(vector<Point> list)
     return samexWithoutObs;
 }
 
-bool Map::metObstacleDownOrUp(Point start, Point end) // FEJL PÅ DENNE
+bool Map::metObstacleDownOrUp(Point start, Point end)
 {
 
     if(start.y < end.y)
@@ -475,7 +499,7 @@ bool Map::metObstacleLeft(Point start, Point end)
 {
     if(start.x > end.x)
     {
-        for(int i = start.x; i > end.y; i--)
+        for(int i = start.x; i > end.x; i--)
         {
             if((int)map.at<uchar>(start.y,i) == 255)
             {
@@ -492,7 +516,7 @@ bool Map::metObstacleRight(Point start, Point end)
 {
     if(start.x < end.x)
     {
-        for(int i = start.x; i < end.y; i++)
+        for(int i = start.x; i < end.x; i++)
         {
             if((int)map.at<uchar>(start.y,i) == 255)
             {
@@ -504,6 +528,125 @@ bool Map::metObstacleRight(Point start, Point end)
         return true;
     return false;
 }
+
+tuple<string, Point> Map::getClosestPointLeft(vector<Point> samex, vector<Point> nonSamex, Point cellPoint)
+{
+    Point closestPointSamex;
+    Point closestPointNonSamex;
+    closestPointSamex.x = map.cols; // NEEDS TO BE INIT ELSE 0
+    closestPointNonSamex.x = map.cols; // NEEDS TO BE INIT ELSE 0
+    for(size_t i = 0; i < samex.size(); i++)
+    {
+        if(!(cellPoint == samex[i]))
+        {
+            if(cellPoint.y == samex[i].y) // Does not have obstacle op or down if y == same
+            {
+                if(!metObstacleLeft(cellPoint,samex[i]))
+                {
+                    if(abs(cellPoint.x - closestPointSamex.x) > abs(cellPoint.x - samex[i].x))
+                        closestPointSamex = samex[i];
+                }
+            }
+            else if(!metObstacleDownOrUp(cellPoint,samex[i]))
+            {
+                if(!metObstacleLeft(cellPoint,samex[i]))
+                {
+                    if(abs(cellPoint.x - closestPointSamex.x) > abs(cellPoint.x - samex[i].x))
+                        closestPointSamex = samex[i];
+                }
+            }
+        }
+    }
+
+    for(size_t i = 0; i < nonSamex.size(); i++)
+    {
+        if(!(cellPoint == nonSamex[i]))
+        {
+            if(cellPoint.y == nonSamex[i].y) // Does not have obstacle op or down if y == same
+            {
+                if(!metObstacleLeft(cellPoint,nonSamex[i]))
+                {
+                    if(abs(cellPoint.x - closestPointNonSamex.x) > abs(cellPoint.x - nonSamex[i].x))
+                        closestPointNonSamex = nonSamex[i];
+                }
+            }
+            else if(!metObstacleDownOrUp(cellPoint,nonSamex[i]))
+            {
+                if(!metObstacleLeft(cellPoint,nonSamex[i]))
+                {
+                    if(abs(cellPoint.x - closestPointNonSamex.x) > abs(cellPoint.x - nonSamex[i].x))
+                        closestPointNonSamex = nonSamex[i];
+                }
+            }
+        }
+    }
+    if(closestPointNonSamex.x == map.cols && closestPointSamex.x == map.cols)
+        return make_tuple("No Point", Point(0,0));
+    if(abs(cellPoint.x - closestPointNonSamex.x) < abs(cellPoint.x - closestPointSamex.x)) // To the power to prevent negative
+        return make_tuple("Non Same x",closestPointNonSamex);
+    else
+        return make_tuple("Same x",closestPointSamex);
+}
+
+tuple<string,Point> Map::getClosestPointRight(vector<Point> samex, vector<Point> nonSamex, Point cellPoint)
+{
+    Point closestPointSamex;
+    Point closestPointNonSamex;
+    closestPointSamex.x = map.cols; // NEEDS TO BE INIT ELSE 0
+    closestPointNonSamex.x = map.cols; // NEEDS TO BE INIT ELSE 0
+    for(size_t i = 0; i < samex.size(); i++)
+    {
+        if(!(cellPoint == samex[i]))
+        {
+            if(cellPoint.y == samex[i].y)// Does not have obstacle op or down if y == same
+            {
+                if(!metObstacleRight(cellPoint,samex[i]))
+                {
+                    if(abs(cellPoint.x - closestPointSamex.x) > abs(cellPoint.x - samex[i].x))
+                        closestPointSamex = samex[i];
+                }
+            }
+            else if(!metObstacleDownOrUp(cellPoint,samex[i]))
+            {
+                if(!metObstacleRight(cellPoint,samex[i]))
+                {
+                    if(abs(cellPoint.x - closestPointSamex.x) > abs(cellPoint.x - samex[i].x))
+                        closestPointSamex = samex[i];
+                }
+            }
+        }
+    }
+
+    for(size_t i = 0; i < nonSamex.size(); i++)
+    {
+        if(!(cellPoint == nonSamex[i]))
+        {
+            if(cellPoint.y == nonSamex[i].y)// Does not have obstacle op or down if y == same
+            {
+                if(!metObstacleRight(cellPoint,nonSamex[i]))
+                {
+                    if(abs(cellPoint.x - closestPointNonSamex.x) > abs(cellPoint.x - nonSamex[i].x))
+                        closestPointNonSamex = nonSamex[i];
+                }
+            }
+            else if(!metObstacleDownOrUp(cellPoint,nonSamex[i]))
+            {
+                if(!metObstacleRight(cellPoint,nonSamex[i]))
+                {
+                    if(abs(cellPoint.x - closestPointNonSamex.x) > abs(cellPoint.x - nonSamex[i].x))
+                        closestPointNonSamex = nonSamex[i];
+                }
+            }
+        }
+    }
+    if(closestPointNonSamex.x == map.cols && closestPointSamex.x == map.cols)
+        return make_tuple("No Point", Point(0,0));
+    if(abs(cellPoint.x - closestPointNonSamex.x) < abs(cellPoint.x - closestPointSamex.x)) // To the power to prevent negative
+        return make_tuple("Non Same x",closestPointNonSamex);
+    else
+        return make_tuple("Same x",closestPointSamex);
+}
+
 
 Point Map::checkPointIfGoal(int currentPointx, int currentPointy, vector<Point> goals)
 {

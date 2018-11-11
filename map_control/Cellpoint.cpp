@@ -12,22 +12,22 @@ Cellpoint::Cellpoint(Point onCell)
 
 void Cellpoint::setPointLeft(Point leftCell)
 {
-    this->connectedTo[0] = leftCell;
+    this->connectedToLeft.push_back(leftCell);
 }
 
 void Cellpoint::setPointRight(Point rightCell)
 {
-    this->connectedTo[1] = rightCell;
+    this->connectedToRight.push_back(rightCell);
 }
 
-Point Cellpoint::getPointLeft()
+vector<Point> Cellpoint::getPointLeft()
 {
-    return this->connectedTo[0];
+    return this->connectedToLeft;
 }
 
-Point Cellpoint::getPointRight()
+vector<Point> Cellpoint::getPointRight()
 {
-    return this->connectedTo[1];
+    return this->connectedToRight;
 }
 
 Point Cellpoint::getOnCell()
