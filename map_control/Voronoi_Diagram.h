@@ -29,6 +29,7 @@ public:
     vector<Point> get_voronoi_points();
 
 private:
+    Mat source;
     Mat brushfire_grid;
     Mat voronoi_diagram_img;
     Mat rooms_map;
@@ -36,6 +37,7 @@ private:
     vector<Point> voronoi_points;
 
     void watershed_algorithm(Mat &src);
+    void make_voronoi_points();
 };
 
 #endif // VORONI_DIAGRAM_H

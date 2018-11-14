@@ -3,7 +3,9 @@
 Voronoi_Diagram::Voronoi_Diagram() {}
 
 Voronoi_Diagram::Voronoi_Diagram(Mat &src) {
+    source = src.clone();
     watershed_algorithm(src);
+    make_voronoi_points();
 }
 
 void Voronoi_Diagram::print_map(Mat &map, string s) {
@@ -99,4 +101,88 @@ void Voronoi_Diagram::watershed_algorithm(Mat &src) {
     }
 
     rooms_map = result.clone();
+}
+
+void Voronoi_Diagram::make_voronoi_points() {
+    Vec3b red(0,0,255), black(0,0,0), white(255,255,255);
+    Mat img = brushfire_grid.clone();
+
+    // Get walls for later use
+    Mat b_img;
+    convertScaleAbs(img, b_img, 255);
+    vector<Point> walls;
+    for (int y = 0; y < b_img.rows; y++) {
+        for (int x = 0; x < b_img.cols; x++) {
+            if ( (int)b_img.at<uchar>(y,x)==0 ) {
+                walls.push_back( Point(x,y) );
+            }
+        }
+    }
+
+    // differentiate brushfire_img
+    Mat dx, dy;
+    Sobel(img, dx, 5, 1, 0);
+    Sobel(img, dy, 5, 0, 1);
+    Mat angle, mag;
+    cartToPolar(dx, dy, mag, angle);
+    convertScaleAbs(mag, mag, 127);
+
+    // Threshold
+    for (int y = 0; y < mag.rows; y++) {
+        for (int x = 0; x < mag.cols; x++) {
+            if ( (int)mag.at<uchar>(y,x)==39 )
+                mag.at<uchar>(y,x) = 0;
+
+            if ( (int)mag.at<uchar>(y,x)>70 )
+                mag.at<uchar>(y,x) = 255;
+        }
+    }
+
+    // Remove walls for img
+    for (unsigned i = 0; i < walls.size(); i++) {
+        mag.at<uchar>( walls[i] ) = 255;
+    }
+
+    // Get all points which is not white(255)
+    vector<Point> v;
+    for (int y = 0; y < mag.rows; y++) {
+        for (int x = 0; x < mag.cols; x++) {
+            if ( (int)mag.at<uchar>(y,x)!=255 )
+                v.push_back( Point(x,y) );
+        }
+    }
+
+    for (unsigned i = 0; i < v.size(); i++) {
+        source.at<Vec3b>( v[i] ) = red;
+    }
+
+    for (int y = 0; y < source.rows; y++) {
+        for (int x = 0; x < source.cols; x++) {
+            if ( source.at<Vec3b>(y,x)==red ) {
+                Vec3b left = source.at<Vec3b>(y,x-1);
+                Vec3b right = source.at<Vec3b>(y,x+1);
+                Vec3b up = source.at<Vec3b>(y-1,x);
+                Vec3b down = source.at<Vec3b>(y+1,x);
+                Vec3b down_right = source.at<Vec3b>(y+1,x+1);
+                Vec3b down_left = source.at<Vec3b>(y+1,x-1);
+                Vec3b up_right = source.at<Vec3b>(y-1,x+1);
+                Vec3b up_left = source.at<Vec3b>(y-1,x-1);
+                if ( left==black || right==black || up==black ||
+                     down==black || down_right==black ||
+                     down_left==black ||up_right==black ||
+                     up_left==black) {
+                    source.at<Vec3b>(y,x)=white;
+                }
+            }
+        }
+    }
+
+    voronoi_points.clear();
+    for (int y = 0; y < source.rows; y++) {
+        for (int x = 0; x < source.cols; x++) {
+            if ( source.at<Vec3b>(y,x)==red ) {
+                voronoi_points.push_back( Point(x,y) );
+            }
+        }
+    }
 }
