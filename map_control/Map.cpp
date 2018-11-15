@@ -268,7 +268,7 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
     string answer;
     //tie(answer,closest) = getClosestPointLeft(samex, nonSamex, nonSamex[17]);
     //cout << answer << " punkt " << closest << endl;
-    /*
+
     //Non-samex connecting cells
     for(size_t i = 0; i < nonSamex.size(); i++)
     {
@@ -321,10 +321,12 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         Cell tempCell(tempCellePoint);
         detectedCells.push_back(tempCell);
     }
-    */
+
+
     tie(answer,closest) = getClosestPointRight(samex, nonSamex, Point(17,40));
     cout << "Svar: " << answer << " Forbundet til: " << closest << endl;
     metObstacleDownOrUp(Point(17,40), Point(20,60));
+    metObstacleRight(Point(17,76),Point(27,39));
     // NOGET GALT I DISSE FØRSTE STYKKE KODE FORBINDER HENOVER GRÆNSERNE!!!
     //Initializing all cellpoint for same x
     vector<Point> tempsamex = samex;
@@ -341,7 +343,8 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         }
         else if(answer == "Non Same x" || answer == "Same x")
         {
-            if(isLeftSameCellpoint(tempCellPointVector, samex[i], closest)) // LAV TIL EN FUNKTION
+            /*
+            if(isLeftSameCellpoint(tempCellPointVector, samex[i], closest)) // Er den allerede connected // LAV TIL EN FUNKTION
             {
                 while(obstacleDetectedWithLine(closest,samex[i]) && answer != "No Point")
                 {
@@ -354,6 +357,16 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
             }
             else
                 tempCellePoint.setPointLeft(closest);
+                */
+            while(obstacleDetectedWithLine(closest,samex[i]) && answer != "No Point")
+            {
+                findNremovePoint(tempsamex, closest);
+                findNremovePoint(tempNonSamex, closest);
+                tie(answer,closest) = getClosestPointLeft(tempsamex, tempNonSamex, samex[i]);
+            }
+            if(answer == "Non Same x" || answer == "Same x")
+                tempCellePoint.setPointLeft(closest);
+
         }
         tempsamex = samex;
         tempNonSamex = nonSamex;
@@ -365,6 +378,7 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         }
         else if(answer == "Non Same x" || answer == "Same x")
         {
+            /*
             if(isRightSameCellpoint(tempCellPointVector, samex[i], closest))  // LAV TIL EN FUNKTION
             {
                 while(obstacleDetectedWithLine(closest,samex[i]) && answer != "No Point")
@@ -377,6 +391,15 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
                     tempCellePoint.setPointRight(closest);
             }
             else
+                tempCellePoint.setPointRight(closest);
+                */
+            while(obstacleDetectedWithLine(closest,samex[i]) && answer != "No Point")
+            {
+                findNremovePoint(tempsamex, closest);
+                findNremovePoint(tempNonSamex, closest);
+                tie(answer,closest) = getClosestPointRight(tempsamex, tempNonSamex, samex[i]);
+            }
+            if(answer == "Non Same x" || answer == "Same x")
                 tempCellePoint.setPointRight(closest);
         }
         tempsamex = samex;
@@ -578,6 +601,7 @@ bool Map::metObstacleDownOrUp(Point start, Point end)
 
 bool Map::metObstacleLeft(Point start, Point end)
 {
+    end.y = start.y;
     if(start.x > end.x)
     {
         for(int i = start.x; i > end.x; i--)
@@ -595,6 +619,7 @@ bool Map::metObstacleLeft(Point start, Point end)
 
 bool Map::metObstacleRight(Point start, Point end)
 {
+    start.y = end.y;
     if(start.x < end.x)
     {
         for(int i = start.x; i < end.x; i++)
