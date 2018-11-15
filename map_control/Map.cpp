@@ -173,10 +173,12 @@ void Map::drawCellsPath(string pictureText, vector<Cell> cells)
 {
     Mat tempMap;
     // Line options
-    int thickness = 1;
+    int thickness = 2;
     int lineType = 8;
     int shift = 0;
+    int scaling = 10;
     cvtColor(map, tempMap, COLOR_GRAY2BGR);
+    resize(tempMap,tempMap,map.size()*scaling,0,0,INTER_NEAREST);
     for(size_t i = 0; i < cells.size(); i++)
     {
         for(size_t k = 0; k < cells[i].getAllCellPoints().size(); k++)
@@ -185,17 +187,17 @@ void Map::drawCellsPath(string pictureText, vector<Cell> cells)
                 for(size_t j = 0; j < cells[i].getAllCellPoints()[k].getPointRight().size(); j++)
                 {
                     cout << "Cell Number: " << i << " CellePoint: " << cells[i].getAllCellPoints()[k].getOnCell() << "Connected on Right: " << cells[i].getAllCellPoints()[k].getPointRight()[j] << endl;
-                    line(tempMap, cells[i].getAllCellPoints()[k].getOnCell(), cells[i].getAllCellPoints()[k].getPointRight()[j], Scalar(0,0,255), thickness, lineType, shift);
+                    line(tempMap, cells[i].getAllCellPoints()[k].getOnCell()*scaling, cells[i].getAllCellPoints()[k].getPointRight()[j]*scaling, Scalar(0,0,255), thickness, lineType, shift);
                 }
             if(cells[i].getAllCellPoints()[k].getPointLeft().size() > 0)
                 for(size_t j = 0; j < cells[i].getAllCellPoints()[k].getPointLeft().size(); j++)
                 {
                     cout << "Cell Number: " << i << " CellePoint: " << cells[i].getAllCellPoints()[k].getOnCell() << "Connected on Left: " << cells[i].getAllCellPoints()[k].getPointLeft()[j] << endl;
-                    line(tempMap, cells[i].getAllCellPoints()[k].getOnCell(), cells[i].getAllCellPoints()[k].getPointLeft()[j], Scalar(0,255,0), thickness, lineType, shift);
+                    line(tempMap, cells[i].getAllCellPoints()[k].getOnCell()*scaling, cells[i].getAllCellPoints()[k].getPointLeft()[j]*scaling, Scalar(0,255,0), thickness, lineType, shift);
                 }
         }
     }
-    resize(tempMap,tempMap,map.size()*10,0,0,INTER_NEAREST);
+
     imshow(pictureText, tempMap);
 }
 
