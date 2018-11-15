@@ -45,6 +45,27 @@ Point Cellpoint::getOnCell()
     return this->onCell;
 }
 
+double Cellpoint::getHeuristicdist()
+{
+    return this->heuristicdist;
+}
+
+double Cellpoint::getCurrentdist()
+{
+    return this->currentdist;
+}
+
+void Cellpoint::setHeuristicdist(double dist)
+{
+    this->heuristicdist = dist;
+}
+
+void Cellpoint::setCurrentdist(double dist)
+{
+    this->currentdist = dist;
+}
+
+
 Cellpoint::~Cellpoint()
 {
 

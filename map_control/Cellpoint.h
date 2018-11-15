@@ -26,11 +26,19 @@ public:
     void removePointLeft(int space);
     void removePointRight(int space);
     Point getOnCell();
+
+    double getHeuristicdist();
+    double getCurrentdist();
+    void setHeuristicdist(double dist);
+    void setCurrentdist(double dist);
     ~Cellpoint();
 protected:
     Point onCell;
     vector<Point> connectedToLeft;
     vector<Point> connectedToRight;
+
+    double heuristicdist; // Used by astar
+    double currentdist; // Used by astar
 };
 
 #endif // CELLPOINT_H

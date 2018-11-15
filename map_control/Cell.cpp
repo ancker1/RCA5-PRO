@@ -36,4 +36,5 @@ void Cell::addCellPoint(Cellpoint newCellPoint)
     this->allCellPoints.push_back(newCellPoint);
 }
 
+
 Cell::~Cell(){}

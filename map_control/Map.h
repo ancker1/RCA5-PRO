@@ -51,6 +51,9 @@ public:
     Mat brushfire_img(Mat &img);
     vector<Point> find_centers(Mat &img);
 
+
+    //PLANNNING ALGORITHM
+    vector<Point> astar(vector<Cell> cells, Point start, Point goal);
     ~Map();
 
 private:

@@ -1008,3 +1008,27 @@ void Map::remove_points_in_corners(vector<Point> &v, Mat &img) {
         }
     }
 }
+
+vector<Point> Map::astar(vector<Cell> cells, Point start, Point goal)
+{
+    vector<Point> path;
+    //Init heauristic with distance from point to goal
+    double tempHeuristicDist;
+    for(size_t i = 0; i < cells.size(); i++)
+    {
+        for(size_t j = 0; j < cells[i].getAllCellPoints().size(); j++)
+        {
+            tempHeuristicDist = sqrt(pow(abs(cells[i].getAllCellPoints()[j].getOnCell().x - goal.x),2) + pow(abs(cells[i].getAllCellPoints()[j].getOnCell().y - goal.y),2)); // PYTTE
+            cells[i].getAllCellPoints()[j].setHeuristicdist(tempHeuristicDist);
+        }
+    }
+
+    for(size_t i = 0; i < cells.size(); i++)
+    {
+        for(size_t j = 0; j < cells[i].getAllCellPoints().size(); j++)
+        {
+
+        }
+    }
+    return path;
+}

@@ -82,6 +82,7 @@ int main(int argc, char** argv)
     resize(tempMap,tempMap,tempMap.size()*10,0,0,INTER_NEAREST);
     imshow("Goals", tempMap);
     vector<Cell> t = smallMap.calculateCells(upper, lower);
+    smallMap.astar(t, Point(2,63), Point(114,55));
     //smallMap.drawCellsPath("Cell Path", t);
     /*
     for(size_t i = 0; i < t.size(); i++)
@@ -138,6 +139,7 @@ int main(int argc, char** argv)
     }
     myfile1.close();
     */
+
     waitKey(0);
     return 0;
 }
