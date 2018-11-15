@@ -36,56 +36,6 @@ bool obstacle_detected( Mat &img, Point start, Point goal ) {
     return false;
 }
 
-void forward_in_img( Mat &img, Point start) {
-    img.at<Vec3b>( start ) = white;
-    for ( int y = start.y ; y < img.rows ; y++ )
-        for ( int x = 0 ; x < img.cols ; x++ ) {
-            if ( img.at<Vec3b>(y,x) == red )
-                if ( !obstacle_detected( img, start, Point(x,y) ) ) {
-                    LineIterator it( img, start, Point(x,y), 8 );
-                    for ( int i = 0 ; i < it.count ; i++, it++ )
-                        lines.push_back( it.pos() );
-                    return;
-                }
-        }
-}
-
-void backward_in_img( Mat &img, Point start ) {
-    for ( int y = img.rows ; y > start.y ; y-- )
-        for ( int x = img.cols ; x > start.x ; x-- ) {
-            if ( img.at<Vec3b>(y,x) == red )
-                if ( !obstacle_detected( img, start, Point(x,y) ) ) {
-                    LineIterator it( img, start, Point(x,y), 8 );
-                    vector<Point> v(it.count);
-                    for ( int i = 0 ; i < it.count ; i++, it++ )
-                        v[i] = it.pos();
-                    for ( unsigned i = 0; i < v.size(); i++ )
-                        img.at<Vec3b>( v[i] ) = red;
-                    return;
-                }
-        }
-}
-
-bool remove_some_points( Mat &img, Point p, int thresh ) {
-    bool result = false;;
-    for ( int y = p.y-1; y < ( p.y+thresh ) && y < img.rows; y++ )
-        for ( int x = p.x-1; x < ( p.x+thresh ) && x < img.cols; x++ ) {
-            if ( img.at<Vec3b>(y,x) == red ) {
-                img.at<Vec3b>(y,x) = white;
-                result = true;
-            }
-        }
-
-    for ( int y = p.y+1; y > ( p.y-thresh ) && y > 0; y-- )
-        for ( int x = p.x+1; x > ( p.x-thresh ) && x > 0; x-- ) {
-            if ( img.at<Vec3b>(y,x) == red ) {
-                img.at<Vec3b>(y,x) = white;
-                result = true;
-            }
-        }
-    return result;
-}
-
 int main() {
     const string big_map_filename = "../map_control/big_floor_plan.png";
     const string small_map_filename = "../map_control/floor_plan.png";
@@ -95,6 +45,8 @@ int main() {
 
     Mat img = big_map.clone();
     Mat img2 = img.clone();
+
+
 
     Voronoi_Diagram v_d(img);
     Mat b_img = v_d.get_brushfire_grid();
@@ -179,8 +131,6 @@ int main() {
         img.at<Vec3b>( v[i] ) = red;
     }
 
-    print_map(img, "Peaks");
-
     Map map;
     Mat brushfire = map.brushfire_img(img2);
     vector<Point> v2 = map.find_centers(brushfire);
@@ -206,17 +156,45 @@ int main() {
             }
         }
 
-    print_map(img, "Map");
+    vector<Point> points;
+    for ( int y = 0; y < img.rows; y++ )
+        for ( int x = 0; x < img.cols; x++ ) {
+            if ( img.at<Vec3b>(y,x) == red )
+                points.push_back( Point(x,y) );
+        }
 
-//    for (unsigned i = 0; i < v.size(); i++) {
-//        forward_in_img(img, v[i]);
+    print_map( img, "Points" );
+
+
+//    vector<vector<Point>> lines;
+//    while ( !points.empty() ) {
+//        for (unsigned i = 1; i < points.size(); i++) {
+//            if ( !obstacle_detected( img, points[0], points[i] ) ) {
+//                LineIterator it( img, points[0], points[i], 8 );
+//                vector<Point> line_points(it.count);
+//                for (int j = 0; j < it.count; j++, it++)
+//                    line_points[j] = it.pos();
+//                lines.push_back( line_points );
+//            }
+//        }
+//        int index = 0;
+
+//        for (unsigned j = 1; j < lines.size(); j++) {
+//            if ( lines[index].size() > lines[j].size() )
+//                index = j;
+//        }
+
+//        for (unsigned j = 0; j < lines[index].size(); j++)
+//            img.at<Vec3b>( lines[index][j] ) = red;
+
+//        lines.clear();
+
+//        points.erase( points.begin() );
 //    }
 
-//    for (unsigned i = 0; i < lines.size(); i++) {
-//        img.at<Vec3b>( lines[i] ) = red;
-//    }
-//    print_map(img, "Map");
-
+//    print_map(img, "img");
+    big_map.at<Vec3b>( points[34] ) = red;
+    print_map(big_map, "Big");
 
 //    Mat binary, gray;
 //    cvtColor(img, gray, CV_RGB2GRAY);
