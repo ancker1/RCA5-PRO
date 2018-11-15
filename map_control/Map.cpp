@@ -862,7 +862,8 @@ Map::~Map()
  *  BUSHFIRE
  * *************************************************/
 
-Mat Map::brushfire_img(Mat &img) {
+Mat Map::brushfire_img(Mat &img)
+{
     Mat binary_img = img.clone();
     binarize_img(binary_img);
     make_brushfire_grid(binary_img);
