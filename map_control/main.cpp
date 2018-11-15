@@ -13,7 +13,8 @@
 using namespace std;
 using namespace cv;
 
-Vec3b red(0,0,255), black(0,0,0), white(255,255,255);
+Vec3b red(0,0,255), black(0,0,0), white(255,255,255), blue(255,0,0);
+vector<Point> lines;
 
 void print_map(Mat &map, string s) {
     Mat resizeMap;
@@ -28,19 +29,61 @@ bool obstacle_detected( Mat &img, Point start, Point goal ) {
         v[i] = it.pos();
 
     for (unsigned i = 0; i < v.size(); i++) {
-        if ( (int)img.at<uchar>( v[i] )==0 )
+        if ( img.at<Vec3b>( v[i] ) == black )
             return true;
     }
 
     return false;
 }
 
-void center_to_center( Mat &img, Point start) {
-    for (int y = start.y; y < img.rows; y++) {
-        for (int x = 0; x < img.cols; x++) {
-
+void forward_in_img( Mat &img, Point start) {
+    img.at<Vec3b>( start ) = white;
+    for ( int y = start.y ; y < img.rows ; y++ )
+        for ( int x = 0 ; x < img.cols ; x++ ) {
+            if ( img.at<Vec3b>(y,x) == red )
+                if ( !obstacle_detected( img, start, Point(x,y) ) ) {
+                    LineIterator it( img, start, Point(x,y), 8 );
+                    for ( int i = 0 ; i < it.count ; i++, it++ )
+                        lines.push_back( it.pos() );
+                    return;
+                }
         }
-    }
+}
+
+void backward_in_img( Mat &img, Point start ) {
+    for ( int y = img.rows ; y > start.y ; y-- )
+        for ( int x = img.cols ; x > start.x ; x-- ) {
+            if ( img.at<Vec3b>(y,x) == red )
+                if ( !obstacle_detected( img, start, Point(x,y) ) ) {
+                    LineIterator it( img, start, Point(x,y), 8 );
+                    vector<Point> v(it.count);
+                    for ( int i = 0 ; i < it.count ; i++, it++ )
+                        v[i] = it.pos();
+                    for ( unsigned i = 0; i < v.size(); i++ )
+                        img.at<Vec3b>( v[i] ) = red;
+                    return;
+                }
+        }
+}
+
+bool remove_some_points( Mat &img, Point p, int thresh ) {
+    bool result = false;;
+    for ( int y = p.y-1; y < ( p.y+thresh ) && y < img.rows; y++ )
+        for ( int x = p.x-1; x < ( p.x+thresh ) && x < img.cols; x++ ) {
+            if ( img.at<Vec3b>(y,x) == red ) {
+                img.at<Vec3b>(y,x) = white;
+                result = true;
+            }
+        }
+
+    for ( int y = p.y+1; y > ( p.y-thresh ) && y > 0; y-- )
+        for ( int x = p.x+1; x > ( p.x-thresh ) && x > 0; x-- ) {
+            if ( img.at<Vec3b>(y,x) == red ) {
+                img.at<Vec3b>(y,x) = white;
+                result = true;
+            }
+        }
+    return result;
 }
 
 int main() {
@@ -51,17 +94,128 @@ int main() {
     Mat small_map = cv::imread( small_map_filename, IMREAD_COLOR );
 
     Mat img = big_map.clone();
-    Map map;
-    Mat brushfire = map.brushfire_img(img);
-    vector<Point> v = map.find_centers(brushfire);
+    Mat img2 = img.clone();
+
+    Voronoi_Diagram v_d(img);
+    Mat b_img = v_d.get_brushfire_grid();
+    Mat kernel( Size(5,5), CV_8U );
+    Mat b_dilate;
+    dilate( b_img, b_dilate, kernel );
+    Mat1b local_max = ( b_img >= b_dilate );
+    for (int y = 0; y < local_max.rows; y++) {
+        for (int x = 0; x < local_max.cols; x++) {
+            if ((int)local_max.at<uchar>(y,x) == 255) {
+                for (int j = 1; (int)local_max.at<uchar>(y+j,x) == 255; j++) {
+                    local_max.at<uchar>(y,x) = 0;
+                    j++;
+                }
+                for (int j = 1; (int)local_max.at<uchar>(y,x+j) == 255; j++) {
+                    local_max.at<uchar>(y,x) = 0;
+                    j++;
+                }
+            }
+        }
+    }
+
+    vector<Point> v;
+    for (int y = 0; y < local_max.rows; y++) {
+        for (int x = 0; x < local_max.cols; x++) {
+            if ((int)local_max.at<uchar>(y,x) == 255) {
+                v.push_back( Point(x,y) );
+            }
+        }
+    }
+
+    for (unsigned i = 0; i < v.size(); ) {
+        if ((int)b_img.at<uchar>(v[i].y-1,v[i].x-1)==0) {
+            v.erase(v.begin()+i);
+        }
+        else if ((int)b_img.at<uchar>(v[i].y,v[i].x-1)==0) {
+            v.erase(v.begin()+i);
+        }
+        else if ((int)b_img.at<uchar>(v[i].y+1,v[i].x-1)==0) {
+            v.erase(v.begin()+i);
+        }
+        else if ((int)b_img.at<uchar>(v[i].y-1,v[i].x)==0) {
+            v.erase(v.begin()+i);
+        }
+        else if ((int)b_img.at<uchar>(v[i].y+1,v[i].x)==0) {
+            v.erase(v.begin()+i);
+        }
+        else if ((int)b_img.at<uchar>(v[i].y-1,v[i].x+1)==0) {
+            v.erase(v.begin()+i);
+        }
+        else if ((int)b_img.at<uchar>(v[i].y,v[i].x+1)==0) {
+            v.erase(v.begin()+i);
+        }
+        else if ((int)b_img.at<uchar>(v[i].y+1,v[i].x+1)==0) {
+            v.erase(v.begin()+i);
+        }
+        else {
+            i++;
+        }
+    }
+
+    for (int i = 0; i < local_max.cols; i++) {
+        local_max.at<uchar>(0, i) = 0;
+        local_max.at<uchar>(local_max.rows-1, i) = 0;
+    }
+    for (int i = 0; i < local_max.rows; i++) {
+        local_max.at<uchar>(i, 0) = 0;
+        local_max.at<uchar>(i, local_max.cols-1) = 0;
+    }
+
+    v.clear();
+    for (int y = 0; y < img.rows; y++) {
+        for (int x = 0; x < img.cols; x++) {
+            if ( (int)local_max.at<uchar>(y,x) == 255 )
+                v.push_back( Point(x,y) );
+        }
+    }
+
+    v.erase( v.begin()+13 );
+
     for (unsigned i = 0; i < v.size(); i++) {
         img.at<Vec3b>( v[i] ) = red;
     }
-    for (unsigned i = 0; i < v.size(); i++) {
-        center_to_center(img, v[i]);
+
+    print_map(img, "Peaks");
+
+    Map map;
+    Mat brushfire = map.brushfire_img(img2);
+    vector<Point> v2 = map.find_centers(brushfire);
+    v2.erase( v2.begin()+15 );
+    for (unsigned i = 0; i < v2.size(); i++) {
+        img2.at<Vec3b>( v2[i] ) = red;
+        img.at<Vec3b>( v2[i] ) = red;
     }
 
+    for ( int y = 0; y < img.rows; y++)
+        for (int x = 0; x < img.cols; x++) {
+            Vec3b left = img.at<Vec3b>(y,x-1);
+            Vec3b right = img.at<Vec3b>(y,x+1);
+            Vec3b up = img.at<Vec3b>(y-1,x);
+            Vec3b down = img.at<Vec3b>(y+1,x);
+            Vec3b left_up = img.at<Vec3b>(y-1,x-1);
+            Vec3b left_down = img.at<Vec3b>(y+1,x-1);
+            Vec3b right_up = img.at<Vec3b>(y-1,x+1);
+            Vec3b right_down = img.at<Vec3b>(y+1,x+1);
+            if ( left==red || right==red || up==red || down==red ||
+                 left_up==red || right_up==red || left_down==red || right_down==red) {
+                img.at<Vec3b>(y,x) = white;
+            }
+        }
+
     print_map(img, "Map");
+
+//    for (unsigned i = 0; i < v.size(); i++) {
+//        forward_in_img(img, v[i]);
+//    }
+
+//    for (unsigned i = 0; i < lines.size(); i++) {
+//        img.at<Vec3b>( lines[i] ) = red;
+//    }
+//    print_map(img, "Map");
 
 
 //    Mat binary, gray;
