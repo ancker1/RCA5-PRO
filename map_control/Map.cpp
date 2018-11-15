@@ -322,6 +322,9 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         detectedCells.push_back(tempCell);
     }
     */
+    tie(answer,closest) = getClosestPointRight(samex, nonSamex, Point(17,40));
+    cout << "Svar: " << answer << " Forbundet til: " << closest << endl;
+    metObstacleDownOrUp(Point(17,40), Point(20,60));
     // NOGET GALT I DISSE FØRSTE STYKKE KODE FORBINDER HENOVER GRÆNSERNE!!!
     //Initializing all cellpoint for same x
     vector<Point> tempsamex = samex;
@@ -396,7 +399,8 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
     }
 
     drawCellsPath("t",detectedCells);
-    cout << "Obstacle mellem linje: " << obstacleDetectedWithLine(Point(14,24),Point(19,24)) << endl;
+    //cout << "Obstacle mellem linje: " << obstacleDetectedWithLine(Point(14,24),Point(19,24)) << endl;
+
     /*
     vector<Point> confirm;
     int t = 17;
