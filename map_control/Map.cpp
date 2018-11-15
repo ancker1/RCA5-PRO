@@ -177,22 +177,23 @@ void Map::drawCellsPath(string pictureText, vector<Cell> cells)
     int lineType = 8;
     int shift = 0;
     cvtColor(map, tempMap, COLOR_GRAY2BGR);
-
     for(size_t i = 0; i < cells.size(); i++)
     {
-        if(cells[i].getCellPointRight().size() > 0)
-            for(size_t j = 0; j < cells[i].getCellPointRight().size(); j++)
-            {
-                cout << "Cell Number: " << i << " CellePoint: " << cells[i].getCellPointOnCell() << "Connected on Right: " << cells[i].getCellPointRight()[j] << endl;
-                line(tempMap, cells[i].getCellPointOnCell(), cells[i].getCellPointRight()[j], Scalar(0,0,255), thickness, lineType, shift);
-            }
-        if(cells[i].getCellPointLeft().size() > 0)
-            for(size_t j = 0; j < cells[i].getCellPointLeft().size(); j++)
-            {
-                cout << "Cell Number: " << i << " CellePoint: " << cells[i].getCellPointOnCell() << "Connected on Left: " << cells[i].getCellPointLeft()[j] << endl;
-                line(tempMap, cells[i].getCellPointOnCell(), cells[i].getCellPointLeft()[j], Scalar(0,255,0), thickness, lineType, shift);
-            }
-
+        for(size_t k = 0; k < cells[i].getAllCellPoints().size(); k++)
+        {
+            if(cells[i].getAllCellPoints()[k].getPointRight().size() > 0)
+                for(size_t j = 0; j < cells[i].getAllCellPoints()[k].getPointRight().size(); j++)
+                {
+                    cout << "Cell Number: " << i << " CellePoint: " << cells[i].getAllCellPoints()[k].getOnCell() << "Connected on Right: " << cells[i].getAllCellPoints()[k].getPointRight()[j] << endl;
+                    line(tempMap, cells[i].getAllCellPoints()[k].getOnCell(), cells[i].getAllCellPoints()[k].getPointRight()[j], Scalar(0,0,255), thickness, lineType, shift);
+                }
+            if(cells[i].getAllCellPoints()[k].getPointLeft().size() > 0)
+                for(size_t j = 0; j < cells[i].getAllCellPoints()[k].getPointLeft().size(); j++)
+                {
+                    cout << "Cell Number: " << i << " CellePoint: " << cells[i].getAllCellPoints()[k].getOnCell() << "Connected on Left: " << cells[i].getAllCellPoints()[k].getPointLeft()[j] << endl;
+                    line(tempMap, cells[i].getAllCellPoints()[k].getOnCell(), cells[i].getAllCellPoints()[k].getPointLeft()[j], Scalar(0,255,0), thickness, lineType, shift);
+                }
+        }
     }
     resize(tempMap,tempMap,map.size()*10,0,0,INTER_NEAREST);
     imshow(pictureText, tempMap);
@@ -265,8 +266,10 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
 
     Point closest;
     string answer;
-    tie(answer,closest) = getClosestPointLeft(samex, nonSamex, nonSamex[17]);
-    cout << answer << " punkt " << closest << endl;
+    //tie(answer,closest) = getClosestPointLeft(samex, nonSamex, nonSamex[17]);
+    //cout << answer << " punkt " << closest << endl;
+    /*
+    //Non-samex connecting cells
     for(size_t i = 0; i < nonSamex.size(); i++)
     {
         Cellpoint tempCellePoint(nonSamex[i]);
@@ -318,7 +321,82 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         Cell tempCell(tempCellePoint);
         detectedCells.push_back(tempCell);
     }
+    */
+    // NOGET GALT I DISSE FØRSTE STYKKE KODE FORBINDER HENOVER GRÆNSERNE!!!
+    //Initializing all cellpoint for same x
+    vector<Point> tempsamex = samex;
+    vector<Point> tempNonSamex = nonSamex;
+    vector<Cellpoint> tempCellPointVector;
+    for(size_t i = 0; i < samex.size(); i++)
+    {
+        Cellpoint tempCellePoint(samex[i]);
+        // LEFT FOR CELLEPOINT
+        tie(answer,closest) = getClosestPointLeft(samex, nonSamex, samex[i]);
+        if(answer == "No Point")
+        {
+            cout << "Ingen til venstre for i punktet: " << samex[i] << endl;
+        }
+        else if(answer == "Non Same x" || answer == "Same x")
+        {
+            if(isLeftSameCellpoint(tempCellPointVector, samex[i], closest)) // LAV TIL EN FUNKTION
+            {
+                while(obstacleDetectedWithLine(closest,samex[i]) && answer != "No Point")
+                {
+                    findNremovePoint(tempsamex, closest);
+                    findNremovePoint(tempNonSamex, closest);
+                    tie(answer,closest) = getClosestPointLeft(tempsamex, tempNonSamex, samex[i]);
+                }
+                if(answer == "Non Same x" || answer == "Same x")
+                    tempCellePoint.setPointLeft(closest);
+            }
+            else
+                tempCellePoint.setPointLeft(closest);
+        }
+        tempsamex = samex;
+        tempNonSamex = nonSamex;
+        // RIGHT FOR CELLEPOINT
+        tie(answer,closest) = getClosestPointRight(samex, nonSamex, samex[i]);
+        if(answer == "No Point")
+        {
+            cout << "Ingen til højre for i punktet: " << samex[i] << endl;
+        }
+        else if(answer == "Non Same x" || answer == "Same x")
+        {
+            if(isRightSameCellpoint(tempCellPointVector, samex[i], closest))  // LAV TIL EN FUNKTION
+            {
+                while(obstacleDetectedWithLine(closest,samex[i]) && answer != "No Point")
+                {
+                    findNremovePoint(tempsamex, closest);
+                    findNremovePoint(tempNonSamex, closest);
+                    tie(answer,closest) = getClosestPointRight(tempsamex, tempNonSamex, samex[i]);
+                }
+                if(answer == "Non Same x" || answer == "Same x")
+                    tempCellePoint.setPointRight(closest);
+            }
+            else
+                tempCellePoint.setPointRight(closest);
+        }
+        tempsamex = samex;
+        tempNonSamex = nonSamex;
+        tempCellPointVector.push_back(tempCellePoint);
+    }
+    //Samex connecting cells
+
+    for(size_t i = 0; i < tempCellPointVector.size(); )
+    {
+        Cell tempCell(tempCellPointVector[i]);
+
+        while(tempCellPointVector[i].getOnCell().x == tempCellPointVector[i+1].getOnCell().x)
+        {
+            tempCell.addCellPoint(tempCellPointVector[i+1]);
+            i++;
+        }
+        detectedCells.push_back(tempCell);
+        i++;
+    }
+
     drawCellsPath("t",detectedCells);
+    cout << "Obstacle mellem linje: " << obstacleDetectedWithLine(Point(14,24),Point(19,24)) << endl;
     /*
     vector<Point> confirm;
     int t = 17;
@@ -452,7 +530,6 @@ vector<Point> Map::sortxAndRemoveDuplicate(vector<Point> list)
 
 vector<Point> Map::findSamexPointWithoutObstacle(vector<Point> list)
 {
-    int firstx;
     vector<Point> samexWithoutObs;
     for(size_t i = 0; i < list.size(); i++)
     {
@@ -647,6 +724,67 @@ tuple<string,Point> Map::getClosestPointRight(vector<Point> samex, vector<Point>
         return make_tuple("Same x",closestPointSamex);
 }
 
+bool Map::isRightSameCellpoint(vector<Cellpoint> list, Point cellpoint, Point connectionPointRight)
+{
+    for(size_t i = 0; i < list.size(); i++)
+    {
+        if(list[i].getOnCell().x == cellpoint.x)
+        {
+            for(size_t j = 0; j < list[i].getPointRight().size(); j++)
+                if(list[i].getPointRight()[j] == connectionPointRight)
+                    return true;
+        }
+    }
+    return false;
+}
+
+bool Map::isLeftSameCellpoint(vector<Cellpoint> list, Point cellpoint, Point connectionPointLeft)
+{
+    for(size_t i = 0; i < list.size(); i++)
+    {
+        if(list[i].getOnCell().x == cellpoint.x)
+        {
+            for(size_t j = 0; j < list[i].getPointLeft().size(); j++)
+                if(list[i].getPointLeft()[j] == connectionPointLeft)
+                    return true;
+        }
+    }
+    return false;
+}
+
+vector<Point> Map::get_points(LineIterator &it)
+{
+    vector<Point> v(it.count);
+    for (int i = 0; i < it.count; i++, it++) {
+        v[i] = it.pos();
+    }
+    return v;
+}
+
+bool Map::obstacleDetectedWithLine(Point start, Point end)
+{
+    LineIterator it(this->map, start, end, 8);
+    vector<Point> v = get_points(it);
+    for (size_t i = 0; i < v.size(); i++) {
+        if ( (int)this->map.at<uchar>(v[i]) == 255 ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Map::findNremovePoint(vector<Point> &list, Point point)
+{
+    for(size_t i = 0; i < list.size(); i++)
+    {
+        if(list[i] == point)
+        {
+            list.erase(list.begin()+i);
+            return true;
+        }
+    }
+    return false;
+}
 
 Point Map::checkPointIfGoal(int currentPointx, int currentPointy, vector<Point> goals)
 {

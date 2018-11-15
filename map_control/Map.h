@@ -69,6 +69,13 @@ private:
     bool metObstacleRight(Point start, Point end);
     tuple<string,Point> getClosestPointLeft(vector<Point> samex, vector<Point> nonSamex, Point cellPoint);
     tuple<string, Point> getClosestPointRight(vector<Point> samex, vector<Point> nonSamex, Point cellPoint);
+    bool obstacleDetectedWithLine(Point start, Point end);
+    vector<Point> get_points(LineIterator &it);
+    bool isRightSameCellpoint(vector<Cellpoint> list, Point cellpoint, Point connectionPointRight);
+    bool isLeftSameCellpoint(vector<Cellpoint> list, Point cellpoint, Point connectionPointLeft);
+    bool findNremovePoint(vector<Point> &list, Point point);
+
+
     Point checkPointIfGoal(int currentPointx, int currentPointy, vector<Point> goals);
     void deleteNonClosesPoint(cell checkCell);
     // Bushfire

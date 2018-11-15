@@ -30,7 +30,22 @@ vector<Point> Cellpoint::getPointRight()
     return this->connectedToRight;
 }
 
+void Cellpoint::removePointLeft(int space)
+{
+    this->connectedToLeft.erase(connectedToLeft.begin()+space);
+}
+
+void Cellpoint::removePointRight(int space)
+{
+    this->connectedToRight.erase(connectedToRight.begin()+space);
+}
+
 Point Cellpoint::getOnCell()
 {
     return this->onCell;
+}
+
+Cellpoint::~Cellpoint()
+{
+
 }

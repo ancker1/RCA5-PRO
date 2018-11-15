@@ -23,8 +23,10 @@ public:
     void setPointRight(Point rightCell);
     vector<Point> getPointLeft();
     vector<Point> getPointRight();
+    void removePointLeft(int space);
+    void removePointRight(int space);
     Point getOnCell();
-
+    ~Cellpoint();
 protected:
     Point onCell;
     vector<Point> connectedToLeft;

@@ -10,6 +10,7 @@
 #include "opencv2/ximgproc.hpp"
 
 #include "Cellpoint.h"
+#include <vector>
 
 using namespace std;
 using namespace cv;
@@ -20,14 +21,15 @@ class Cell
 public:
     Cell();
     Cell(Cellpoint);
-
     vector<Point> getCellPointLeft();
     vector<Point> getCellPointRight();
     Point getCellPointOnCell();
-
-
+    vector<Cellpoint> getAllCellPoints(); // Only used by same x
+    void addCellPoint(Cellpoint); // Only used by same x
+    ~Cell();
 protected:
     Cellpoint cellpoint;
+    vector<Cellpoint> allCellPoints; // Only used by same x
 };
 
 #endif // CELL_H
