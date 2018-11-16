@@ -130,6 +130,7 @@ void Voronoi_Diagram::make_voronoi_points() {
     // Threshold
     for (int y = 0; y < mag.rows; y++) {
         for (int x = 0; x < mag.cols; x++) {
+
             if ( (int)mag.at<uchar>(y,x)==39 )
                 mag.at<uchar>(y,x) = 0;
 
@@ -152,6 +153,7 @@ void Voronoi_Diagram::make_voronoi_points() {
         }
     }
 
+    mag = Scalar::all(0);
     for (unsigned i = 0; i < v.size(); i++) {
         source.at<Vec3b>( v[i] ) = red;
     }

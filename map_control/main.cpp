@@ -35,30 +35,7 @@ int main() {
     vector<Point> v = v_d.get_voronoi_points();
     for (unsigned i = 0; i < v.size(); i++)
         img.at<Vec3b>( v[i] ) = red;
-    cvtColor(img, img, CV_BGR2GRAY);
-
-    for (int y = 0; y < img.rows; y++) {
-        for (int x = 0; x < img.cols; x++) {
-
-        }
-    }
-
-    print_map( img, "Img" );
-
-//    // Removing walls
-//    for (int y = 0; y < img.rows; y++) {
-//        for (int x = 0; x < img.cols; x++) {
-//            if ( img.at<uchar>(y,x)==0 ) {
-//                img.at<uchar>(y,x)=255;
-//            }
-//        }
-//    }
-
-//    // erosion and dilation
-//    Mat kernel = getStructuringElement( MORPH_RECT, Size(2,2) );
-//    Mat dst;
-//    erode( img, dst, kernel, Point(-1,-1), 3 );
-//    dilate( dst, img, kernel, Point(-1,-1), 3 );
+    print_map(img, "Img");
 
     waitKey(0);
     return 0;
