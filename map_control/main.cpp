@@ -29,13 +29,27 @@ int main() {
     Mat small_map = cv::imread( small_map_filename, IMREAD_COLOR );
 
     Mat src = big_map.clone();
-    Mat img = src.clone();
+    Voronoi_Diagram v_d(src);
 
-    Voronoi_Diagram v_d( src );
-    vector<Point> v = v_d.get_voronoi_points();
-    for (unsigned i = 0; i < v.size(); i++)
-        img.at<Vec3b>( v[i] ) = red;
-    print_map(img, "Img");
+    Mat gray;
+    cvtColor( src, gray, CV_BGR2GRAY );
+    Mat binary;
+    threshold(gray, binary, 127, 255, CV_THRESH_BINARY);
+    Mat skel( binary.size(), CV_8UC1, Scalar(0));
+    Mat temp;
+    Mat eroded;
+    Mat element = getStructuringElement( MORPH_CROSS, Size(3,3) );
+    bool done;
+    do {
+        erode( binary, eroded, element );
+        dilate( eroded, temp, element );
+        subtract( binary, temp, temp );
+        bitwise_or( skel, temp, skel );
+        eroded.copyTo( binary );
+        done =( countNonZero(binary) == 0 );
+    } while ( !done );
+
+    print_map(skel, "Skel");
 
     waitKey(0);
     return 0;
