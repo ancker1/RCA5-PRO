@@ -195,10 +195,12 @@ void Map::drawCellsPath(string pictureText, vector<Cell> cells)
                     cout << "Cell Number: " << i << " CellePoint: " << cells[i].getAllCellPoints()[k].getOnCell() << "Connected on Left: " << cells[i].getAllCellPoints()[k].getPointLeft()[j] << endl;
                     line(tempMap, cells[i].getAllCellPoints()[k].getOnCell()*scaling, cells[i].getAllCellPoints()[k].getPointLeft()[j]*scaling, Scalar(0,255,0), thickness, lineType, shift);
                 }
+             //waitKey(0);
+             // Udkommenter hvis følg med imshow(pictureText, tempMap);
         }
     }
-
     imshow(pictureText, tempMap);
+
 }
 
 vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTrap)
