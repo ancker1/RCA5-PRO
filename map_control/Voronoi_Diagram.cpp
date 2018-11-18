@@ -125,6 +125,7 @@ void Voronoi_Diagram::make_voronoi_points() {
     Sobel(img, dy, 5, 0, 1);
     Mat angle, mag;
     cartToPolar(dx, dy, mag, angle);
+    convertScaleAbs(mag, mag, 127);
 
     // Threshold
     for (int y = 0; y < mag.rows; y++) {
