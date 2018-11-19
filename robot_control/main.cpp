@@ -15,6 +15,7 @@ static boost::mutex mutex;
 float arr[7] = { 0 };
 coordinate robot;
 double robot_oz;
+Mat map;
 
 void statCallback(ConstWorldStatisticsPtr& _msg) {
 	(void)_msg;
