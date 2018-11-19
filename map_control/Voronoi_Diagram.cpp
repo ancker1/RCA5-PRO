@@ -30,6 +30,10 @@ vector<Point> Voronoi_Diagram::get_voronoi_points() {
     return voronoi_points;
 }
 
+Mat Voronoi_Diagram::get_mag_img() {
+    return mag_img;
+}
+
 void Voronoi_Diagram::watershed_algorithm(Mat &src) {
     // Create binary image from src img
     Mat bw_img;
@@ -134,10 +138,12 @@ void Voronoi_Diagram::make_voronoi_points() {
             if ( (int)mag.at<uchar>(y,x)==39 )
                 mag.at<uchar>(y,x) = 0;
 
-            if ( (int)mag.at<uchar>(y,x)>70 )
+            if ( (int)mag.at<uchar>(y,x)>127 )
                 mag.at<uchar>(y,x) = 255;
         }
     }
+
+    mag_img = mag.clone();
 
     // Remove walls for img
     for (unsigned i = 0; i < walls.size(); i++) {

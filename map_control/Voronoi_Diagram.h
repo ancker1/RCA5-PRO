@@ -26,11 +26,13 @@ public:
     Mat get_brushfire_grid();
     Mat get_rooms_map();
     Mat get_binary_img();
+    Mat get_mag_img();
     vector<Point> get_voronoi_points();
 
 private:
     Mat source;
     Mat brushfire_grid;
+    Mat mag_img;
     Mat voronoi_diagram_img;
     Mat rooms_map;
     Mat binary_img;

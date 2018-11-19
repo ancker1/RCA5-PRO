@@ -1,8 +1,8 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 #include "opencv2/imgcodecs.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/imgproc.hpp"
 #include "opencv2/ximgproc.hpp"
 
 #include <iostream>
@@ -42,32 +42,42 @@ int main() {
     Mat big_map = cv::imread( big_map_filename, IMREAD_COLOR );
     Mat small_map = cv::imread( small_map_filename, IMREAD_COLOR );
 
-//    // Skeletinize
-//    Mat gray, binary;
-//    cvtColor( src, gray, CV_BGR2GRAY );
-//    threshold(gray, binary, 127, 255, CV_THRESH_BINARY);
-//    Mat skel(binary.size(), CV_8UC1, Scalar(0)), temp, eroded, element;
-//    element = getStructuringElement(MORPH_CROSS, Size(3,3));
-//    bool done;
-//    do {
-//        erode( binary, eroded, element );
-//        dilate( eroded, temp, element );
-//        subtract( binary, temp, temp );
-//        bitwise_or( skel, temp, skel );
-//        eroded.copyTo( binary );
-//        done =( countNonZero(binary) == 0 );
-//    } while ( !done );
+    Mat src = big_map.clone();
+    Voronoi_Diagram v_d(src);
+    Mat mag = v_d.get_mag_img();
 
-//    // Remove outside map
-//    for (int y = 0; y < skel.rows; y++) {
-//        skel.at<uchar>( y, 0 ) = 0;
-//        skel.at<uchar>( y, skel.cols-1 ) = 0;
-//    }
-//    for (int x = 0; x < skel.cols; x++) {
-//        skel.at<uchar>( 0, x ) = 0;
-//        skel.at<uchar>( skel.rows-1, x ) = 0;
-//    }
-//    print_map( skel, "Skel" );
+    // Skeletinize
+    Mat gray, binary;
+    cvtColor( src, gray, CV_BGR2GRAY );
+    threshold(gray, binary, 127, 255, CV_THRESH_BINARY);
+    Mat skel(binary.size(), CV_8UC1, Scalar(0)), temp, eroded, element;
+    element = getStructuringElement(MORPH_CROSS, Size(3,3));
+    bool done;
+    do {
+        erode( binary, eroded, element );
+        dilate( eroded, temp, element );
+        subtract( binary, temp, temp );
+        bitwise_or( skel, temp, skel );
+        eroded.copyTo( binary );
+        done =( countNonZero(binary) == 0 );
+    } while ( !done );
+
+    for (int y = 0; y < skel.rows; y++) {
+        for (int x = 0; x < skel.cols; x++) {
+            skel.at<uchar>( y, 0 ) = 0;
+            skel.at<uchar>( y, skel.cols-1 ) = 0;
+            skel.at<uchar>( 0, x ) = 0;
+            skel.at<uchar>( skel.rows-1, x ) = 0;
+
+            if ( (int)skel.at<uchar>(y,x) != 0 ) {
+                skel.at<uchar>(y,x) = 127;
+            }
+        }
+    }
+
+    Mat dst = mag + skel;
+    dst = dst + skel;
+    print_map( dst, "Dst" );
 
     waitKey(0);
     return 0;
