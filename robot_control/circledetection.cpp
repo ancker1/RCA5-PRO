@@ -78,8 +78,10 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 				} */
 
 				// Height/width ratio
-				RotatedRect min_bounding_rect = minAreaRect(hull);
-				ratio = min_bounding_rect.size.height / min_bounding_rect.size.width;
+				Point top;
+				Rect bounding_rect = findBoundaries(hull, top);
+				if (bounding_rect.width < 3) continue;
+				ratio = bounding_rect.height / bounding_rect.width;
 
 				// Circularity
 				double perimeter_length = 0;
@@ -105,80 +107,91 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 				int right_area = 0;
 				circle_side side;
 
-				for (int row = 0; row < min_bounding_rect.size.height; row++) {
-					for (int col = 0; col < min_bounding_rect.size.width; col++) {
-						if (image_filtered.at<uchar>(min_bounding_rect.boundingRect().y + row, min_bounding_rect.boundingRect().x + col) == 255) {
-							col < min_bounding_rect.size.width / 2 ? left_area++ : right_area++;
+				for (int row = 0; row < bounding_rect.height; row++) {
+					for (int col = 0; col < bounding_rect.width; col++) {
+						if (image_filtered.at<uchar>(bounding_rect.y + row, bounding_rect.x + col) != 0) {
+							if (col == bounding_rect.width && bounding_rect.width % 2 == 1) continue;
+							col < bounding_rect.width / 2 ? left_area++ : right_area++;
 						}
 					}
 				}
 				left_area < right_area ? side = LEFT : side = RIGHT;
+				//putText(image, format("Left = %d", left_area), Point(50, 50), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));
+				//putText(image, format("Right = %d", right_area), Point(50, 60), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));
 
 				// Is circle?
-				if (0.9 <= circularity && circularity <= 1.1) {
+				if (0.95 <= circularity && circularity <= 1.05) {
 
 					// ONE CIRCLE
 					circlevector.push_back(circleInfo());
 					circlevector[circlevector.size() - 1].r		= sqrt(hull_area / PI);
-					circlevector[circlevector.size() - 1].x0	= min_bounding_rect.center.x;
-					circlevector[circlevector.size() - 1].y0	= min_bounding_rect.center.y;
+					circlevector[circlevector.size() - 1].x0	= bounding_rect.x + bounding_rect.width / 2;
+					circlevector[circlevector.size() - 1].y0	= bounding_rect.y + bounding_rect.height / 2;
 
-				} else if (0.9 * image_filtered.rows <= min_bounding_rect.size.height) {
+				} else if (0.7 * image_filtered.rows <= bounding_rect.height) {
 
 					// CIRCLE CLOSE
 					circlevector.push_back(circleInfo());
-					circlevector[circlevector.size() - 1].x0	= min_bounding_rect.center.x;
-					circlevector[circlevector.size() - 1].y0	= min_bounding_rect.center.y;
+					circlevector[circlevector.size() - 1].x0	= bounding_rect.x + bounding_rect.width / 2;
+					circlevector[circlevector.size() - 1].y0	= bounding_rect.y + bounding_rect.height / 2;
 
 					// COULD BE BETTER
-					circlevector[circlevector.size() - 1].r		= max(min_bounding_rect.size.height, min_bounding_rect.size.width) / 2;
+					circlevector[circlevector.size() - 1].r		= max(bounding_rect.height, bounding_rect.width) / 2;
 
-				} else if (1 <= ratio && ratio <= 2 && 0.5 <= circularity) {
-
-					// AT LEAST HALF CIRCLE
-					circlevector.push_back(circleInfo());
-					circlevector[circlevector.size() - 1].r		= min_bounding_rect.size.height / 2;
-					circlevector[circlevector.size() - 1].y0	= min_bounding_rect.center.y;
-
-					if (side == LEFT) {
-						circlevector[circlevector.size() - 1].x0	= hull[0].x - min_bounding_rect.size.width + circlevector[circlevector.size() - 1].r;
-					} else {
-						circlevector[circlevector.size() - 1].x0	= hull[0].x - circlevector[circlevector.size() - 1].r;
-					}
-					
-				} else if (2 <= ratio) {
-					
-					// LESS THAN HALF CIRCLE SHOWING
-					circlevector.push_back(circleInfo());
-					circlevector[circlevector.size() - 1].r		= min_bounding_rect.size.width / 2 + pow(min_bounding_rect.size.height, 2) / (8 * min_bounding_rect.size.width);
-					circlevector[circlevector.size() - 1].y0	= min_bounding_rect.center.y;
-					if (side == LEFT) {
-						circlevector[circlevector.size() - 1].x0	= hull[0].x - min_bounding_rect.size.width + circlevector[circlevector.size() - 1].r;
-					} else {
-						circlevector[circlevector.size() - 1].x0	= hull[0].x - circlevector[circlevector.size() - 1].r;
-					}
-
-				} else if (ratio < 0.7 && 0.5 <= circularity) {
+				} else if (ratio <= 0.95 && left_area + right_area < bounding_rect.width * bounding_rect.height * 4 / PI) {
 
 					// MORE THAN ONE CIRCLE
 					circlevector.push_back(circleInfo());
-					circlevector[circlevector.size() - 1].r		= min_bounding_rect.size.height / 2;
-					circlevector[circlevector.size() - 1].y0	= min_bounding_rect.center.y;
+					circlevector[circlevector.size() - 1].r		= bounding_rect.height / 2;
+					circlevector[circlevector.size() - 1].y0	= bounding_rect.y + bounding_rect.height / 2;
+					circlevector[circlevector.size() - 1].x0	= top.x;
+
+					/* For detecting the small circle as well when 2 are present (unprecise)
 					if (side == LEFT) {
-						circlevector[circlevector.size() - 1].x0	= hull[0].x - min_bounding_rect.size.width + circlevector[circlevector.size() - 1].r;
-					} else {
 						circlevector[circlevector.size() - 1].x0	= hull[0].x - circlevector[circlevector.size() - 1].r;
+					} else {
+						circlevector[circlevector.size() - 1].x0	= bounding_rect.x + circlevector[circlevector.size() - 1].r;
 					}
 
 					circlevector.push_back(circleInfo());
 					// COULD BE BETTER
-					circlevector[circlevector.size() - 1].r		= (min_bounding_rect.size.width - min_bounding_rect.size.height) / 2;
-					circlevector[circlevector.size() - 1].y0	= min_bounding_rect.center.y;
+					circlevector[circlevector.size() - 1].r		= (bounding_rect.width - bounding_rect.height) / 2;
+					circlevector[circlevector.size() - 1].y0	= bounding_rect.y + bounding_rect.height / 2;
 					if (side == LEFT) {
-						circlevector[circlevector.size() - 1].x0	= hull[0].x - circlevector[circlevector.size() - 1].r;
+						circlevector[circlevector.size() - 1].x0	= bounding_rect.x + circlevector[circlevector.size() - 1].r;
 					} else {
-						circlevector[circlevector.size() - 1].x0	= hull[0].x - min_bounding_rect.size.width + circlevector[circlevector.size() - 1].r;
+						circlevector[circlevector.size() - 1].x0	= hull[0].x - circlevector[circlevector.size() - 1].r;
+					}*/
+					//putText(image, format("Multiple (ratio: %5.2f)", ratio), Point(circlevector[circlevector.size() - 1].x0, circlevector[circlevector.size() - 1].y0), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));
+					//rectangle(image, bounding_rect, Scalar(200, 200, 200));
+
+				} else if (ratio <= 2) {
+
+					// AT LEAST HALF CIRCLE
+					circlevector.push_back(circleInfo());
+					circlevector[circlevector.size() - 1].r		= bounding_rect.height / 2;
+					circlevector[circlevector.size() - 1].y0	= bounding_rect.y + bounding_rect.height / 2;
+
+					if (side == LEFT) {
+						circlevector[circlevector.size() - 1].x0	= bounding_rect.x + circlevector[circlevector.size() - 1].r;
+					} else {
+						circlevector[circlevector.size() - 1].x0	= bounding_rect.x + bounding_rect.width - circlevector[circlevector.size() - 1].r;
 					}
+					//putText(image, format("More"), Point(circlevector[circlevector.size() - 1].x0, circlevector[circlevector.size() - 1].y0), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));
+					
+				} else if (2 <= ratio && ratio <= 6) {
+					
+					// LESS THAN HALF CIRCLE SHOWING
+					circlevector.push_back(circleInfo());
+					circlevector[circlevector.size() - 1].r		= bounding_rect.width / 2 + pow(bounding_rect.height, 2) / (8 * bounding_rect.width);
+					circlevector[circlevector.size() - 1].y0	= bounding_rect.y + bounding_rect.height / 2;
+
+					if (side == LEFT) {
+						circlevector[circlevector.size() - 1].x0	= bounding_rect.x + circlevector[circlevector.size() - 1].r;
+					} else {
+						circlevector[circlevector.size() - 1].x0	= bounding_rect.x + bounding_rect.width - circlevector[circlevector.size() - 1].r;
+					}
+					//putText(image, format("Less"), Point(circlevector[circlevector.size() - 1].x0, circlevector[circlevector.size() - 1].y0), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));
 
 				} else {
 
@@ -203,6 +216,26 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 	return circlevector;
 }
 
+Rect CircleDetection::findBoundaries(vector<Point>& hull, Point& top) {
+	int x_min = INT_MAX, x_max = 0, y_min = INT_MAX, y_max = 0;
+
+	for (unsigned int i = 0; i < hull.size(); i++) {
+		if (hull[i].x < x_min) x_min = hull[i].x;
+		if (x_max < hull[i].x) x_max = hull[i].x;
+		if (hull[i].y < y_min) {
+			y_min = hull[i].y;
+			top = hull[i];
+		}
+		if (y_max < hull[i].y) y_max = hull[i].y;
+	}
+
+	//if (x_min == INT_MAX || x_max == 0 || y_min == INT_MAX || y_max == 0)
+	//	return Rect(0, 0, 10, 10);
+
+	return Rect(x_min, y_min, x_max - x_min, y_max - y_min);
+}
+
+
 void CircleDetection::drawCircles(Mat& image, vector<circleInfo>& circles) {
 	putText(image, format("Marbles: %d", circles.size()), Point(20, 20), FONT_HERSHEY_SIMPLEX, 0.4, Scalar(255, 255, 255), 1, LINE_AA);
 
@@ -213,7 +246,7 @@ void CircleDetection::drawCircles(Mat& image, vector<circleInfo>& circles) {
 		circle(image, Point(circles[i].x0, circles[i].y0), circles[i].r,	Scalar(255, 255, 255), 1, LINE_AA);
 
 		// Display angle and distance to marbles
-		putText(image, format("%5.2f", circles[i].angle), Point(circles[i].x0 - 20, circles[i].y0 - circles[i].r - 20),
+		putText(image, format("%5.2f", circles[i].angle), Point(circles[i].x0 + 20, circles[i].y0 - circles[i].r - 20),
 						FONT_HERSHEY_SIMPLEX, 0.4, Scalar(0, 0, 255), 1, LINE_AA);
 		putText(image, format("%5.2f", circles[i].d), Point(circles[i].x0 - 20, circles[i].y0 - circles[i].r - 10),
 						FONT_HERSHEY_SIMPLEX, 0.4, Scalar(0, 0, 255), 1, LINE_AA);
@@ -221,8 +254,7 @@ void CircleDetection::drawCircles(Mat& image, vector<circleInfo>& circles) {
 }
 
 void CircleDetection::calcCirclePosition(vector<circleInfo>& circles, int imagewidth) {
-	float r     = 0.5;
-	float theta = 1.047;
+	const float r = 0.5, theta = 1.047;
 
 	for (unsigned int i = 0; i < circles.size(); i++) {
 		circles[i].d			= r / tan(theta * circles[i].r / imagewidth);

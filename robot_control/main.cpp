@@ -288,8 +288,8 @@ int main(int _argc, char **_argv) {
 		/*************************************************************/
 		/*       Output variables of Fuzzy Controller is set         */
 		/*************************************************************/
-		speed = controller->getSpeed();
-		dir = controller->getDirection();
+		//speed = controller->getSpeed();
+		//dir = controller->getDirection();
 /*
 		std::cout << "RelAngle: " << controller->getRelativeAngleToGoal() << std::endl
 							<< "RelDist: "  << controller->getRelativeDistanceToGoal() << std::endl;
