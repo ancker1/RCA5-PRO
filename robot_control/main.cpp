@@ -77,6 +77,7 @@ void cameraCallback(ConstImageStampedPtr& msg) {
 	CircleDetection    cd;
 	vector<circleInfo> circles = cd.detectCircles(im, CD_SPR);
 	cd.drawCircles(im, circles);
+	cd.mapMarbles(map, robot.x, robot.y, robot_oz, circles);
 
 	im = im.clone();
 	cv::cvtColor(im, im, CV_BGR2RGB);
@@ -152,6 +153,10 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 }
 
 int main(int _argc, char **_argv) {
+	map = imread("../../map_control/big_floor_plan.png");
+
+	if (!map.data) return 1;
+
 	// Load gazebo
 	gazebo::client::setup(_argc, _argv);
 
@@ -313,7 +318,10 @@ int main(int _argc, char **_argv) {
 		int key = cv::waitKey(1);
 		mutex.unlock();
 
-		if (key == key_esc) break;
+		if (key == key_esc) {
+			imshow("MAP", map);
+			break;
+		}
 
 		if ((key == key_up) && (speed <= 1.2f)) speed += 0.05;
 		else if ((key == key_down) && (speed >= -1.2f)) speed -= 0.05;
@@ -369,7 +377,8 @@ int main(int _argc, char **_argv) {
 
 
 	}
-
 	// Make sure to shut everything down.
 	gazebo::client::shutdown();
+
+	waitKey();
 }

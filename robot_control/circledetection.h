@@ -30,10 +30,10 @@ public:
 	~CircleDetection();
 
 	vector<circleInfo>	detectCircles(Mat& image, detection_algorithm algo = CD_HOUGH);
-	Rect								findBoundaries(vector<Point>& hull, Point& top);
+	void								findBoundaries(vector<Point>& hull, Point& top, Point& right, Point& bottom, Point& left);
 	void								drawCircles(Mat& image, vector<circleInfo>& circles);
 	void								calcCirclePosition(vector<circleInfo>& circles, int imagewidth);
-	void								mapMarbles(Mat& map, int x_robot, int y_robot, float angle, vector<circleInfo>& circles);
+	void								mapMarbles(Mat& map, int x_robot, int y_robot, float angle_robot, vector<circleInfo>& circles);
 
 private:
 };
