@@ -15,6 +15,8 @@ using std::endl;
 
 #include <cmath>
 
+#define MAP_ENLARGEMENT 10
+
 enum detection_algorithm {CD_HOUGH, CD_SPR};
 enum circle_side {LEFT, RIGHT};
 
@@ -32,8 +34,8 @@ public:
 	vector<circleInfo>	detectCircles(Mat& image, detection_algorithm algo = CD_HOUGH);
 	void								findBoundaries(vector<Point>& hull, Point& top, Point& right, Point& bottom, Point& left);
 	void								drawCircles(Mat& image, vector<circleInfo>& circles);
-	void								calcCirclePosition(vector<circleInfo>& circles, int imagewidth);
-	void								mapMarbles(Mat& map, int x_robot, int y_robot, float angle_robot, vector<circleInfo>& circles);
+	void								calcCirclePositions(vector<circleInfo>& circles, int imagewidth);
+	void								mapMarbles(Mat& map, double x_robot, double y_robot, double angle_robot, vector<circleInfo>& circles);
 
 private:
 };

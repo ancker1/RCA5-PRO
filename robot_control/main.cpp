@@ -80,10 +80,13 @@ void cameraCallback(ConstImageStampedPtr& msg) {
 	cd.mapMarbles(map, robot.x, robot.y, robot_oz, circles);
 
 	im = im.clone();
-	cv::cvtColor(im, im, CV_BGR2RGB);
+	cvtColor(im, im, CV_BGR2RGB);
+
+	namedWindow("MAP", WINDOW_NORMAL);
 
 	mutex.lock();
-	cv::imshow("camera", im);
+	imshow("camera", im);
+	imshow("MAP", map);
 	mutex.unlock();
 }
 
@@ -154,8 +157,8 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 
 int main(int _argc, char **_argv) {
 	map = imread("../../map_control/big_floor_plan.png");
-
 	if (!map.data) return 1;
+	resize(map, map, map.size() * MAP_ENLARGEMENT, 0, 0, INTER_NEAREST);
 
 	// Load gazebo
 	gazebo::client::setup(_argc, _argv);
@@ -319,7 +322,6 @@ int main(int _argc, char **_argv) {
 		mutex.unlock();
 
 		if (key == key_esc) {
-			imshow("MAP", map);
 			break;
 		}
 
@@ -379,6 +381,4 @@ int main(int _argc, char **_argv) {
 	}
 	// Make sure to shut everything down.
 	gazebo::client::shutdown();
-
-	waitKey();
 }

@@ -81,7 +81,7 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 				Point top, right, bottom, left;
 				findBoundaries(hull, top, right, bottom, left);
 				Rect bounding_rect(left.x, top.y, right.x - left.x, bottom.y - top.y);
-				if (bounding_rect.width < 3) continue;
+				if (bounding_rect.width < 2) continue;
 				ratio = double(bounding_rect.height) / double(bounding_rect.width);
 
 				// Circularity
@@ -169,10 +169,25 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 				} else if (ratio <= 0.95 && left_area + right_area < bounding_rect.width * bounding_rect.height * 4 / PI) {
 
 					// MORE THAN ONE CIRCLE
+					/*
 					circlevector.push_back(circleInfo());
 					circlevector[circlevector.size() - 1].r		= bounding_rect.height / 2;
 					circlevector[circlevector.size() - 1].y0	= bounding_rect.y + bounding_rect.height / 2;
 					circlevector[circlevector.size() - 1].x0	= top.x;
+					*/
+
+					// Hough Circle
+					vector<Vec3f> circles;
+					Mat slice;
+					image_filtered(bounding_rect).copyTo(slice);
+					GaussianBlur(slice, slice, Size(9, 9), 2, 2);
+					HoughCircles(slice, circles, HOUGH_GRADIENT, 1, slice.rows / 2, 5, slice.rows / 4, 0, slice.rows);
+					for (unsigned int j = 0; j < circles.size(); j++) {
+						circlevector.push_back(circleInfo());
+						circlevector[circlevector.size() - 1].x0	= circles[j][0] + bounding_rect.x;
+						circlevector[circlevector.size() - 1].y0	= circles[j][1] + bounding_rect.y;
+						circlevector[circlevector.size() - 1].r		= bounding_rect.height < circles[j][2] ? bounding_rect.height : circles[j][2];
+					}
 
 					/* For detecting the small circle as well when 2 are present (unprecise)
 					if (side == LEFT) {
@@ -190,8 +205,9 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 					} else {
 						circlevector[circlevector.size() - 1].x0	= hull[0].x - circlevector[circlevector.size() - 1].r;
 					}*/
+
 					//putText(image, format("Multiple (ratio: %5.2f)", ratio), Point(circlevector[circlevector.size() - 1].x0, circlevector[circlevector.size() - 1].y0), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));
-					//rectangle(image, bounding_rect, Scalar(200, 200, 200));
+					//rectangle(image, bounding_rect, Scalar(0, 0, 255));
 
 				} else if (ratio <= 2) {
 
@@ -205,6 +221,7 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 					} else {
 						circlevector[circlevector.size() - 1].x0	= bounding_rect.x + bounding_rect.width - circlevector[circlevector.size() - 1].r;
 					}
+
 					//putText(image, format("More"), Point(circlevector[circlevector.size() - 1].x0, circlevector[circlevector.size() - 1].y0), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));
 					
 				} else if (2 <= ratio) {
@@ -219,6 +236,7 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 					} else {
 						circlevector[circlevector.size() - 1].x0	= bounding_rect.x + bounding_rect.width - circlevector[circlevector.size() - 1].r;
 					}
+
 					//putText(image, format("Less"), Point(circlevector[circlevector.size() - 1].x0, circlevector[circlevector.size() - 1].y0), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));
 
 				} else {
@@ -233,7 +251,7 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 	default:;
 	}
 
-	calcCirclePosition(circlevector, image.cols);
+	calcCirclePositions(circlevector, image.cols);
 
 	return circlevector;
 }
@@ -270,7 +288,7 @@ void CircleDetection::drawCircles(Mat& image, vector<circleInfo>& circles) {
 	}
 }
 
-void CircleDetection::calcCirclePosition(vector<circleInfo>& circles, int imagewidth) {
+void CircleDetection::calcCirclePositions(vector<circleInfo>& circles, int imagewidth) {
 	const float r = 0.5, theta = 1.047;
 
 	for (unsigned int i = 0; i < circles.size(); i++) {
@@ -279,8 +297,24 @@ void CircleDetection::calcCirclePosition(vector<circleInfo>& circles, int imagew
 	}
 }
 
-void CircleDetection::mapMarbles(Mat& map, int x_robot, int y_robot, float angle_robot, vector<circleInfo>& circles) {
+void CircleDetection::mapMarbles(Mat& map, double x_robot, double y_robot, double angle_robot, vector<circleInfo>& circles) {
+	const double mtopix = MAP_ENLARGEMENT * 10 / 7;
+	const double radius = 0.5 * mtopix;
+	const int h_shift = MAP_ENLARGEMENT * 80 / 2;
+	const int w_shift = MAP_ENLARGEMENT * 120 / 2;
+	Vec3b* current_pixel;
+	unsigned char certainty = 255;
+
 	for (unsigned int i = 0; i < circles.size(); i++) {
-		map.at<Vec3b>(x_robot + circles[i].d * cos(angle_robot + circles[i].angle), y_robot + circles[i].d * sin(angle_robot + circles[i].angle)) = Vec3b(0, 0, 255);
+		certainty = 255 / (1 < circles[i].d ? sqrt(circles[i].d) : 1);
+		current_pixel = &map.at<Vec3b>(Point(w_shift + mtopix * (circles[i].d * cos(angle_robot + circles[i].angle) + x_robot), h_shift - mtopix * (circles[i].d * sin(angle_robot + circles[i].angle) + y_robot)));
+		if (current_pixel->val[1] == 255 || current_pixel->val[0] + certainty <= 255) {
+			*current_pixel = Vec3b(current_pixel->val[0] + certainty, 0, 0);
+		}
+		if (circles[i].d <= 10) {
+			circle(map, Point(w_shift + mtopix * (circles[i].d * cos(angle_robot + circles[i].angle) + x_robot), h_shift - mtopix * (circles[i].d * sin(angle_robot + circles[i].angle) + y_robot)), radius, Scalar(certainty, 0, 0));
+		}
 	}
+
+	map.at<Vec3b>(Point(w_shift + mtopix * x_robot, h_shift - mtopix * y_robot)) = Vec3b(0, 0, 255);
 }
