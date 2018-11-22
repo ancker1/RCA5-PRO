@@ -28,32 +28,35 @@ class Zhang_suen {
 
         int num_zero_pixel_neighbours( const cv::Mat &img,
                                        const Point &p );
+
         int connectivity( const cv::Mat &img,
                           const Point &p );
 
         int yokoi_connectivity( const cv::Mat &img,
                                 const Point &p );
 
-        void delete_pixels( const cv::Mat &img,
-                            const std::vector<Point> &v);
+        void delete_pixels( cv::Mat &img,
+                            std::vector<Point> &v);
 
-        void remove_staircases( cv::Mat &img);
+        void remove_staircases( cv::Mat &img );
 
         void zhang_suen_thin(cv::Mat &img);
 
         void thin( cv::Mat &img,
-                   bool need_boundary_smoothing = false,
-                   bool need_acute_angle_emphasis = false,
-                   bool destair = false);
+                   bool need_boundary_smoothing,
+                   bool need_acute_angle_emphasis,
+                   bool destair);
 
-        void boundary_smooth();
+        void boundary_smooth( cv::Mat &img );
 
-        void acute_angle_emphasis();
+        void acute_angle_emphasis( cv::Mat &img );
 
-        bool match( const std::vector<Point> &points,
+        bool match( const std::vector<uchar> &points,
                     const std::vector<uchar> &values);
 
-        bool match_templates( const Point &point, int k );
+        bool match_templates( const cv::Mat &img,
+                              const Point &point,
+                              int k );
 };
 
 #endif // ZHANG_SUEN_H
