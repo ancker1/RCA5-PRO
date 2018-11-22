@@ -161,7 +161,23 @@ int main() {
     threshold(gray, gray, 127, 255, CV_THRESH_BINARY);
     Mat dst;
     thinning( gray, dst, THINNING_ZHANGSUEN );
-    print_map( dst, "Dst" );
+    vector<Point> voronoi_points;
+    for (int y = 0; y < dst.rows; y++) {
+        for (int x = 0; x < dst.cols; x++) {
+            dst.at<uchar>(y, 0) = 0;
+            dst.at<uchar>(y, dst.cols-1) = 0;
+            dst.at<uchar>(0, x) = 0;
+            dst.at<uchar>(dst.rows-1, x) = 0;
+
+            if ( (int)dst.at<uchar>(y,x) == 255 )
+                voronoi_points.push_back( Point(x,y) );
+        }
+    }
+
+    for ( auto& p : voronoi_points )
+        src.at<Vec3b>( p ) = red;
+
+    print_map( src, "Voronoi map" );
 
     waitKey(0);
     return 0;
