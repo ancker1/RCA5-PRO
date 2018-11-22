@@ -204,16 +204,10 @@ void GraphLearner::init_environment()
 	graph.AddNode(node7);
 
 	node0->AddNeighbor(node1);
-	node1->AddNeighbor(node0);
-	node1->AddNeighbor(node2);
-	node2->AddNeighbor(node1);
-	node2->AddNeighbor(node3);
-	node3->AddNeighbor(node2);
-	node3->AddNeighbor(node6);
-	node3->AddNeighbor(node7);
-	node3->AddNeighbor(node4);
-	node4->AddNeighbor(node3);
-	node4->AddNeighbor(node5);
+	node1->AddNeighbor({ node0, node2 });
+	node2->AddNeighbor({ node1, node3 });
+	node3->AddNeighbor({ node2, node6, node7, node4});
+	node4->AddNeighbor({ node3, node5 });
 	node5->AddNeighbor(node4);
 	node6->AddNeighbor(node3);
 	node7->AddNeighbor(node3);
