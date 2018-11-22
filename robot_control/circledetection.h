@@ -35,7 +35,7 @@ public:
 	void								findBoundaries(vector<Point>& hull, Point& top, Point& right, Point& bottom, Point& left);
 	void								drawCircles(Mat& image, vector<circleInfo>& circles);
 	void								calcCirclePositions(vector<circleInfo>& circles, int imagewidth);
-	void								mapMarbles(Mat& map, double x_robot, double y_robot, double angle_robot, vector<circleInfo>& circles);
+	void								mapMarbles(Mat& map, double x_robot, double y_robot, double angle_robot, vector<circleInfo>& circles, int (&detections)[4]);
 
 private:
 };
