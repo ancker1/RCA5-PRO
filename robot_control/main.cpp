@@ -16,6 +16,7 @@ float arr[7] = { 0 };
 coordinate robot;
 double robot_oz;
 Mat map;
+int detections[4];
 
 void statCallback(ConstWorldStatisticsPtr& _msg) {
 	(void)_msg;
@@ -77,12 +78,13 @@ void cameraCallback(ConstImageStampedPtr& msg) {
 	CircleDetection    cd;
 	vector<circleInfo> circles = cd.detectCircles(im, CD_SPR);
 	cd.drawCircles(im, circles);
+	cd.mapMarbles(map, robot.x, robot.y, robot_oz, circles, detections);
 
 	im = im.clone();
-	cv::cvtColor(im, im, CV_BGR2RGB);
+	cvtColor(im, im, CV_BGR2RGB);
 
 	mutex.lock();
-	cv::imshow("camera", im);
+	imshow("camera", im);
 	mutex.unlock();
 }
 
@@ -152,6 +154,13 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 }
 
 int main(int _argc, char **_argv) {
+	map = imread("../../map_control/big_floor_plan.png");
+	if (!map.data) return 1;
+	resize(map, map, map.size() * MAP_ENLARGEMENT, 0, 0, INTER_NEAREST);
+	for (int i = 0; i < 4; i++) {
+		detections[i] = 0;
+	}
+
 	// Load gazebo
 	gazebo::client::setup(_argc, _argv);
 
@@ -288,8 +297,8 @@ int main(int _argc, char **_argv) {
 		/*************************************************************/
 		/*       Output variables of Fuzzy Controller is set         */
 		/*************************************************************/
-		speed = controller->getSpeed();
-		dir = controller->getDirection();
+		//speed = controller->getSpeed();
+		//dir = controller->getDirection();
 /*
 		std::cout << "RelAngle: " << controller->getRelativeAngleToGoal() << std::endl
 							<< "RelDist: "  << controller->getRelativeDistanceToGoal() << std::endl;
@@ -313,7 +322,17 @@ int main(int _argc, char **_argv) {
 		int key = cv::waitKey(1);
 		mutex.unlock();
 
-		if (key == key_esc) break;
+		if (key == key_esc) {
+			// Display map
+			/*for (int i = 0; i < 3; i++) {
+				putText(map, format("%2d-%2d: %d", i * 10, i * 10 + 9, detections[i]), Point(10, (i + 2) * 15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 0, 0));
+			}
+			putText(map, format("  30+: %d", detections[3]), Point(10, 5 * 15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 0, 0));
+
+			imshow("Map", map);
+			waitKey();*/
+			break;
+		}
 
 		if ((key == key_up) && (speed <= 1.2f)) speed += 0.05;
 		else if ((key == key_down) && (speed >= -1.2f)) speed -= 0.05;
@@ -369,7 +388,6 @@ int main(int _argc, char **_argv) {
 
 
 	}
-
 	// Make sure to shut everything down.
 	gazebo::client::shutdown();
 }
