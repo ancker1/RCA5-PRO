@@ -20,6 +20,8 @@ class Zhang_suen {
         Zhang_suen( const Mat &img );
         ~Zhang_suen();
 
+        Mat get_img();
+
     protected:
         Mat src;
 
@@ -43,9 +45,9 @@ class Zhang_suen {
         void zhang_suen_thin(cv::Mat &img);
 
         void thin( cv::Mat &img,
-                   bool need_boundary_smoothing,
-                   bool need_acute_angle_emphasis,
-                   bool destair);
+                   bool need_boundary_smoothing = false,
+                   bool need_acute_angle_emphasis = false,
+                   bool destair = false );
 
         void boundary_smooth( cv::Mat &img );
 

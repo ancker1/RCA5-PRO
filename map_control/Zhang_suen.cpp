@@ -1,12 +1,27 @@
 #include "Zhang_suen.h"
-// -----------------------------------------------------------------------
+
+/*************************************************************************
+ * Public
+ ************************************************************************/
+
 Zhang_suen::Zhang_suen() {}
 // -----------------------------------------------------------------------
 Zhang_suen::~Zhang_suen() {}
 // -----------------------------------------------------------------------
 Zhang_suen::Zhang_suen( const Mat &img ) {
     src = img.clone();
+    thin( src, true, true, true );
 }
+// -----------------------------------------------------------------------
+Mat Zhang_suen::get_img() {
+    return src;
+}
+//------------------------------------------------------------------------
+
+/*************************************************************************
+ * Protected
+ ************************************************************************/
+
 // -----------------------------------------------------------------------
 int Zhang_suen::num_one_pixel_neighbours( const cv::Mat &img,
                                           const Point &p) {
@@ -149,9 +164,9 @@ void Zhang_suen::remove_staircases( cv::Mat &img ) {
 }
 // -----------------------------------------------------------------------
 void Zhang_suen::thin( cv::Mat &img,
-                       bool need_boundary_smoothing = false,
-                       bool need_acute_angle_emphasis = false,
-                       bool destair = false ) {
+                       bool need_boundary_smoothing,
+                       bool need_acute_angle_emphasis,
+                       bool destair ) {
 
     for (int y = 0; y < img.rows; y++) {
         uchar *iter = img.ptr<uchar>(y);
@@ -187,7 +202,10 @@ void Zhang_suen::thin( cv::Mat &img,
         }
     }
 
-    zhang_suen_thin(image);
+    zhang_suen_thin( image );
+
+    cout << "Zhang" << endl;
+    cout << image << endl;
 
     if ( destair == true )
         remove_staircases(image);
@@ -200,6 +218,9 @@ void Zhang_suen::thin( cv::Mat &img,
             *dst_iter = ( *src_iter++ > 0 ) ? 0 : 255;
         }
     }
+
+    cout << "Thin" << endl;
+    cout << img << endl;
 }
 // -----------------------------------------------------------------------
 void Zhang_suen::zhang_suen_thin(Mat &img) {
