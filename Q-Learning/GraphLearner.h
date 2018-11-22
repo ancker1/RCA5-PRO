@@ -60,7 +60,7 @@ private:
 	LinkedList* Q = new LinkedList(*head);
 	
 
-	float discount_factor = 0.9;
+	float discount_factor = 0.15;
 	float learning_rate = 0.5;
 	float alpha = 0.5;
 	float epsilon = 0.1;

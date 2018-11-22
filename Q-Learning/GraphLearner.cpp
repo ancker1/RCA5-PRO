@@ -11,7 +11,7 @@ GraphLearner::GraphLearner()
 
 void GraphLearner::QLearning()
 {
-	for (int i = 0; i < 5000; i++)
+	for (int i = 0; i < 15000; i++)
 	{
 		
 		graph.Init();			// Will place current node at starting node.
@@ -21,12 +21,12 @@ void GraphLearner::QLearning()
 			std::cout << i << std::endl;
 		float sum_r = 0; // TEST
 		int steps = 0;
-		while ((int)cstate.visited_nodes != 255 && steps < 10)	// Should be after x time units.. / moves / all rooms visited
+		while ((int)cstate.visited_nodes != 65535 && steps <= 6)	// Should be after x time units.. / moves / all rooms visited
 		{
 			action a = GetNextAction(cstate);
 			float reward = GetReward(cstate, a);
 			state nstate = GetNextState(cstate, a);
-
+			
 			sum_r += reward;	// Used for plot
 
 			int node = cstate.current_node->GetValue();
@@ -46,7 +46,7 @@ void GraphLearner::QLearning()
 		zplot.push_back(steps);
 	}
 	//Q2->print_data();
-	//std::cout << "Size, Q2: " << Q2->GetSize() << std::endl;
+	//std::cout << "Size, Q: " << Q->GetSize() << std::endl;
 }
 
 state GraphLearner::GetNextState(state s, action a)
@@ -139,15 +139,15 @@ void GraphLearner::print_route()
 	cstate.visited_nodes = (char)1;
 	std::cout << "NEW RUN" << std::endl;
 	std::cout << "node: " << cstate.current_node->GetValue() << std::endl;
-
-	while ((int)cstate.visited_nodes != 255)	// Should be after x time units.. / moves / all rooms visited
+	int steps = 0;
+	while ((int)cstate.visited_nodes != 65535 && steps <= 6)	// Should be after x time units.. / moves / all rooms visited
 	{
 		//std::cout << "Visited: " << (int)cstate.visited_nodes << std::endl;
 		action a = GetNextGreedyAction(cstate);
 		std::vector<Node*> possible = cstate.current_node->GetNeighbors();
 		for (int i = 0; i < possible.size(); i++)
 		{
-			std::cout << action_text[possible[i]->GetValue()] << "2: " << Q->GetValue(cstate.current_node->GetValue(), cstate.visited_nodes, possible[i]->GetValue()) << std::endl;
+			std::cout << action_text[possible[i]->GetValue()] << ": " << Q->GetValue(cstate.current_node->GetValue(), cstate.visited_nodes, possible[i]->GetValue()) << std::endl;
 		}
 
 		state nstate = GetNextState(cstate, a);
@@ -158,7 +158,7 @@ void GraphLearner::print_route()
 		cstate = nstate;
 		std::cout << "node: " << cstate.current_node->GetValue() << std::endl;
 		// print info for debugging
-
+		steps++;
 	}
 }
 
@@ -193,6 +193,14 @@ void GraphLearner::init_environment()
 	Node* node5 = new Node(5);
 	Node* node6 = new Node(6);
 	Node* node7 = new Node(7);
+	Node* node8 = new Node(8);
+	Node* node9 = new Node(9);
+	Node* node10 = new Node(10);
+	Node* node11 = new Node(11);
+	Node* node12 = new Node(12);
+	Node* node13 = new Node(13);
+	Node* node14 = new Node(14);
+	Node* node15 = new Node(15);
 
 	graph.AddNode(node0);
 	graph.AddNode(node1);
@@ -202,21 +210,33 @@ void GraphLearner::init_environment()
 	graph.AddNode(node5);
 	graph.AddNode(node6);
 	graph.AddNode(node7);
+	graph.AddNode(node8);
+	graph.AddNode(node9);
+	graph.AddNode(node10);
+	graph.AddNode(node11);
+	graph.AddNode(node12);
+	graph.AddNode(node13);
+	graph.AddNode(node14);
+	graph.AddNode(node15);
 
-	node0->AddNeighbor(node1);
-	node1->AddNeighbor(node0);
-	node1->AddNeighbor(node2);
-	node2->AddNeighbor(node1);
-	node2->AddNeighbor(node3);
-	node3->AddNeighbor(node2);
-	node3->AddNeighbor(node6);
-	node3->AddNeighbor(node7);
-	node3->AddNeighbor(node4);
-	node4->AddNeighbor(node3);
-	node4->AddNeighbor(node5);
-	node5->AddNeighbor(node4);
-	node6->AddNeighbor(node3);
-	node7->AddNeighbor(node3);
+
+
+	node0->AddNeighbor({ node1, node11, node3 });
+	node1->AddNeighbor({ node0, node2,  node14 });
+	node2->AddNeighbor({ node1 });
+	node3->AddNeighbor({ node0, node4, node6});
+	node4->AddNeighbor({ node3, node5 });
+	node5->AddNeighbor({ node4, node6 });
+	node6->AddNeighbor({ node5, node7 });
+	node7->AddNeighbor({ node8, node9 });
+	node8->AddNeighbor({ node7 });
+	node9->AddNeighbor({ node7, node10 });
+	node10->AddNeighbor({ node9 });
+	node11->AddNeighbor({ node0, node12, node13 });
+	node12->AddNeighbor({ node11 });
+	node13->AddNeighbor({ node11 });
+	node14->AddNeighbor({ node1, node15 });
+	node15->AddNeighbor({ node14 });
 
 	graph.Init();
 	amount_nodes = graph.GetAmountNodes();
