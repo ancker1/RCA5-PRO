@@ -3,7 +3,7 @@
 
 
 
-Node::Node(int v)
+Node::Node(wchar_t v)
 {
 	value = v;
 }
@@ -18,7 +18,7 @@ std::vector<Node*> Node::GetNeighbors()
 	return neighbors;
 }
 
-int Node::GetValue()
+wchar_t Node::GetValue()
 {
 	return value;
 }

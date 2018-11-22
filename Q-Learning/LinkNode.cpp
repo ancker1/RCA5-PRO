@@ -6,11 +6,12 @@ LinkNode::LinkNode()
 {
 }
 
-LinkNode::LinkNode(wchar_t room, wchar_t visited, float data)
+LinkNode::LinkNode(wchar_t room, wchar_t visited, wchar_t action, float data)
 {
 	this->data = data;
 	this->room = room;
 	this->visited = visited;
+	this->action = action;
 }
 
 void LinkNode::SetNext(LinkNode * Node)
@@ -36,6 +37,16 @@ wchar_t LinkNode::GetRoom()
 wchar_t LinkNode::GetVisited()
 {
 	return visited;
+}
+
+wchar_t LinkNode::GetAction()
+{
+	return action;
+}
+
+void LinkNode::SetData(float d)
+{
+	data = d;
 }
 
 

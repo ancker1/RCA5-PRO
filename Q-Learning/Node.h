@@ -3,10 +3,10 @@
 class Node
 {
 public:
-	Node(int);
+	Node(wchar_t);
 	void AddNeighbor(Node* n);
 	std::vector<Node*> GetNeighbors();
-	int GetValue();
+	wchar_t GetValue();
 	~Node();
 private:
 	std::vector<Node*> neighbors;

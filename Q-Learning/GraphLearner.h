@@ -8,17 +8,20 @@
 #include "Node.h"
 #include <fstream>
 
+#include "LinkedList.h"
+#include "LinkNode.h"
+
 #define GREEDY		1
 #define NONGREEDY	0
 
 struct state
 {
 	Node* current_node;
-	unsigned char visited_nodes;
+	wchar_t visited_nodes;
 };
 
-enum action { GOTO0, GOTO1, GOTO2, GOTO3, GOTO4, GOTO5, GOTO6, GOTO7 };
-static action actions[] = { GOTO0, GOTO1, GOTO2, GOTO3, GOTO4, GOTO5, GOTO6, GOTO7 };
+enum action { GOTO0, GOTO1, GOTO2, GOTO3, GOTO4, GOTO5, GOTO6, GOTO7, GOTO8, GOTO9, GOTO10, GOTO11, GOTO12, GOTO13, GOTO14, GOTO15 };
+static action actions[] = { GOTO0, GOTO1, GOTO2, GOTO3, GOTO4, GOTO5, GOTO6, GOTO7, GOTO8, GOTO9, GOTO10, GOTO11, GOTO12, GOTO13, GOTO14, GOTO15 };
 
 class GraphLearner
 {
@@ -53,9 +56,12 @@ private:
 	void init_environment();
 	int amount_nodes = 0;
 
-	float Q[8][256][8] = { 0 };	// Q[amount_rooms][visited][actions]
+	LinkNode* head = new LinkNode( 0, 0, 0, 0 );
+	LinkedList* Q = new LinkedList(*head);
+	
 
 	float discount_factor = 0.9;
+	float learning_rate = 0.5;
 	float alpha = 0.5;
 	float epsilon = 0.1;
 
@@ -63,6 +69,6 @@ private:
 	std::vector<float> yplot;
 	std::vector<int> zplot;
 
-	std::string action_text[8] = { "GOTO0", "GOTO1", "GOTO2", "GOTO3", "GOTO4", "GOTO5", "GOTO6", "GOTO7" };
+	std::string action_text[16] = { "GOTO0", "GOTO1", "GOTO2", "GOTO3", "GOTO4", "GOTO5", "GOTO6", "GOTO7", "GOTO8", "GOTO9", "GOTO10", "GOTO11", "GOTO12", "GOTO13", "GOTO14", "GOTO15" };
 };
 

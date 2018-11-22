@@ -29,7 +29,13 @@ void GraphLearner::QLearning()
 
 			sum_r += reward;	// Used for plot
 
-			Q[cstate.current_node->GetValue()][cstate.visited_nodes][a] = Q[cstate.current_node->GetValue()][cstate.visited_nodes][a] + alpha*(reward + discount_factor*GetHighestActionValue(nstate) - Q[cstate.current_node->GetValue()][cstate.visited_nodes][a]);
+			int node = cstate.current_node->GetValue();
+			float q_val = Q->GetValue(node, cstate.visited_nodes, a);
+			float updated_Q = q_val + learning_rate*( reward + discount_factor*GetHighestActionValue(nstate) - q_val );
+			Q->SetValue(node, cstate.visited_nodes, a, updated_Q);
+			
+			//Q[cstate.current_node->GetValue()][cstate.visited_nodes][a] = Q[cstate.current_node->GetValue()][cstate.visited_nodes][a] + alpha*(reward + discount_factor*GetHighestActionValue(nstate) - Q[cstate.current_node->GetValue()][cstate.visited_nodes][a]);
+			
 
 			cstate = nstate;
 
@@ -39,6 +45,8 @@ void GraphLearner::QLearning()
 		yplot.push_back(sum_r);
 		zplot.push_back(steps);
 	}
+	//Q2->print_data();
+	//std::cout << "Size, Q2: " << Q2->GetSize() << std::endl;
 }
 
 state GraphLearner::GetNextState(state s, action a)
@@ -80,19 +88,17 @@ action GraphLearner::GetNextAction(state s)
 action GraphLearner::GetNextGreedyAction(state s)
 {
 	float current_max = -std::numeric_limits<float>::max();	// get the most negative number.
-
 	std::vector<Node *> possible_nodes =s.current_node->GetNeighbors();	// Get vec of possible nodes.
 	action best = actions[possible_nodes[0]->GetValue()];	// default action
-	//std::cout << "best: " << best << std::endl;
 	for (int i = 0; i < possible_nodes.size(); i++)
 	{
-		if ((Q[s.current_node->GetValue()][s.visited_nodes][actions[possible_nodes[i]->GetValue()]] > current_max || ((Q[s.current_node->GetValue()][s.visited_nodes][actions[i]] == current_max) && random_choice())))	// This will be true for:
+		float q_val = Q->GetValue(s.current_node->GetValue(), s.visited_nodes, actions[possible_nodes[i]->GetValue()]);
+		if ((q_val > current_max || ((q_val == current_max) && random_choice())))	// This will be true for:
 		{														// next state is within environment AND ( action-value estimate is above current max OR ( action-value estimate is equal to current max AND random choice ) )
 			best = actions[possible_nodes[i]->GetValue()];
-			current_max = Q[s.current_node->GetValue()][s.visited_nodes][actions[possible_nodes[i]->GetValue()]];
+			current_max = q_val;
 		}
 	}
-	//std::cout << "best final: " << best << std::endl;
 	return best;
 }
 
@@ -102,8 +108,9 @@ float GraphLearner::GetHighestActionValue(state s)
 	float current_max = -std::numeric_limits<float>::max();
 	for (int i = 0; i < possible_nodes.size(); i++)
 	{
-		if (Q[s.current_node->GetValue()][s.visited_nodes][possible_nodes[i]->GetValue()] > current_max)
-			current_max = Q[s.current_node->GetValue()][s.visited_nodes][possible_nodes[i]->GetValue()];
+		float q_val = Q->GetValue(s.current_node->GetValue(),s.visited_nodes, possible_nodes[i]->GetValue());
+		if (q_val > current_max)
+			current_max = q_val;
 	}
 	return current_max;
 }
@@ -140,7 +147,7 @@ void GraphLearner::print_route()
 		std::vector<Node*> possible = cstate.current_node->GetNeighbors();
 		for (int i = 0; i < possible.size(); i++)
 		{
-			std::cout << action_text[possible[i]->GetValue()] <<": " << Q[cstate.current_node->GetValue()][cstate.visited_nodes][possible[i]->GetValue()] << std::endl;
+			std::cout << action_text[possible[i]->GetValue()] << "2: " << Q->GetValue(cstate.current_node->GetValue(), cstate.visited_nodes, possible[i]->GetValue()) << std::endl;
 		}
 
 		state nstate = GetNextState(cstate, a);

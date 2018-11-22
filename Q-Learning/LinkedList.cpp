@@ -25,17 +25,33 @@ void LinkedList::add(LinkNode* node)
 void LinkedList::print_data()
 {
 	for (LinkNode* cur = &head; cur != nullptr; cur = cur->GetNext())
-		std::cout << "Room: " << cur->GetRoom() << ",		Visited: " << cur->GetVisited() << ",		Data: " << cur->GetData() << std::endl;
+		std::cout << "Room: " << cur->GetRoom() << ",		Visited: " << cur->GetVisited() << ",		Action: " << cur->GetAction()<< ",		Data: " << cur->GetData() << std::endl;
 
 }
 
-float LinkedList::GetQValue(wchar_t room, wchar_t visited)
+float LinkedList::GetValue(wchar_t room, wchar_t visited, wchar_t action)
 {
 	for (LinkNode* cur = &head; cur != nullptr; cur = cur->GetNext())
-		if (cur->GetRoom() == room && cur->GetVisited() == visited)
+		if (cur->GetRoom() == room && cur->GetVisited() == visited && cur->GetAction() == action)
 			return cur->GetData();
-	this->add(new LinkNode(room, visited, 0));	// Create new node if none was found. New node is initialized with: data = 0.
+	this->add(new LinkNode(room, visited, action, 0.0));	// Create new node if none was found. New node is initialized with: data = 0.
 	return 0.0;
+}
+
+void LinkedList::SetValue(wchar_t room, wchar_t visited, wchar_t action, float data)
+{
+	for (LinkNode* cur = &head; cur != nullptr; cur = cur->GetNext())
+		if (cur->GetRoom() == room && cur->GetVisited() == visited && cur->GetAction() == action)
+		{
+			cur->SetData(data);
+			return;
+		}
+	this->add(new LinkNode(room, visited, action, data));	// Create new node if none was found. New node is initialized with: data = data.
+}
+
+int LinkedList::GetSize()
+{
+	return size;
 }
 
 
