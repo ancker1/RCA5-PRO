@@ -10,6 +10,8 @@
 #include "opencv2/ximgproc.hpp"
 #include <vector>
 
+#include "Link.h"
+
 using namespace std;
 using namespace cv;
 using namespace cv::ximgproc;
@@ -19,26 +21,19 @@ class Cellpoint
 public:
     Cellpoint();
     Cellpoint(Point onCell);
-    void setPointLeft(Point leftCell);
-    void setPointRight(Point rightCell);
-    vector<Point> getPointLeft();
-    vector<Point> getPointRight();
-    void removePointLeft(int space);
-    void removePointRight(int space);
+    void addConnection(Link connection);
     Point getOnCell();
-
+    vector<Link> getLinks();
     double getHeuristicdist();
-    double getCurrentdist();
-    void setHeuristicdist(double dist);
-    void setCurrentdist(double dist);
+    double combinedHeuristic();
+    void setCombinedHeuristic(double t);
+    void calculateHeuristicdist(Point dist);
     ~Cellpoint();
 protected:
     Point onCell;
-    vector<Point> connectedToLeft;
-    vector<Point> connectedToRight;
-
+    vector<Link> connectedTo;
     double heuristicdist; // Used by astar
-    double currentdist; // Used by astar
+    double combinedHeuristic; // Used by astar
 };
 
 #endif // CELLPOINT_H

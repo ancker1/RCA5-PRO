@@ -183,18 +183,10 @@ void Map::drawCellsPath(string pictureText, vector<Cell> cells)
     {
         for(size_t k = 0; k < cells[i].getAllCellPoints().size(); k++)
         {
-            if(cells[i].getAllCellPoints()[k].getPointRight().size() > 0)
-                for(size_t j = 0; j < cells[i].getAllCellPoints()[k].getPointRight().size(); j++)
-                {
-                    cout << "Cell Number: " << i << " CellePoint: " << cells[i].getAllCellPoints()[k].getOnCell() << "Connected on Right: " << cells[i].getAllCellPoints()[k].getPointRight()[j] << endl;
-                    line(tempMap, cells[i].getAllCellPoints()[k].getOnCell()*scaling, cells[i].getAllCellPoints()[k].getPointRight()[j]*scaling, Scalar(0,0,255), thickness, lineType, shift);
-                }
-            if(cells[i].getAllCellPoints()[k].getPointLeft().size() > 0)
-                for(size_t j = 0; j < cells[i].getAllCellPoints()[k].getPointLeft().size(); j++)
-                {
-                    cout << "Cell Number: " << i << " CellePoint: " << cells[i].getAllCellPoints()[k].getOnCell() << "Connected on Left: " << cells[i].getAllCellPoints()[k].getPointLeft()[j] << endl;
-                    line(tempMap, cells[i].getAllCellPoints()[k].getOnCell()*scaling, cells[i].getAllCellPoints()[k].getPointLeft()[j]*scaling, Scalar(0,255,0), thickness, lineType, shift);
-                }
+            for(size_t j = 0; j < cells[i].getAllCellPoints()[k].getLinks().size(); j++)
+            {
+                line(tempMap, cells[i].getAllCellPoints()[k].getOnCell()*scaling, cells[i].getAllCellPoints()[k].getLinks()[j].getConnectedTo()*scaling, Scalar(0,0,255), thickness, lineType, shift);
+            }
              //waitKey(0);
              // Udkommenter hvis følg med imshow(pictureText, tempMap);
         }
@@ -270,9 +262,6 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
 
     Point closest;
     string answer;
-    //tie(answer,closest) = getClosestPointLeft(samex, nonSamex, nonSamex[17]);
-    //cout << answer << " punkt " << closest << endl;
-
     //Non-samex connecting cells
     for(size_t i = 0; i < nonSamex.size(); i++)
     {
@@ -285,7 +274,9 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         }
         else if(answer == "Non Same x")
         {
-            tempCellePoint.setPointLeft(closest);
+            Link tempLink(closest,'L'); // MÅSKE UDREGNE DIKJSTRA AFSTANDEN
+            tempLink.calculateDijkstra(nonSamex[i]);
+            tempCellePoint.addConnection(tempLink);
         }
         else if(answer == "Same x")
         {
@@ -295,7 +286,11 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
                 {
                     if(!metObstacleDownOrUp(tempCellePoint.getOnCell(),samex[j]))
                         if(!metObstacleLeft(tempCellePoint.getOnCell(),samex[j]))
-                            tempCellePoint.setPointRight(samex[j]);
+                        {
+                            Link tempLink(closest,'L');
+                            tempLink.calculateDijkstra(nonSamex[i]);
+                            tempCellePoint.addConnection(tempLink);
+                        }
                 }
             }
         }
@@ -308,7 +303,9 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         }
         else if(answer == "Non Same x")
         {
-            tempCellePoint.setPointRight(closest);
+            Link tempLink(closest,'R');
+            tempLink.calculateDijkstra(nonSamex[i]);
+            tempCellePoint.addConnection(tempLink);
         }
         else if(answer == "Same x")
         {
@@ -318,7 +315,12 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
                 {
                     if(!metObstacleDownOrUp(tempCellePoint.getOnCell(),samex[j]))
                         if(!metObstacleRight(tempCellePoint.getOnCell(),samex[j]))
-                            tempCellePoint.setPointRight(samex[j]);
+                        {
+                            Link tempLink(closest,'R');
+                            tempLink.calculateDijkstra(nonSamex[i]);
+                            tempCellePoint.addConnection(tempLink);
+                        }
+
                 }
             }
         }
@@ -326,12 +328,6 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         detectedCells.push_back(tempCell);
     }
 
-
-    tie(answer,closest) = getClosestPointRight(samex, nonSamex, Point(17,40));
-    cout << "Svar: " << answer << " Forbundet til: " << closest << endl;
-    metObstacleDownOrUp(Point(17,40), Point(20,60));
-    metObstacleRight(Point(17,76),Point(27,39));
-    // NOGET GALT I DISSE FØRSTE STYKKE KODE FORBINDER HENOVER GRÆNSERNE!!!
     //Initializing all cellpoint for same x
     vector<Point> tempsamex = samex;
     vector<Point> tempNonSamex = nonSamex;
@@ -347,21 +343,6 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         }
         else if(answer == "Non Same x" || answer == "Same x")
         {
-            /*
-            if(isLeftSameCellpoint(tempCellPointVector, samex[i], closest)) // Er den allerede connected // LAV TIL EN FUNKTION
-            {
-                while(obstacleDetectedWithLine(closest,samex[i]) && answer != "No Point")
-                {
-                    findNremovePoint(tempsamex, closest);
-                    findNremovePoint(tempNonSamex, closest);
-                    tie(answer,closest) = getClosestPointLeft(tempsamex, tempNonSamex, samex[i]);
-                }
-                if(answer == "Non Same x" || answer == "Same x")
-                    tempCellePoint.setPointLeft(closest);
-            }
-            else
-                tempCellePoint.setPointLeft(closest);
-                */
             while(obstacleDetectedWithLine(closest,samex[i]) && answer != "No Point")
             {
                 findNremovePoint(tempsamex, closest);
@@ -369,7 +350,11 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
                 tie(answer,closest) = getClosestPointLeft(tempsamex, tempNonSamex, samex[i]);
             }
             if(answer == "Non Same x" || answer == "Same x")
-                tempCellePoint.setPointLeft(closest);
+            {
+                Link tempLink(closest,'L');
+                tempLink.calculateDijkstra(nonSamex[i]);
+                tempCellePoint.addConnection(tempLink);
+            }
 
         }
         tempsamex = samex;
@@ -382,21 +367,6 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         }
         else if(answer == "Non Same x" || answer == "Same x")
         {
-            /*
-            if(isRightSameCellpoint(tempCellPointVector, samex[i], closest))  // LAV TIL EN FUNKTION
-            {
-                while(obstacleDetectedWithLine(closest,samex[i]) && answer != "No Point")
-                {
-                    findNremovePoint(tempsamex, closest);
-                    findNremovePoint(tempNonSamex, closest);
-                    tie(answer,closest) = getClosestPointRight(tempsamex, tempNonSamex, samex[i]);
-                }
-                if(answer == "Non Same x" || answer == "Same x")
-                    tempCellePoint.setPointRight(closest);
-            }
-            else
-                tempCellePoint.setPointRight(closest);
-                */
             while(obstacleDetectedWithLine(closest,samex[i]) && answer != "No Point")
             {
                 findNremovePoint(tempsamex, closest);
@@ -404,14 +374,18 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
                 tie(answer,closest) = getClosestPointRight(tempsamex, tempNonSamex, samex[i]);
             }
             if(answer == "Non Same x" || answer == "Same x")
-                tempCellePoint.setPointRight(closest);
+            {
+                Link tempLink(closest,'R');
+                tempLink.calculateDijkstra(nonSamex[i]);
+                tempCellePoint.addConnection(tempLink);
+            }
         }
         tempsamex = samex;
         tempNonSamex = nonSamex;
         tempCellPointVector.push_back(tempCellePoint);
     }
-    //Samex connecting cells
 
+    //Samex connecting cells
     for(size_t i = 0; i < tempCellPointVector.size(); )
     {
         Cell tempCell(tempCellPointVector[i]);
@@ -425,19 +399,8 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         i++;
     }
 
-    drawCellsPath("t",detectedCells);
-    //cout << "Obstacle mellem linje: " << obstacleDetectedWithLine(Point(14,24),Point(19,24)) << endl;
 
-    /*
-    vector<Point> confirm;
-    int t = 17;
-    confirm.push_back(detectedCells[t].getCellPointOnCell());
-    for(size_t i = 0; i < detectedCells[t].getCellPointLeft().size(); i++)
-        confirm.push_back(detectedCells[t].getCellPointLeft()[i]);
-    for(size_t i = 0; i < detectedCells[t].getCellPointRight().size(); i++)
-        confirm.push_back(detectedCells[t].getCellPointRight()[i]);
-    drawNShowPoints("Confirm", confirm);
-    */
+    drawCellsPath("t",detectedCells);
     return detectedCells;
 }
 
@@ -757,34 +720,6 @@ tuple<string,Point> Map::getClosestPointRight(vector<Point> samex, vector<Point>
         return make_tuple("Same x",closestPointSamex);
 }
 
-bool Map::isRightSameCellpoint(vector<Cellpoint> list, Point cellpoint, Point connectionPointRight)
-{
-    for(size_t i = 0; i < list.size(); i++)
-    {
-        if(list[i].getOnCell().x == cellpoint.x)
-        {
-            for(size_t j = 0; j < list[i].getPointRight().size(); j++)
-                if(list[i].getPointRight()[j] == connectionPointRight)
-                    return true;
-        }
-    }
-    return false;
-}
-
-bool Map::isLeftSameCellpoint(vector<Cellpoint> list, Point cellpoint, Point connectionPointLeft)
-{
-    for(size_t i = 0; i < list.size(); i++)
-    {
-        if(list[i].getOnCell().x == cellpoint.x)
-        {
-            for(size_t j = 0; j < list[i].getPointLeft().size(); j++)
-                if(list[i].getPointLeft()[j] == connectionPointLeft)
-                    return true;
-        }
-    }
-    return false;
-}
-
 vector<Point> Map::get_points(LineIterator &it)
 {
     vector<Point> v(it.count);
@@ -817,42 +752,6 @@ bool Map::findNremovePoint(vector<Point> &list, Point point)
         }
     }
     return false;
-}
-
-Point Map::checkPointIfGoal(int currentPointx, int currentPointy, vector<Point> goals)
-{
-    Point canConnectPoint;
-    canConnectPoint.x = -1;
-    canConnectPoint.y = -1;
-    for(size_t i = 0; i < goals.size(); i++)
-    {
-        if(goals[i].y == currentPointy && goals[i].x == currentPointx)
-        {
-            canConnectPoint = goals[i];
-        }
-    }
-    return canConnectPoint;
-}
-
-void Map::deleteNonClosesPoint(cell checkCell)
-{
-    for(size_t i = 0; i < checkCell.neighborcells.size() - 1; i++)
-    {
-        if(checkCell.cellPoint.x < checkCell.neighborcells[i].x && checkCell.cellPoint.x < checkCell.neighborcells[i+1].x)
-        {
-            if(checkCell.neighborcells[i].x > checkCell.neighborcells[i+1].x)
-                checkCell.neighborcells.erase(checkCell.neighborcells.begin()+i);
-            else
-                checkCell.neighborcells.erase(checkCell.neighborcells.begin()+i+1);
-        }
-        else if(checkCell.cellPoint.x > checkCell.neighborcells[i].x && checkCell.cellPoint.x > checkCell.neighborcells[i+1].x)
-        {
-            if(checkCell.neighborcells[i].x > checkCell.neighborcells[i+1].x)
-                checkCell.neighborcells.erase(checkCell.neighborcells.begin()+i);
-            else
-                checkCell.neighborcells.erase(checkCell.neighborcells.begin()+i+1);
-        }
-    }
 }
 
 Map::~Map()
@@ -1014,23 +913,62 @@ void Map::remove_points_in_corners(vector<Point> &v, Mat &img) {
 vector<Point> Map::astar(vector<Cell> cells, Point start, Point goal)
 {
     vector<Point> path;
+    vector<Cell> tempCells;
+    vector<Cell> aStarPath;
+    // Starting Cell closest to start
+    int startCellNr;
+    Cell startCell = findClosestCellFromStart(cells, start, startCellNr);
+    aStarPath.push_back(startCell.getAllCellPoints()[startCellNr]); // Starting Cell
+    tempCells.push_back(startCell.getAllCellPoints()[startCellNr]); // Starting Cell
+    path.push_back(startCell.getAllCellPoints()[startCellNr].getOnCell()); // Starting Point
+    // End Cell closest to goal
+    int endCellNr;
+    Cell endCell = findClosestCellFromStart(cells, goal, endCellNr);
+
     //Init heauristic with distance from point to goal
-    double tempHeuristicDist;
     for(size_t i = 0; i < cells.size(); i++)
     {
         for(size_t j = 0; j < cells[i].getAllCellPoints().size(); j++)
         {
-            tempHeuristicDist = sqrt(pow(abs(cells[i].getAllCellPoints()[j].getOnCell().x - goal.x),2) + pow(abs(cells[i].getAllCellPoints()[j].getOnCell().y - goal.y),2)); // PYTTE
-            cells[i].getAllCellPoints()[j].setHeuristicdist(tempHeuristicDist);
+            cells[i].getAllCellPoints()[j].calculateHeuristicdist(endCell.getAllCellPoints()[endCellNr]);
         }
     }
 
-    for(size_t i = 0; i < cells.size(); i++)
+
+    for(size_t i = 0; i < aStarPath.size(); i++)
     {
-        for(size_t j = 0; j < cells[i].getAllCellPoints().size(); j++)
+        while(!tempCells.empty)
         {
+            for(size_t j = 0; j < aStarPath[i].getAllCellPoints().size(); j++)
+            {
+                aStarPath[i].getAllCellPoints()[j].combinedHeuristic()
+            }
 
         }
     }
+
+
     return path;
+}
+
+Cell Map::findClosestCellFromStart(vector<Cell> cells, Point start, int &cellNumber)
+{
+    Cell closestCell = cells[0].getAllCellPoints()[0];
+    int closestDist = abs(sqrt(pow(cells[0].getAllCellPoints()[0].getOnCell().x,2)+pow(cells[0].getAllCellPoints()[0].getOnCell().y,2))-sqrt(pow(start.x,2)+pow(start.y,2)));
+    for(size_t i = 0; i < cells.size(); i++)
+    {
+        for(size_t j = 0; j < cells[i].getAllCellPoints().size(); j++)
+        {
+            if(!obstacleDetectedWithLine(start, cells[i].getAllCellPoints()[j]))
+            {
+                if(closestDist > abs(sqrt(pow(cells[i].getAllCellPoints()[j].getOnCell().x,2)+pow(cells[i].getAllCellPoints()[j].getOnCell().y,2))-sqrt(pow(start.x,2)+pow(start.y,2))))
+                {
+                    closestCell = cells[i].getAllCellPoints()[j];
+                    closestDist = abs(sqrt(pow(cells[i].getAllCellPoints()[j].getOnCell().x,2)+pow(cells[i].getAllCellPoints()[j].getOnCell().y,2))-sqrt(pow(start.x,2)+pow(start.y,2)));
+                    cellNumber = j;
+                }
+            }
+        }
+    }
+    return closestCell;
 }

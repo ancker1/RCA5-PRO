@@ -10,34 +10,14 @@ Cellpoint::Cellpoint(Point onCell)
     this->onCell = onCell;
 }
 
-void Cellpoint::setPointLeft(Point leftCell)
+void Cellpoint::addConnection(Link connection)
 {
-    this->connectedToLeft.push_back(leftCell);
+    connectedTo.push_back(connection);
 }
 
-void Cellpoint::setPointRight(Point rightCell)
+vector<Link> Cellpoint::getLinks()
 {
-    this->connectedToRight.push_back(rightCell);
-}
-
-vector<Point> Cellpoint::getPointLeft()
-{
-    return this->connectedToLeft;
-}
-
-vector<Point> Cellpoint::getPointRight()
-{
-    return this->connectedToRight;
-}
-
-void Cellpoint::removePointLeft(int space)
-{
-    this->connectedToLeft.erase(connectedToLeft.begin()+space);
-}
-
-void Cellpoint::removePointRight(int space)
-{
-    this->connectedToRight.erase(connectedToRight.begin()+space);
+    return connectedTo;
 }
 
 Point Cellpoint::getOnCell()
@@ -50,21 +30,20 @@ double Cellpoint::getHeuristicdist()
     return this->heuristicdist;
 }
 
-double Cellpoint::getCurrentdist()
+double Cellpoint::getAstarWeight()
 {
-    return this->currentdist;
+    return this->astarWeight;
 }
 
-void Cellpoint::setHeuristicdist(double dist)
+void Cellpoint::calculateHeuristicdist(Point goal)
 {
-    this->heuristicdist = dist;
+    this->heuristicdist = sqrt(pow(this->onCell.x - goal.x,2) + pow(this->onCell.y - goal.y,2)); // PYTTE
 }
 
-void Cellpoint::setCurrentdist(double dist)
+void Cellpoint::setAstarWeight(double t)
 {
-    this->currentdist = dist;
+    this->astarWeight = t;
 }
-
 
 Cellpoint::~Cellpoint()
 {

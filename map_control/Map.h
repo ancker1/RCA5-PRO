@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <Cell.h>
 #include <Cellpoint.h>
+#include <Link.h>
 using namespace std;
 using namespace cv;
 using namespace cv::ximgproc;
@@ -78,14 +79,14 @@ private:
     bool isLeftSameCellpoint(vector<Cellpoint> list, Point cellpoint, Point connectionPointLeft);
     bool findNremovePoint(vector<Point> &list, Point point);
 
-
-    Point checkPointIfGoal(int currentPointx, int currentPointy, vector<Point> goals);
-    void deleteNonClosesPoint(cell checkCell);
     // Bushfire
     void binarize_img(Mat &img);
     void find_neighbors(vector<Point> &v, Mat &img, int x, int y);
     void make_brushfire_grid(Mat &img);
     void remove_points_in_corners(vector<Point> &v, Mat &img);
+
+    // PLANNING ALGOORITHM
+    Cell findClosestCellFromStart(vector<Cell> cells, Point start, int &cellNumber);
 };
 
 #endif // MAP_H

@@ -16,16 +16,6 @@ Point Cell::getCellPointOnCell()
     return this->cellpoint.getOnCell();
 }
 
-vector<Point> Cell::getCellPointLeft()
-{
-    return this->cellpoint.getPointLeft();
-}
-
-vector<Point> Cell::getCellPointRight()
-{
-    return this->cellpoint.getPointRight();
-}
-
 vector<Cellpoint> Cell::getAllCellPoints()
 {
     return this->allCellPoints;

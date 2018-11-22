@@ -74,7 +74,7 @@ void cameraCallback(ConstImageStampedPtr& msg) {
 	cv::Mat     im(int(height), int(width), CV_8UC3, const_cast<char *>(data));
 
 	CircleDetection    cd;
-	vector<circleInfo> circles = cd.detectCircles(im, CD_SPR);
+    vector<circleInfo> circles = cd.detectCircles(im, CD_HOUGH);
 	cd.drawCircles(im, circles);
 
 	im = im.clone();
@@ -287,8 +287,8 @@ int main(int _argc, char **_argv) {
 		/*************************************************************/
 		/*       Output variables of Fuzzy Controller is set         */
 		/*************************************************************/
-		speed = controller->getSpeed();
-		dir = controller->getDirection();
+        //speed = controller->getSpeed();
+        //dir = controller->getDirection();
 /*
 		std::cout << "RelAngle: " << controller->getRelativeAngleToGoal() << std::endl
 							<< "RelDist: "  << controller->getRelativeDistanceToGoal() << std::endl;
