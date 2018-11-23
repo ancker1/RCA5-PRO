@@ -8,29 +8,23 @@ int Path_planning::way_around_obstacle(Point start, Point goal, Mat &src) {
     Map grid;
     Mat img = grid.brushfire_img(src);
     if (obstacle_detected(start, goal, img)) {
-        cout << "Obstacle detected" << endl;
         LineIterator it(img, start, goal, 8);
         vector<Point> v = get_points(it);
         Point start_left = get_p_before_obstacle(v, img);
         Point start_right = get_p_before_obstacle(v, img);
         for (int i = 0; i < 30; i++) {
-            if ( !obstacle_detected(start_left, goal, img) ) {
-                cout << "Go left" << endl;
+            if ( !obstacle_detected(start_left, goal, img) )
                 return 2;
-            }
-            else if ( !obstacle_detected(start_right, goal, img) ) {
-                cout << "Go right" << endl;
+            else if ( !obstacle_detected(start_right, goal, img) )
                 return 3;
-            }
+            
             go_left(start_left, img);
             go_right(start_right, img);
         }
         return 0;
     }
-    else {
-        cout << "No obstacle" << endl;
+    else
         return 1;
-    }
 }
 
 void Path_planning::go_left(Point &p, Mat &img) {
