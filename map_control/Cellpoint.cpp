@@ -17,7 +17,16 @@ void Cellpoint::addConnection(Link connection)
 
 vector<Link> Cellpoint::getLinks()
 {
-    return connectedTo;
+    return this->connectedTo;
+}
+
+void Cellpoint::removePointFromLinks(Point p)
+{
+    for(size_t i = 0; i < this->connectedTo.size(); i++)
+    {
+        if(this->connectedTo[i].getConnectedTo() == p)
+            this->connectedTo.erase(this->connectedTo.begin()+i);
+    }
 }
 
 Point Cellpoint::getOnCell()
@@ -30,9 +39,9 @@ double Cellpoint::getHeuristicdist()
     return this->heuristicdist;
 }
 
-double Cellpoint::getAstarWeight()
+double Cellpoint::getCombinedHeuristic()
 {
-    return this->astarWeight;
+    return this->combinedHeuristic;
 }
 
 void Cellpoint::calculateHeuristicdist(Point goal)
@@ -40,9 +49,9 @@ void Cellpoint::calculateHeuristicdist(Point goal)
     this->heuristicdist = sqrt(pow(this->onCell.x - goal.x,2) + pow(this->onCell.y - goal.y,2)); // PYTTE
 }
 
-void Cellpoint::setAstarWeight(double t)
+void Cellpoint::setCombinedHeuristic(double t)
 {
-    this->astarWeight = t;
+    this->combinedHeuristic = t;
 }
 
 Cellpoint::~Cellpoint()

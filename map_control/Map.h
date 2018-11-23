@@ -54,7 +54,7 @@ public:
 
 
     //PLANNNING ALGORITHM
-    vector<Point> astar(vector<Cell> cells, Point start, Point goal);
+    vector<Point> astar(vector<Cellpoint> cellpoints, Point startCellPoint, Point goalCellPoint); // MAKE IT WORK
     ~Map();
 
 private:
@@ -86,6 +86,8 @@ private:
     void remove_points_in_corners(vector<Point> &v, Mat &img);
 
     // PLANNING ALGOORITHM
+    Cellpoint findCellPointFromPoint(vector<Cellpoint> cellpoints, Point point);
+    Cellpoint findSmallestCombinedHeuristic(vector<Cellpoint> cellpoints);
     Cell findClosestCellFromStart(vector<Cell> cells, Point start, int &cellNumber);
 };
 

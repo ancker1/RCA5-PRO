@@ -24,8 +24,9 @@ public:
     void addConnection(Link connection);
     Point getOnCell();
     vector<Link> getLinks();
+    void removePointFromLinks(Point p); // Used only by astar
     double getHeuristicdist();
-    double combinedHeuristic();
+    double getCombinedHeuristic();
     void setCombinedHeuristic(double t);
     void calculateHeuristicdist(Point dist);
     ~Cellpoint();

@@ -910,48 +910,69 @@ void Map::remove_points_in_corners(vector<Point> &v, Mat &img) {
     }
 }
 
-vector<Point> Map::astar(vector<Cell> cells, Point start, Point goal)
+vector<Point> Map::astar(vector<Cellpoint> cellpoints, Point startCellPoint, Point goalCellPoint) // Start and Goal Cells need to be on the Cell list
 {
+
     vector<Point> path;
-    vector<Cell> tempCells;
-    vector<Cell> aStarPath;
-    // Starting Cell closest to start
-    int startCellNr;
-    Cell startCell = findClosestCellFromStart(cells, start, startCellNr);
-    aStarPath.push_back(startCell.getAllCellPoints()[startCellNr]); // Starting Cell
-    tempCells.push_back(startCell.getAllCellPoints()[startCellNr]); // Starting Cell
-    path.push_back(startCell.getAllCellPoints()[startCellNr].getOnCell()); // Starting Point
-    // End Cell closest to goal
-    int endCellNr;
-    Cell endCell = findClosestCellFromStart(cells, goal, endCellNr);
+    vector<Cellpoint> tempCellspoint;
+    vector<Cellpoint> aStarPath;
+
+    aStarPath.push_back(findCellPointFromPoint(cellpoints, startCellPoint)); // Starting Cellpoint
+    //path.push_back(startCellPoint); // Starting Point
 
     //Init heauristic with distance from point to goal
-    for(size_t i = 0; i < cells.size(); i++)
+    for(size_t i = 0; i < cellpoints.size(); i++)
     {
-        for(size_t j = 0; j < cells[i].getAllCellPoints().size(); j++)
-        {
-            cells[i].getAllCellPoints()[j].calculateHeuristicdist(endCell.getAllCellPoints()[endCellNr]);
-        }
+        cellpoints[i].calculateHeuristicdist(goalCellPoint);
     }
 
-
+    Cellpoint tempCellpoint ;
+    // Sidder Fast Her
     for(size_t i = 0; i < aStarPath.size(); i++)
     {
-        while(!tempCells.empty)
+        // Calculates combined heuristic dist
+        for(size_t j = 0; j < aStarPath[i].getLinks().size(); j++)
         {
-            for(size_t j = 0; j < aStarPath[i].getAllCellPoints().size(); j++)
-            {
-                aStarPath[i].getAllCellPoints()[j].combinedHeuristic()
-            }
-
+            tempCellpoint = findCellPointFromPoint(cellpoints, aStarPath[i].getLinks()[j].getConnectedTo());
+            tempCellpoint.setCombinedHeuristic(tempCellpoint.getHeuristicdist() + aStarPath[i].getLinks()[j].getDijkstraDist());
+            tempCellspoint.push_back(tempCellpoint);
         }
+        if(tempCellpoint.getOnCell() == goalCellPoint )
+            break;
+        aStarPath.push_back(findSmallestCombinedHeuristic(tempCellspoint));
+        cellpoints[i].removePointFromLinks(aStarPath[i].getOnCell()); // Can not go backwards
+        cellpoints[i].removePointFromLinks(tempCellpoint.getOnCell()); // Can not go backwards
+        //tempCellspoint.clear();
+        cout << i << endl;
     }
-
-
+    for(size_t i = 0; i < aStarPath.size(); i++)
+    {
+        path.push_back(aStarPath[i].getOnCell());
+    }
     return path;
 }
 
-Cell Map::findClosestCellFromStart(vector<Cell> cells, Point start, int &cellNumber)
+Cellpoint Map::findCellPointFromPoint(vector<Cellpoint> cellpoints, Point point)
+{
+    for(size_t i = 0; i < cellpoints.size(); i++)
+    {
+        if(cellpoints[i].getOnCell() == point)
+            return cellpoints[i];
+    }
+}
+
+Cellpoint Map::findSmallestCombinedHeuristic(vector<Cellpoint> cellpoints)
+{
+    Cellpoint tempCellp = cellpoints[0];
+    for(size_t i = 0; i < cellpoints.size(); i++)
+    {
+        if(tempCellp.getHeuristicdist() > cellpoints[i].getCombinedHeuristic())
+            tempCellp = cellpoints[i];
+    }
+    return tempCellp;
+}
+
+Cell Map::findClosestCellFromStart(vector<Cell> cells, Point start, int &cellNumber) // MAKE IT WORK
 {
     Cell closestCell = cells[0].getAllCellPoints()[0];
     int closestDist = abs(sqrt(pow(cells[0].getAllCellPoints()[0].getOnCell().x,2)+pow(cells[0].getAllCellPoints()[0].getOnCell().y,2))-sqrt(pow(start.x,2)+pow(start.y,2)));
@@ -959,7 +980,7 @@ Cell Map::findClosestCellFromStart(vector<Cell> cells, Point start, int &cellNum
     {
         for(size_t j = 0; j < cells[i].getAllCellPoints().size(); j++)
         {
-            if(!obstacleDetectedWithLine(start, cells[i].getAllCellPoints()[j]))
+            if(!obstacleDetectedWithLine(start, cells[i].getAllCellPoints()[j].getOnCell()))
             {
                 if(closestDist > abs(sqrt(pow(cells[i].getAllCellPoints()[j].getOnCell().x,2)+pow(cells[i].getAllCellPoints()[j].getOnCell().y,2))-sqrt(pow(start.x,2)+pow(start.y,2))))
                 {
