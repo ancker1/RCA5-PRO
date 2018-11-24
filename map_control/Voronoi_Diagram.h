@@ -24,7 +24,37 @@ class Voronoi_Diagram {
         void get_skeletinize_img( const cv::Mat &src, cv::Mat &dst );
 
     protected:
-
+        /*************************************************************
+         *                      ZHANG-SUEN Algorithm:
+         *  Grid
+         *  ----------------
+         *  | P9 | P2 | P3 |
+         *  ----------------
+         *  | P8 | P1 | P4 |
+         *  ----------------
+         *  | P7 | P6 | P5 |
+         *  ----------------
+         *
+         *  Step one
+         *      Search through the image and check if all conditions are fulfilled
+         *          1. P1 is white
+         *          2. The number of neighboring black pixels is at least 2 and not greater than 6
+         *          3. The number of white-to-black transitions around P1 is equal to 1
+         *          4. At least one of P2, P4 or P6 is white
+         *          5. At least one of P4, P6 or P8 is white
+         *              All P1 that meets the criteria is set to white
+         *
+         *  Step two
+         *      Search through the image and check if all conditions are fulfilled
+         *          1. (same as step one)
+         *          2. (same as step one)
+         *          3. (same as step one)
+         *          4. At least one of P2, P4 or P8 is white
+         *          5. At least one of P2, P6 or P8 is white
+         *              All P1 that meets the criteria is set to white
+         *
+         *  Step one and two are reapeated until image pixels are no longer changing
+         ************************************************************/
         void voronoi( const cv::Mat &input,
                       cv::Mat &output );
 
@@ -34,12 +64,15 @@ class Voronoi_Diagram {
         void skeletinize( const cv::Mat &input,
                           cv::Mat &output );
 
+        // Step one
         void thin_subiteration_1( const cv::Mat &input,
                                   cv::Mat &output);
 
+        // Step two
         void thin_subiteration_2( const cv::Mat &input,
                                   cv::Mat &output );
 
+        // cycling through until convergence has been reached
         void make_voronoi( cv::Mat &input,
                            cv::Mat &output );
 };

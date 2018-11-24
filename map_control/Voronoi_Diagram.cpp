@@ -87,38 +87,38 @@ void Voronoi_Diagram::skeletinize( const cv::Mat &input,
 void Voronoi_Diagram::thin_subiteration_1( const cv::Mat &input, cv::Mat &output ) {
     input.copyTo( output );
 
-    for (int y = 1; y < input.rows; y++)
-        for (int x = 1; x < input.cols; x++) {
+    for (int y = 1; y < input.rows-1; y++)
+        for (int x = 1; x < input.cols-1; x++) {
             if ( input.at<float>(y,x) == 1.0f ) {
-                int neighbor_0 = (int)input.at<float>( y-1, x-1 );
-                int neighbor_1 = (int)input.at<float>( y-1, x );
-                int neighbor_2 = (int)input.at<float>( y-1, x+1 );
-                int neighbor_3 = (int)input.at<float>( y, x+1 );
-                int neighbor_4 = (int)input.at<float>( y+1, x+1 );
-                int neighbor_5 = (int)input.at<float>( y+1, x );
-                int neighbor_6 = (int)input.at<float>( y+1, x-1 );
-                int neighbor_7 = (int)input.at<float>( y, x-1 );
+                int p_9 = (int)input.at<float>( y-1, x-1 );  // P9
+                int p_2 = (int)input.at<float>( y-1, x );    // P2
+                int p_3 = (int)input.at<float>( y-1, x+1 );  // P3
+                int p_4 = (int)input.at<float>( y, x+1 );    // P4
+                int p_5 = (int)input.at<float>( y+1, x+1 );  // P5
+                int p_6 = (int)input.at<float>( y+1, x );    // P6
+                int p_7 = (int)input.at<float>( y+1, x-1 );  // P7
+                int p_8 = (int)input.at<float>( y, x-1 );    // P8
 
-                int c = int( ~neighbor_1 & ( neighbor_2 | neighbor_3 ) ) +
-                        int( ~neighbor_3 & ( neighbor_4 | neighbor_5 ) ) +
-                        int( ~neighbor_5 & ( neighbor_6 | neighbor_7 ) ) +
-                        int( ~neighbor_7 & ( neighbor_0 | neighbor_1 ) );
+                int c =  int( ~p_2 & ( p_3 | p_4 ) ) +
+                                    int( ~p_4 & ( p_5 | p_6 ) ) +
+                                    int( ~p_6 & ( p_7 | p_8 ) ) +
+                                    int( ~p_8 & ( p_9 | p_2 ) );
 
                 if ( c == 1 ) {
-                    int n_1 =   int( neighbor_0 | neighbor_1 ) +
-                                int( neighbor_2 | neighbor_3 ) +
-                                int( neighbor_4 | neighbor_5 ) +
-                                int( neighbor_6 | neighbor_7 );
+                    int n_1 =   int( p_9 | p_2 ) +
+                                int( p_3 | p_4 ) +
+                                int( p_5 | p_6 ) +
+                                int( p_7 | p_8 );
 
-                    int n_2 =   int( neighbor_1 | neighbor_2 ) +
-                                int( neighbor_3 | neighbor_4 ) +
-                                int( neighbor_5 | neighbor_6 ) +
-                                int( neighbor_7 | neighbor_0 );
+                    int n_2 =   int( p_2 | p_3 ) +
+                                int( p_4 | p_5 ) +
+                                int( p_6 | p_7 ) +
+                                int( p_8 | p_9 );
 
                     int n = min( n_1, n_2 );
 
                     if ( n == 2 || n == 3 ) {
-                        int c_3 = ( neighbor_1 | neighbor_2 | ~neighbor_4 ) & neighbor_3;
+                        int c_3 = ( p_2 | p_3 | ~p_5 ) & p_4;
 
                         if ( c_3 == 0 ) {
                             output.at<float>(y,x) = 0.0f;
@@ -131,38 +131,38 @@ void Voronoi_Diagram::thin_subiteration_1( const cv::Mat &input, cv::Mat &output
 // -------------------------------------------------------------------------
 void Voronoi_Diagram::thin_subiteration_2( const cv::Mat &input, cv::Mat &output ) {
     input.copyTo( output );
-    for (int y = 1; y < input.rows; y++)
-        for (int x = 1; x < input.cols; x++) {
+    for (int y = 1; y < input.rows-1; y++)
+        for (int x = 1; x < input.cols-1; x++) {
             if ( input.at<float>(y,x) == 1.0f ) {
-                int neighbor_0 = (int)input.at<float>( y-1, x-1 );
-                int neighbor_1 = (int)input.at<float>( y-1, x );
-                int neighbor_2 = (int)input.at<float>( y-1, x+1 );
-                int neighbor_3 = (int)input.at<float>( y, x+1 );
-                int neighbor_4 = (int)input.at<float>( y+1, x+1 );
-                int neighbor_5 = (int)input.at<float>( y+1, x );
-                int neighbor_6 = (int)input.at<float>( y+1, x-1 );
-                int neighbor_7 = (int)input.at<float>( y, x-1 );
+                int p_9 = (int)input.at<float>( y-1, x-1 );
+                int p_2 = (int)input.at<float>( y-1, x );
+                int p_3 = (int)input.at<float>( y-1, x+1 );
+                int p_4 = (int)input.at<float>( y, x+1 );
+                int p_5 = (int)input.at<float>( y+1, x+1 );
+                int p_6 = (int)input.at<float>( y+1, x );
+                int p_7 = (int)input.at<float>( y+1, x-1 );
+                int p_8 = (int)input.at<float>( y, x-1 );
 
-                int c = int( ~neighbor_1 & ( neighbor_2 | neighbor_3 ) ) +
-                        int( ~neighbor_3 & ( neighbor_4 | neighbor_5 ) ) +
-                        int( ~neighbor_5 & ( neighbor_6 | neighbor_7 ) ) +
-                        int( ~neighbor_7 & ( neighbor_0 | neighbor_1 ) );
+                int c =  int( ~p_2 & ( p_3 | p_4 ) ) +
+                                    int( ~p_4 & ( p_5 | p_6 ) ) +
+                                    int( ~p_6 & ( p_7 | p_8 ) ) +
+                                    int( ~p_8 & ( p_9 | p_2 ) );
 
                 if ( c == 1 ) {
-                    int n_1 =   int( neighbor_0 | neighbor_1 ) +
-                                int( neighbor_2 | neighbor_3 ) +
-                                int( neighbor_4 | neighbor_5 ) +
-                                int( neighbor_6 | neighbor_7 );
+                    int n_1 =   int( p_9 | p_2 ) +
+                                int( p_3 | p_4 ) +
+                                int( p_5 | p_6 ) +
+                                int( p_7 | p_8 );
 
-                    int n_2 =   int( neighbor_1 | neighbor_2 ) +
-                                int( neighbor_3 | neighbor_4 ) +
-                                int( neighbor_5 | neighbor_6 ) +
-                                int( neighbor_7 | neighbor_0 );
+                    int n_2 =   int( p_2 | p_3 ) +
+                                int( p_4 | p_5 ) +
+                                int( p_6 | p_7 ) +
+                                int( p_8 | p_9 );
 
                     int n = min( n_1, n_2 );
 
                     if ( n == 2 || n == 3 ) {
-                        int e = ( neighbor_5 | neighbor_6 | ~neighbor_0 ) & neighbor_7;
+                        int e = ( p_6 | p_7 | ~p_9 ) & p_8;
 
                         if ( e == 0 )
                             output.at<float>(y,x) = 0.0f;
@@ -178,6 +178,8 @@ void Voronoi_Diagram::make_voronoi( cv::Mat &input, cv::Mat &output) {
     input.copyTo( output );
     output.convertTo( output, CV_32FC1 );
 
+    cout << output << endl;
+
     // start to thin
     Mat thin_mat_1 = Mat::zeros( input.rows, input.cols, CV_32FC1 );
     Mat thin_mat_2 = Mat::zeros( input.rows, input.cols, CV_32FC1 );
@@ -188,7 +190,7 @@ void Voronoi_Diagram::make_voronoi( cv::Mat &input, cv::Mat &output) {
         thin_subiteration_2( thin_mat_1, thin_mat_2 );  // sub-iteration 2
         compare( output, thin_mat_2, cmp, CV_CMP_EQ );  // compare
         int num_non_zero = countNonZero( cmp );         // check
-        if ( num_non_zero == ( input.rows * input.cols ) )
+        if ( num_non_zero == output.size().area() )
             done = true;
         thin_mat_2.copyTo( output );
     }
