@@ -11,11 +11,18 @@
 #include <Map.h>
 #include <Cell.h>
 #include <Cellpoint.h>
+#include <vector>
+
+#include "Map.h"
+#include "path_planning.h"
+#include "Voronoi_Diagram.h"
 
 using namespace std;
 using namespace cv;
 
-void printMap(Mat &map, string s) {
+Vec3b red(0,0,255), black(0,0,0), white(255,255,255), blue(255,0,0);
+
+void print_map(Mat &map, string s) {
     Mat resizeMap;
     resize( map, resizeMap, map.size()*10, 0, 0, INTER_NEAREST);
     imshow(s, resizeMap);
@@ -118,12 +125,19 @@ int main(int argc, char** argv)
     }
     myfile1.close();
 
+<<<<<<< HEAD
     myfile1.open ("y-coordinates.txt");
     for(size_t i = 0; i < opstaclegazebo.size(); i++)
     {
         myfile1 << opstaclegazebo[i].y << "\n";
     }
     myfile1.close();
+=======
+    Mat src = big_map.clone(), dst;
+    Voronoi_Diagram *v_d = new Voronoi_Diagram();
+    v_d->get_voronoi_img( src, dst);
+    print_map( dst, "Dst" );
+>>>>>>> create_voronoi_diagram
 
     myfile1.open ("x-coordinates-goals.txt");
     for(size_t i = 0; i < gazeboGoals.size(); i++)

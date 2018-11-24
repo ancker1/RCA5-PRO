@@ -45,11 +45,15 @@ public:
 
     //ILLUSTRATIVE FUNCTIONS
     void printMap();
+    void print_map(Mat &img, string s);
     void drawNShowPoints(string pictureText, vector<Point> points);
     void drawCellsPath(string pictureText, vector<Cell> cells);
     // BUSHFIRE
     Mat brushfire_img(Mat &img);
     vector<Point> find_centers(Mat &img);
+
+    // DETECTED ROOMS
+    vector<Point> get_centers(Mat &img);
 
     ~Map();
 
@@ -83,6 +87,9 @@ private:
     void find_neighbors(vector<Point> &v, Mat &img, int x, int y);
     void make_brushfire_grid(Mat &img);
     void remove_points_in_corners(vector<Point> &v, Mat &img);
+
+    // DETECTED ROOMS
+    void detected_rooms(Mat &img, vector<Point> &v);
 };
 
 #endif // MAP_H

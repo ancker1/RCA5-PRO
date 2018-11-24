@@ -31,6 +31,12 @@ void Map::printMap()
     imshow("Map", resizeMap);
 }
 
+void Map::print_map(Mat &map, string s) {
+    Mat resizeMap;
+    resize( map, resizeMap, map.size()*10, 0, 0, INTER_NEAREST);
+    imshow(s, resizeMap);
+}
+
 vector<Point> Map::cornerDetection()
 {
     vector<Point> vecCorners;
@@ -862,8 +868,7 @@ Map::~Map()
  *  BUSHFIRE
  * *************************************************/
 
-Mat Map::brushfire_img(Mat &img)
-{
+Mat Map::brushfire_img(Mat &img) {
     Mat binary_img = img.clone();
     binarize_img(binary_img);
     make_brushfire_grid(binary_img);
@@ -1007,4 +1012,17 @@ void Map::remove_points_in_corners(vector<Point> &v, Mat &img) {
             v.erase(v.begin()+i);
         }
     }
+}
+
+/****************
+ * DETECTED ROOMS
+ ***************/
+vector<Point> Map::get_centers(Mat &img) {
+    vector<Point> result;
+    detected_rooms(img, result);
+    return result;
+}
+
+void Map::detected_rooms(Mat &img, vector<Point> &v) {
+
 }
