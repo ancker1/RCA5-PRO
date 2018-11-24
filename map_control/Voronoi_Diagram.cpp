@@ -26,7 +26,8 @@ void Voronoi_Diagram::voronoi( const cv::Mat &input,
 {
     Mat gray;
     cvtColor( input, gray, CV_BGR2GRAY );
-    threshold( gray, gray, 127, 1, CV_THRESH_BINARY );
+    threshold( gray, gray, 10, 1, CV_THRESH_BINARY );
+    make_voronoi( gray );
     for (int y = 0; y < gray.rows; y++) {
         gray.at<uchar>(y, 0) = 0;
         gray.at<uchar>(y, gray.cols-1) = 0;
@@ -35,7 +36,7 @@ void Voronoi_Diagram::voronoi( const cv::Mat &input,
         gray.at<uchar>(0, x) = 0;
         gray.at<uchar>(gray.rows-1, x) = 0;
     }
-    make_voronoi( gray, output_img );
+    output_img = gray.clone();
 }
 // -------------------------------------------------------------------------
 void Voronoi_Diagram::opencv_thinning(const cv::Mat &input,
@@ -84,114 +85,56 @@ void Voronoi_Diagram::skeletinize( const cv::Mat &input,
     output_img = skel.clone();
 }
 // -------------------------------------------------------------------------
-void Voronoi_Diagram::thin_subiteration_1( const cv::Mat &input, cv::Mat &output ) {
-    input.copyTo( output );
+void Voronoi_Diagram::thinning_iteration( cv::Mat &img, int iter) {
+    cv::Mat marker = cv::Mat::zeros( img.size(), CV_8UC1 );
+    for (int y = 1; y < img.rows-1; y++)
+        for (int x = 1; x < img.cols-1; x++) {
+            int p9 = (int)img.at<uchar>( y-1, x-1 );
+            int p2 = (int)img.at<uchar>( y-1, x );
+            int p3 = (int)img.at<uchar>( y-1, x+1 );
+            int p4 = (int)img.at<uchar>( y, x+1 );
+            int p5 = (int)img.at<uchar>( y+1, x+1 );
+            int p6 = (int)img.at<uchar>( y+1, x );
+            int p7 = (int)img.at<uchar>( y+1, x-1 );
+            int p8 = (int)img.at<uchar>( y, x-1 );
 
-    for (int y = 1; y < input.rows-1; y++)
-        for (int x = 1; x < input.cols-1; x++) {
-            if ( input.at<float>(y,x) == 1.0f ) {
-                int p_9 = (int)input.at<float>( y-1, x-1 );  // P9
-                int p_2 = (int)input.at<float>( y-1, x );    // P2
-                int p_3 = (int)input.at<float>( y-1, x+1 );  // P3
-                int p_4 = (int)input.at<float>( y, x+1 );    // P4
-                int p_5 = (int)input.at<float>( y+1, x+1 );  // P5
-                int p_6 = (int)input.at<float>( y+1, x );    // P6
-                int p_7 = (int)input.at<float>( y+1, x-1 );  // P7
-                int p_8 = (int)input.at<float>( y, x-1 );    // P8
+            // The number of neighboring black pixels is at least 2 and not greater than 6
+            int sum  = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
+            if ( sum < 2 || sum > 6 )
+                continue;
 
-                int c =  int( ~p_2 & ( p_3 | p_4 ) ) +
-                                    int( ~p_4 & ( p_5 | p_6 ) ) +
-                                    int( ~p_6 & ( p_7 | p_8 ) ) +
-                                    int( ~p_8 & ( p_9 | p_2 ) );
+            // The number of white-to-black transistions around P1 is equal to 1
+            int transistions  = (p2 == 0 && p3 == 1) + (p3 == 0 && p4 == 1) +
+                     (p4 == 0 && p5 == 1) + (p5 == 0 && p6 == 1) +
+                     (p6 == 0 && p7 == 1) + (p7 == 0 && p8 == 1) +
+                     (p8 == 0 && p9 == 1) + (p9 == 0 && p2 == 1);
+            if ( transistions != 1 )
+                continue;
 
-                if ( c == 1 ) {
-                    int n_1 =   int( p_9 | p_2 ) +
-                                int( p_3 | p_4 ) +
-                                int( p_5 | p_6 ) +
-                                int( p_7 | p_8 );
-
-                    int n_2 =   int( p_2 | p_3 ) +
-                                int( p_4 | p_5 ) +
-                                int( p_6 | p_7 ) +
-                                int( p_8 | p_9 );
-
-                    int n = min( n_1, n_2 );
-
-                    if ( n == 2 || n == 3 ) {
-                        int c_3 = ( p_2 | p_3 | ~p_5 ) & p_4;
-
-                        if ( c_3 == 0 ) {
-                            output.at<float>(y,x) = 0.0f;
-                        }
-                    }
-                }
-            }
+            // if iter = 0 => step one
+            //      m1 => at least one of P2, P4 or P6 is white
+            //      m2 => at least one of P4, P6 or P8 is white
+            // if iter = 1 => step two
+            //      m1 => at least one of P2, P4 or P8 is white
+            //      m2 => at least one of P2, P6 or P8 is white
+            int m1 = ( iter == 0 ) ? (p2 * p4 * p6) : (p2 * p4 * p8);
+            int m2 = ( iter == 0 ) ? (p4 * p6 * p8) : (p2 * p6 * p8);
+            if (m1 == 0 && m2 == 0)
+                marker.at<uchar>(y,x) = 1;
         }
-}
-// -------------------------------------------------------------------------
-void Voronoi_Diagram::thin_subiteration_2( const cv::Mat &input, cv::Mat &output ) {
-    input.copyTo( output );
-    for (int y = 1; y < input.rows-1; y++)
-        for (int x = 1; x < input.cols-1; x++) {
-            if ( input.at<float>(y,x) == 1.0f ) {
-                int p_9 = (int)input.at<float>( y-1, x-1 );
-                int p_2 = (int)input.at<float>( y-1, x );
-                int p_3 = (int)input.at<float>( y-1, x+1 );
-                int p_4 = (int)input.at<float>( y, x+1 );
-                int p_5 = (int)input.at<float>( y+1, x+1 );
-                int p_6 = (int)input.at<float>( y+1, x );
-                int p_7 = (int)input.at<float>( y+1, x-1 );
-                int p_8 = (int)input.at<float>( y, x-1 );
 
-                int c =  int( ~p_2 & ( p_3 | p_4 ) ) +
-                                    int( ~p_4 & ( p_5 | p_6 ) ) +
-                                    int( ~p_6 & ( p_7 | p_8 ) ) +
-                                    int( ~p_8 & ( p_9 | p_2 ) );
-
-                if ( c == 1 ) {
-                    int n_1 =   int( p_9 | p_2 ) +
-                                int( p_3 | p_4 ) +
-                                int( p_5 | p_6 ) +
-                                int( p_7 | p_8 );
-
-                    int n_2 =   int( p_2 | p_3 ) +
-                                int( p_4 | p_5 ) +
-                                int( p_6 | p_7 ) +
-                                int( p_8 | p_9 );
-
-                    int n = min( n_1, n_2 );
-
-                    if ( n == 2 || n == 3 ) {
-                        int e = ( p_6 | p_7 | ~p_9 ) & p_8;
-
-                        if ( e == 0 )
-                            output.at<float>(y,x) = 0.0f;
-                    }
-                }
-            }
-        }
+    img &= ~marker;
 }
 // -------------------------------------------------------------------
-void Voronoi_Diagram::make_voronoi( cv::Mat &input, cv::Mat &output) {
-    bool done = false;
-    input.convertTo( input, CV_32FC1 );
-    input.copyTo( output );
-    output.convertTo( output, CV_32FC1 );
-
-    cout << output << endl;
-
-    // start to thin
-    Mat thin_mat_1 = Mat::zeros( input.rows, input.cols, CV_32FC1 );
-    Mat thin_mat_2 = Mat::zeros( input.rows, input.cols, CV_32FC1 );
-    Mat cmp = Mat::zeros( input.rows, input.cols, CV_8UC1 );
-
-    while ( done != true ) {
-        thin_subiteration_1( output, thin_mat_1 );      // sub-iteration 1
-        thin_subiteration_2( thin_mat_1, thin_mat_2 );  // sub-iteration 2
-        compare( output, thin_mat_2, cmp, CV_CMP_EQ );  // compare
-        int num_non_zero = countNonZero( cmp );         // check
-        if ( num_non_zero == output.size().area() )
-            done = true;
-        thin_mat_2.copyTo( output );
+void Voronoi_Diagram::make_voronoi( cv::Mat &img ) {
+    cv::Mat prev = cv::Mat::zeros( img.size(), CV_8UC1 ), diff;
+    do {
+        thinning_iteration( img, 0 );
+        thinning_iteration( img, 1 );
+        cv::absdiff( img, prev, diff );
+        img.copyTo( prev );
     }
+    while ( cv::countNonZero( diff ) > 0 );
+
+    img *= 255;
 }
