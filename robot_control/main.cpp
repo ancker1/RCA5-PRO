@@ -76,7 +76,7 @@ void cameraCallback(ConstImageStampedPtr& msg) {
 	cv::Mat     im(int(height), int(width), CV_8UC3, const_cast<char *>(data));
 
 	CircleDetection    cd;
-	vector<circleInfo> circles = cd.detectCircles(im, CD_SPR);
+    vector<circleInfo> circles = cd.detectCircles(im, CD_HOUGH);
 	cd.drawCircles(im, circles);
 	cd.mapMarbles(map, robot.x, robot.y, robot_oz, circles, detections);
 

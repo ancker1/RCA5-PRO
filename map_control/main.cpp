@@ -89,6 +89,15 @@ int main(int argc, char** argv)
     resize(tempMap,tempMap,tempMap.size()*10,0,0,INTER_NEAREST);
     imshow("Goals", tempMap);
     vector<Cell> t = smallMap.calculateCells(upper, lower);
+    vector<Cellpoint> allCellpoint;
+    for(size_t i = 0; i < t.size(); i++)
+    {
+        for(size_t j = 0; j < t[i].getAllCellPoints().size(); j++)
+        {
+            allCellpoint.push_back(t[i].getAllCellPoints()[j]);
+        }
+    }
+    //smallMap.astar(allCellpoint, Point(2,63), Point(114,55));
     //smallMap.drawCellsPath("Cell Path", t);
     /*
     for(size_t i = 0; i < t.size(); i++)
@@ -125,19 +134,16 @@ int main(int argc, char** argv)
     }
     myfile1.close();
 
-<<<<<<< HEAD
     myfile1.open ("y-coordinates.txt");
     for(size_t i = 0; i < opstaclegazebo.size(); i++)
     {
         myfile1 << opstaclegazebo[i].y << "\n";
     }
     myfile1.close();
-=======
     Mat src = big_map.clone(), dst;
     Voronoi_Diagram *v_d = new Voronoi_Diagram();
     v_d->get_voronoi_img( src, dst);
     print_map( dst, "Dst" );
->>>>>>> create_voronoi_diagram
 
     myfile1.open ("x-coordinates-goals.txt");
     for(size_t i = 0; i < gazeboGoals.size(); i++)
@@ -152,6 +158,7 @@ int main(int argc, char** argv)
     }
     myfile1.close();
     */
+
     waitKey(0);
     return 0;
 }
