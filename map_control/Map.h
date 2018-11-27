@@ -48,13 +48,14 @@ public:
     void printMap();
     void print_map(Mat &img, string s);
     void drawNShowPoints(string pictureText, vector<Point> points);
-    void drawCellsPath(string pictureText, vector<Cell> cells);
+    Mat drawCellsPath(string pictureText, vector<Cell> cells);
     // BUSHFIRE
     Mat brushfire_img(Mat &img);
     vector<Point> find_centers(Mat &img);
 
 
     //PLANNNING ALGORITHM
+
     vector<Point> astar(vector<Cellpoint> cellpoints, Point startCellPoint, Point goalCellPoint); // MAKE IT WORK
     ~Map();
 
@@ -90,6 +91,11 @@ private:
     Cellpoint findCellPointFromPoint(vector<Cellpoint> cellpoints, Point point);
     Cellpoint findSmallestCombinedHeuristic(vector<Cellpoint> cellpoints);
     Cell findClosestCellFromStart(vector<Cell> cells, Point start, int &cellNumber);
+    // PUT INTO ASTAR CLASS
+    double calculateDiagonalDist(Point p1, Point p2);
+    Point findWayToRoadMap(Mat roadmap, Point entryExitPoint);
+    vector<double> findAstarPathLengthsForRoadmap(Mat roadmap);
+    vector<Point> findFirstStartNGoalWithoutObs(Mat roadmap, int starti, int startj, int endi, int endj);
 };
 
 #endif // MAP_H

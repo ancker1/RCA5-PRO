@@ -66,17 +66,19 @@ int main(int argc, char** argv)
     cvtColor(smallWorld, tempMap, COLOR_GRAY2BGR);
     vector<Point> upper = smallMap.getUpperTrapezoidalGoals();
     vector<Point> lower = smallMap.getLowerTrapezoidalGoals();
-
+    vector<Point> upperNlower;
     // DRAWS IN SAME MAP
     for(size_t i = 0; i < upper.size(); i++) // Upper goal green
     {
         //cout << "Upper x: " << upper[i].x << " y: " << upper[i].y << endl;
         tempMap.at<Vec3b>(upper[i].y,upper[i].x)[1] = 255;
+        upperNlower.push_back(upper[i]);
     }
     for(size_t i = 0; i < lower.size(); i++)
     {
         //cout << "Lower x: " << lower[i].x << " y: " << lower[i].y << endl;
         tempMap.at<Vec3b>(lower[i].y,lower[i].x)[2] = 255; // Lower goal red
+        upperNlower.push_back(lower[i]);
     }
 
     // COUT COORDINATES FROM PIXELS TO GAZEBO
@@ -89,14 +91,9 @@ int main(int argc, char** argv)
     resize(tempMap,tempMap,tempMap.size()*10,0,0,INTER_NEAREST);
     imshow("Goals", tempMap);
     vector<Cell> t = smallMap.calculateCells(upper, lower);
-    vector<Cellpoint> allCellpoint;
-    for(size_t i = 0; i < t.size(); i++)
-    {
-        for(size_t j = 0; j < t[i].getAllCellPoints().size(); j++)
-        {
-            allCellpoint.push_back(t[i].getAllCellPoints()[j]);
-        }
-    }
+    Mat img_Boustrophedon = smallMap.drawCellsPath("Boustrophedon", t);
+
+
     //smallMap.astar(allCellpoint, Point(2,63), Point(114,55));
     //smallMap.drawCellsPath("Cell Path", t);
     /*

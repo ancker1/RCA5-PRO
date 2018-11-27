@@ -175,7 +175,7 @@ void Map::drawNShowPoints(string pictureText, vector<Point> points)
     imshow(pictureText, tempMap);
 }
 
-void Map::drawCellsPath(string pictureText, vector<Cell> cells)
+Mat Map::drawCellsPath(string pictureText, vector<Cell> cells)
 {
     Mat tempMap;
     // Line options
@@ -199,9 +199,10 @@ void Map::drawCellsPath(string pictureText, vector<Cell> cells)
              // Udkommenter hvis følg med imshow(pictureText, tempMap);
         }
     }
+    Mat result = tempMap.clone();
     resize(tempMap,tempMap,map.size()*scaling,0,0,INTER_NEAREST);
     imshow(pictureText, tempMap);
-
+    return result;
 }
 
 vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTrap)
@@ -413,8 +414,7 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         i++;
     }
 
-
-    drawCellsPath("t",detectedCells);
+    //drawCellsPath("t",detectedCells);
     return detectedCells;
 }
 
@@ -985,4 +985,113 @@ Cell Map::findClosestCellFromStart(vector<Cell> cells, Point start, int &cellNum
         }
     }
     return closestCell;
+}
+// PUT INTO ASTAR CLASS
+Point Map::findWayToRoadMap(Mat roadmap, Point entryExitPoint)
+{
+    Point roadmapEntryExit = Point(roadmap.cols, roadmap.rows);
+    for(int i = 0; i < roadmap.rows; i++)
+    {
+        for(int j = 0; j < roadmap.cols; j++)
+        {
+            if(roadmap.at<Vec3b>(i,j) == Vec3b(0,0,255))
+            {
+                if(!obstacleDetectedWithLine(Point(j,i), entryExitPoint))
+                {
+                    if(calculateDiagonalDist(roadmapEntryExit, entryExitPoint) > calculateDiagonalDist(Point(j,i), entryExitPoint))
+                        roadmapEntryExit = Point(j,i);
+                }
+            }
+        }
+    }
+
+    return roadmapEntryExit;
+}
+
+double Map::calculateDiagonalDist(Point p1, Point p2)
+{
+    return sqrt(pow(p1.x-p2.x,2) + pow(p1.y-p2.y,2));
+}
+
+vector<double> Map::findAstarPathLengthsForRoadmap(Mat roadmap)
+{
+    vector<double> pathLengths;
+    double tempDist;
+    vector<Point> aStarPath;
+    vector<Point> firstStartNEnd = findFirstStartNGoalWithoutObs(roadmap, 0, 0, roadmap.rows, roadmap.cols);
+    Point startPoint = firstStartNEnd[0];
+    Point endPoint = firstStartNEnd[1];
+    Point startPointOnRoadmap;
+    Point endPointOnRoadmap;
+    int startPointi = startPoint.y;
+    int startPointj = startPoint.x;
+    int endPointi = endPoint.y;
+    int endPointj = endPoint.x;
+    do
+    {
+        // Calculation of distance over all points on map
+        tempDist = 0;
+        startPointOnRoadmap = findWayToRoadMap(roadmap, startPoint);
+        endPointOnRoadmap = findWayToRoadMap(roadmap, endPoint);
+        aStarPath = get_path(roadmap, startPointOnRoadmap, endPointOnRoadmap);
+        tempDist = calculateDiagonalDist(startPoint, startPointOnRoadmap);
+        tempDist += calculateDiagonalDist(endPoint, endPointOnRoadmap);
+        tempDist += aStarPath.size();
+        pathLengths.push_back(tempDist);
+        // Finds new start- and end- points
+        firstStartNEnd.clear();
+        firstStartNEnd = findFirstStartNGoalWithoutObs(roadmap, ++startPointi, ++startPointj, --endPointi, --endPointj);
+        startPointi = startPoint.y;
+        startPointj = startPoint.x;
+        endPointi = endPoint.y;
+        endPointj = endPoint.x;
+    } while(startPoint != endPoint);
+    return pathLengths;
+
+}
+
+vector<Point> Map::findFirstStartNGoalWithoutObs(Mat roadmap, int starti, int startj, int endi, int endj)
+{
+    Point firstStart;
+    Point firstEnd;
+    vector<Point> firstStartNEnd(2);
+    bool foundFirst = false;
+    // Find First Starting point without obstacle
+    for(int i = starti; i < roadmap.rows; i++)
+    {
+        for(int j = startj; j < roadmap.cols; j++)
+        {
+            if(roadmap.at<Vec3b>(i,j) != Vec3b(0,0,0)) // If not black
+            {
+                foundFirst = true;
+                firstStart = Point(j,i);
+                break;
+            }
+        }
+        if(foundFirst)
+        {
+            firstStartNEnd.push_back(firstStart);
+            foundFirst = false;
+            break;
+        }
+    }
+    // Finds First ending point without obstacle
+    for(int i = endi; i > 0; i--)
+    {
+        for(int j = endj; j > 0; j--)
+        {
+            if(roadmap.at<Vec3b>(i,j) != Vec3b(0,0,0)) // If not black
+            {
+                foundFirst = true;
+                firstEnd = Point(j,i);
+                break;
+            }
+        }
+        if(foundFirst)
+        {
+            firstStartNEnd.push_back(firstEnd);
+            break;
+        }
+    }
+    return firstStartNEnd;
 }
