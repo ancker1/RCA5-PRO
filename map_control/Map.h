@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <Cell.h>
 #include <Cellpoint.h>
+//#include <Link.h>
 using namespace std;
 using namespace cv;
 using namespace cv::ximgproc;
@@ -47,14 +48,14 @@ public:
     void printMap();
     void print_map(Mat &img, string s);
     void drawNShowPoints(string pictureText, vector<Point> points);
-    void drawCellsPath(string pictureText, vector<Cell> cells);
+    Mat drawCellsPath(string pictureText, vector<Cell> cells);
     // BUSHFIRE
     Mat brushfire_img(Mat &img);
     vector<Point> find_centers(Mat &img);
 
-    // DETECTED ROOMS
-    vector<Point> get_centers(Mat &img);
 
+    //PLANNNING ALGORITHM
+    vector<Point> astar(vector<Cellpoint> cellpoints, Point startCellPoint, Point goalCellPoint); // MAKE IT WORK
     ~Map();
 
 private:
@@ -79,17 +80,16 @@ private:
     bool isLeftSameCellpoint(vector<Cellpoint> list, Point cellpoint, Point connectionPointLeft);
     bool findNremovePoint(vector<Point> &list, Point point);
 
-
-    Point checkPointIfGoal(int currentPointx, int currentPointy, vector<Point> goals);
-    void deleteNonClosesPoint(cell checkCell);
     // Bushfire
     void binarize_img(Mat &img);
     void find_neighbors(vector<Point> &v, Mat &img, int x, int y);
     void make_brushfire_grid(Mat &img);
     void remove_points_in_corners(vector<Point> &v, Mat &img);
 
-    // DETECTED ROOMS
-    void detected_rooms(Mat &img, vector<Point> &v);
+    // PLANNING ALGOORITHM
+    Cellpoint findCellPointFromPoint(vector<Cellpoint> cellpoints, Point point);
+    Cellpoint findSmallestCombinedHeuristic(vector<Cellpoint> cellpoints);
+    Cell findClosestCellFromStart(vector<Cell> cells, Point start, int &cellNumber);
 };
 
 #endif // MAP_H
