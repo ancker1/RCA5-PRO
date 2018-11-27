@@ -16,11 +16,10 @@
 #include "Map.h"
 #include "path_planning.h"
 #include "Voronoi_Diagram.h"
+#include "A_Star.h"
 
 using namespace std;
 using namespace cv;
-
-Vec3b red(0,0,255), black(0,0,0), white(255,255,255), blue(255,0,0);
 
 void print_map(Mat &map, string s) {
     Mat resizeMap;
@@ -37,6 +36,7 @@ void draw_pixel_red(vector<Point> &v, Mat &img) {
 
 int main(int argc, char** argv)
 {
+    /* MIKKEL STYKKE TIL RAPPORT SKRIVNING
     //const char* default_file = "../map_control/floor_plan.png";
     const char* default_file = "../map_control/big_floor_plan.png";
     const char* filename = argc >=2 ? argv[1] : default_file;
@@ -57,11 +57,13 @@ int main(int argc, char** argv)
 
     smallMap.printMap();
     smallMap.drawNShowPoints("Detected Corners", detectedCorners);
+    */
     /* SHOWS UPPER AND LOWER SEPARATELY
     smallMap.drawNShowPoints("Upper Goals", smallMap.getUpperTrapezoidalGoals());
     smallMap.drawNShowPoints("Lower Goals", smallMap.getLowerTrapezoidalGoals());
     */
     //SHOWS UPPER AND LOWER TOGETHER
+    /*
     Mat tempMap = smallWorld;
     cvtColor(smallWorld, tempMap, COLOR_GRAY2BGR);
     vector<Point> upper = smallMap.getUpperTrapezoidalGoals();
@@ -92,7 +94,7 @@ int main(int argc, char** argv)
     imshow("Goals", tempMap);
     vector<Cell> t = smallMap.calculateCells(upper, lower);
     Mat img_Boustrophedon = smallMap.drawCellsPath("Boustrophedon", t);
-
+    */
 
     //smallMap.astar(allCellpoint, Point(2,63), Point(114,55));
     //smallMap.drawCellsPath("Cell Path", t);
@@ -121,40 +123,31 @@ int main(int argc, char** argv)
             }
         }
     }
+Vec3b red(0,0,255), black(0,0,0), white(255,255,255), blue(255,0,0);
 
-    vector<Point_<double>> opstaclegazebo = smallMap.convertToGazeboCoordinates(obstacle);
-    ofstream myfile1;
-    myfile1.open ("x-coordinates.txt");
-    for(size_t i = 0; i < opstaclegazebo.size(); i++)
-    {
-        myfile1 << opstaclegazebo[i].x << "\n";
-    }
-    myfile1.close();
+// CONSTANTS
+Mat big_map = cv::imread( "../map_control/big_floor_plan.png", IMREAD_COLOR);
+Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
 
-    myfile1.open ("y-coordinates.txt");
-    for(size_t i = 0; i < opstaclegazebo.size(); i++)
-    {
-        myfile1 << opstaclegazebo[i].y << "\n";
-    }
-    myfile1.close();
+int main( ) {
     Mat src = big_map.clone(), dst;
     Voronoi_Diagram *v_d = new Voronoi_Diagram();
-    v_d->get_voronoi_img( src, dst);
-    print_map( dst, "Dst" );
+    v_d->get_voronoi_img( src, dst );
+    std::vector<Point> points;
+    for (int y = 0; y < dst.rows; y++)
+        for (int x = 0; x < dst.cols; x++)
+            if ( (int)dst.at<uchar>(y,x) == 255 )
+                points.push_back( Point(x,y) );
+    for ( auto& p : points )
+        src.at<Vec3b>( p ) = red;
+    print_map( src, "Voronoi Diagram" );
 
-    myfile1.open ("x-coordinates-goals.txt");
-    for(size_t i = 0; i < gazeboGoals.size(); i++)
-    {
-        myfile1 << gazeboGoals[i].x << "\n";
-    }
-    myfile1.close();
-    myfile1.open ("y-coordinates-goals.txt");
-    for(size_t i = 0; i < gazeboGoals.size(); i++)
-    {
-        myfile1 << gazeboGoals[i].y << "\n";
-    }
-    myfile1.close();
-    */
+    A_Star *a = new A_Star();
+    std::vector<cv::Point> v = a->get_path( src, points[0], points[ points.size()-1 ] );
+    Mat img = big_map.clone();
+    for ( auto& p : v )
+        img.at<Vec3b>( p ) = red;
+    print_map( img, "Map" );
 
     waitKey(0);
     return 0;
