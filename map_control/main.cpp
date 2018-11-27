@@ -36,11 +36,10 @@ void draw_pixel_red(vector<Point> &v, Mat &img) {
 
 Vec3b red(0,0,255), black(0,0,0), white(255,255,255), blue(255,0,0);
 
-// CONSTANTS
-Mat big_map = cv::imread( "../map_control/big_floor_plan.png", IMREAD_COLOR);
-Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
-
 int main( ) {
+    Mat big_map = cv::imread( "../map_control/big_floor_plan.png", IMREAD_COLOR);
+    Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
+
     Mat src = big_map.clone(), dst;
     Voronoi_Diagram *v_d = new Voronoi_Diagram();
     v_d->get_voronoi_img( src, dst );
@@ -59,6 +58,9 @@ int main( ) {
     for ( auto& p : v )
         img.at<Vec3b>( p ) = red;
     print_map( img, "Map" );
+
+    Mat map = a->get_a_star();
+    print_map( map, "A_Star");
 
     waitKey(0);
     return 0;

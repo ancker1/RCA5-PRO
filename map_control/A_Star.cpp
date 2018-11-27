@@ -209,30 +209,28 @@ std::vector<Map_Node *> A_Star::find() {
 
 // -----------------------------------------------------------------------
 
-void A_Star::draw_path( cv::Mat &img,
-                        const std::vector<cv::Point> path) {
-    for ( auto& p : path ) {
-        img.at<Vec3b>( p ) = Vec3b( 0, 0, 255 );
-    }
+void A_Star::draw_path( const std::vector<Map_Node *> path ) {
+    cvtColor( map_a_star, map_a_star, COLOR_BGR2HSV);
+    for ( auto& n : path )
+        map_a_star.at<Vec3b>( n->y, n->x ) = Vec3b(0,0,255);
+    cvtColor( map_a_star, map_a_star, COLOR_HSV2BGR );
 }
 
 // -----------------------------------------------------------------------
 
-void A_Star::draw_open_list( cv::Mat &img ) {
+void A_Star::draw_open_list() {
     for ( auto& o : open_list ) {
         Map_Node *n = o;
         if ( ( n == start_node ) || ( n == goal_node ) )
             continue;
-        img.at<Vec3b>(n->y, n->x) = Vec3b(210,210,210);
+        map_a_star.at<Vec3b>(n->y, n->x) = Vec3b(210,210,210);
     }
 }
 
 // -----------------------------------------------------------------------
 
-void A_Star::print_map(const Mat &img, const string &s) {
-    cv::Mat resize_img;
-    resize( img, resize_img, img.size()*7, 0, 0, INTER_NEAREST );
-    imshow( s, resize_img );
+Mat A_Star::get_a_star() {
+    return map_a_star;
 }
 
 // -----------------------------------------------------------------------

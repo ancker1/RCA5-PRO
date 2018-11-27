@@ -17,6 +17,9 @@ using namespace cv;
 /***************************************
  * Constants
  ***************************************/
+const Mat big_map = cv::imread( "../map_control/big_floor_plan.png", IMREAD_COLOR);
+const Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
+
 const int ALLOW_VERTEX_PASSTHROUGH = 1;
 const int DRAW_OPEN_LIST = 1;
 
@@ -86,24 +89,16 @@ class A_Star {
                                 const cv::Point &start,
                                 const cv::Point &goal);
 
-        /**
-         * @brief draw_path
-         * @param img
-         * @param path
-         */
-        void draw_path(cv::Mat &img, const std::vector<Point> path );
+        Mat get_a_star();
 
         ~A_Star();
 
     private:
-        Mat map;
+        Mat map, map_a_star = big_map.clone();
         vector<Map_Node *> open_list;
         Map_Node *start_node, *goal_node;
         Map_Size map_size;
         vector<Map_Node> map_data;
-
-        void print_map( const cv::Mat &img,
-                        const string &s);
 
         /**
          * @brief manhatten_distance
@@ -162,7 +157,14 @@ class A_Star {
         /**
          * @brief draw_open_list
          */
-        void draw_open_list(Mat &img);
+        void draw_open_list();
+
+        /**
+         * @brief draw_path
+         * @param img
+         * @param path
+         */
+        void draw_path( const std::vector<Map_Node *> path );
 };
 
 #endif // A_STAR_H
