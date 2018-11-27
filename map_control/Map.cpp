@@ -34,7 +34,7 @@ void Map::printMap()
 vector<Point> Map::cornerDetection()
 {
     vector<Point> vecCorners;
-    int filter[2][2] = {{5,7},{9,11}};
+    int filter[2][2] = {{1,3},{5,7}};
     int sum;
     Point corner;
     bitwise_not(map,map);
@@ -49,49 +49,49 @@ vector<Point> Map::cornerDetection()
             sum += (map.at<uchar>(i+1,j+1)/255) * filter[1][1];
             switch (sum) {
 
-            case 5:
+            case 1:
                 corner.x = j+1;
                 corner.y = i+1;
+                vecCorners.push_back(corner);
+                break;
+
+            case 3:
+                corner.x = j;
+                corner.y = i+1;
+                vecCorners.push_back(corner);
+                break;
+
+            case 5:
+                corner.x = j+1;
+                corner.y = i;
                 vecCorners.push_back(corner);
                 break;
 
             case 7:
                 corner.x = j;
-                corner.y = i+1;
+                corner.y = i;
                 vecCorners.push_back(corner);
                 break;
-
+            /* INDRE PUNKTER BRUGES IKKE PT.
             case 9:
                 corner.x = j+1;
-                corner.y = i;
+                corner.y = i+1;
                 vecCorners.push_back(corner);
                 break;
 
             case 11:
                 corner.x = j;
-                corner.y = i;
-                vecCorners.push_back(corner);
-                break;
-            /* INDRE PUNKTER BRUGES IKKE PT.
-            case 21:
-                corner.x = j+1;
                 corner.y = i+1;
                 vecCorners.push_back(corner);
                 break;
 
-            case 23:
-                corner.x = j;
-                corner.y = i+1;
-                vecCorners.push_back(corner);
-                break;
-
-            case 25:
+            case 13:
                 corner.x = j+1;
                 corner.y = i;
                 vecCorners.push_back(corner);
                 break;
 
-            case 27:
+            case 15:
                 corner.x = j;
                 corner.y = i;
                 vecCorners.push_back(corner);
@@ -173,24 +173,27 @@ void Map::drawCellsPath(string pictureText, vector<Cell> cells)
 {
     Mat tempMap;
     // Line options
-    int thickness = 2;
+    int thickness = 1;
     int lineType = 8;
     int shift = 0;
     int scaling = 10;
     cvtColor(map, tempMap, COLOR_GRAY2BGR);
-    resize(tempMap,tempMap,map.size()*scaling,0,0,INTER_NEAREST);
+    bitwise_not(tempMap,tempMap);
+    //resize(tempMap,tempMap,map.size()*scaling,0,0,INTER_NEAREST); // Udkommenter for små streger
     for(size_t i = 0; i < cells.size(); i++)
     {
         for(size_t k = 0; k < cells[i].getAllCellPoints().size(); k++)
         {
             for(size_t j = 0; j < cells[i].getAllCellPoints()[k].getLinks().size(); j++)
             {
-                line(tempMap, cells[i].getAllCellPoints()[k].getOnCell()*scaling, cells[i].getAllCellPoints()[k].getLinks()[j].getConnectedTo()*scaling, Scalar(0,0,255), thickness, lineType, shift);
+                //line(tempMap, cells[i].getAllCellPoints()[k].getOnCell()*scaling, cells[i].getAllCellPoints()[k].getLinks()[j].getConnectedTo()*scaling, Scalar(0,0,255), thickness, lineType, shift); // Udkommenter for små streger
+                line(tempMap, cells[i].getAllCellPoints()[k].getOnCell(), cells[i].getAllCellPoints()[k].getLinks()[j].getConnectedTo(), Scalar(0,0,255), thickness, lineType, shift);
             }
              //waitKey(0);
              // Udkommenter hvis følg med imshow(pictureText, tempMap);
         }
     }
+    resize(tempMap,tempMap,map.size()*scaling,0,0,INTER_NEAREST);
     imshow(pictureText, tempMap);
 
 }
@@ -262,6 +265,11 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
 
     Point closest;
     string answer;
+    vector<Cellpoint> allCellPoints;
+    for(size_t i = 0; i < nonSamex.size(); i++)
+    {
+        allCellPoints.push_back(nonSamex[i]);
+    }
     //Non-samex connecting cells
     for(size_t i = 0; i < nonSamex.size(); i++)
     {
@@ -274,7 +282,7 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         }
         else if(answer == "Non Same x")
         {
-            Link tempLink(closest,'L'); // MÅSKE UDREGNE DIKJSTRA AFSTANDEN
+            Link tempLink(closest,'L');
             tempLink.calculateDijkstra(nonSamex[i]);
             tempCellePoint.addConnection(tempLink);
         }
@@ -928,27 +936,7 @@ vector<Point> Map::astar(vector<Cellpoint> cellpoints, Point startCellPoint, Poi
 
     Cellpoint tempCellpoint ;
     // Sidder Fast Her
-    for(size_t i = 0; i < aStarPath.size(); i++)
-    {
-        // Calculates combined heuristic dist
-        for(size_t j = 0; j < aStarPath[i].getLinks().size(); j++)
-        {
-            tempCellpoint = findCellPointFromPoint(cellpoints, aStarPath[i].getLinks()[j].getConnectedTo());
-            tempCellpoint.setCombinedHeuristic(tempCellpoint.getHeuristicdist() + aStarPath[i].getLinks()[j].getDijkstraDist());
-            tempCellspoint.push_back(tempCellpoint);
-        }
-        if(tempCellpoint.getOnCell() == goalCellPoint )
-            break;
-        aStarPath.push_back(findSmallestCombinedHeuristic(tempCellspoint));
-        cellpoints[i].removePointFromLinks(aStarPath[i].getOnCell()); // Can not go backwards
-        cellpoints[i].removePointFromLinks(tempCellpoint.getOnCell()); // Can not go backwards
-        //tempCellspoint.clear();
-        cout << i << endl;
-    }
-    for(size_t i = 0; i < aStarPath.size(); i++)
-    {
-        path.push_back(aStarPath[i].getOnCell());
-    }
+
     return path;
 }
 

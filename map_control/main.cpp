@@ -90,7 +90,7 @@ int main(int argc, char** argv)
             allCellpoint.push_back(t[i].getAllCellPoints()[j]);
         }
     }
-    smallMap.astar(allCellpoint, Point(2,63), Point(114,55));
+    //smallMap.astar(allCellpoint, Point(2,63), Point(114,55));
     //smallMap.drawCellsPath("Cell Path", t);
     /*
     for(size_t i = 0; i < t.size(); i++)
