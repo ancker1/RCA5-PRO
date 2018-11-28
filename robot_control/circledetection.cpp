@@ -4,6 +4,60 @@ CircleDetection::CircleDetection() {}
 
 CircleDetection::~CircleDetection() {}
 
+int circleInfo::isSpotted(vector<circleInfo>& spottedCircles) {
+	double d;
+	double min_d = DBL_MAX;
+	int min_i;
+
+	// If circle was displayed just before
+	for (unsigned int i = 0; i < spottedCircles.size(); i++) {
+		d = sqrt(pow(this->x0 - spottedCircles[i].x0, 2) + pow(this->y0 - spottedCircles[i].y0, 2));
+
+		if (this->prevspotted == true && d < min_d && d <= 2 * spottedCircles[i].r) {
+			min_d = d;
+			min_i = i;
+		}
+	}
+
+	if (min_d != DBL_MAX) return min_i;
+
+	min_d = DBL_MAX;
+
+	// If circle is same as one seen earlier
+	for (unsigned int i = 0; i < spottedCircles.size(); i++) {
+		d = sqrt(pow(this->map_x - spottedCircles[i].map_x, 2) + pow(this->map_y - spottedCircles[i].map_y, 2));
+
+		if (d < min_d && d <= ceil(this->d / 5) * MARBLE_RADIUS_P) {
+			min_d = d;
+			min_i = i;
+		}
+	}
+
+	if (min_d != DBL_MAX) return min_i;
+	else return -1;
+}
+
+void circleInfo::update(circleInfo& spottedCircle) {
+	// Update map positions
+	this->x0 = this->x0 + (spottedCircle.x0 - this->x0) / this->n;
+	this->y0 = this->y0 + (spottedCircle.y0 - this->y0) / this->n;
+	this->n++;
+
+	// Update camera positions
+	this->x0 = spottedCircle.x0;
+	this->y0 = spottedCircle.y0;
+	this->angle = spottedCircle.angle;
+	this->d = spottedCircle.d;
+
+	this->spotted = true;
+}
+
+void circleInfo::merge(circleInfo& circle) {
+	this->x0 = (this->n * this->x0 + circle.n * circle.x0)/(this->n + circle.n);
+	this->x0 = (this->n * this->y0 + circle.n * circle.y0)/(this->n + circle.n);
+	this->n += circle.n;
+}
+
 vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm algo)
 {
 	Mat image_filtered;
@@ -97,13 +151,6 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 				circularity = 4*PI*area/pow(perimeter_length, 2);
 				printf("%5.2f ", circularity); */
 
-				// Circularity: Hull
-				for (unsigned int j = 0; j < hull.size(); j++) {
-					double dis = sqrt(pow(hull[j].x - hull[(j + 1) % hull.size()].x, 2) + pow(hull[j].y - hull[(j + 1) % hull.size()].y, 2));
-					perimeter_length += dis;
-				}
-				circularity = 4*PI*hull_area/pow(perimeter_length, 2);
-
 				// Which side is showing
 				double left_area = 0;
 				double right_area = 0;
@@ -139,6 +186,13 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 					}
 				}
 				left_area < right_area ? side = LEFT : side = RIGHT;
+
+				// Circularity: Hull
+				for (unsigned int j = 0; j < hull.size(); j++) {
+					double dis = sqrt(pow(hull[j].x - hull[(j + 1) % hull.size()].x, 2) + pow(hull[j].y - hull[(j + 1) % hull.size()].y, 2));
+					perimeter_length += dis;
+				}
+				circularity = 4*PI*(left_area + right_area)/pow(perimeter_length, 2);
 
 				// Analytical purposes
 				/*putText(image, format("Left  = %5.1f",	left_area),		Point(50, 50), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));
@@ -180,7 +234,7 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 					vector<Vec3f> circles;
 					Mat slice;
 					image_filtered(bounding_rect).copyTo(slice);
-					GaussianBlur(slice, slice, Size(9, 9), 2, 2);
+					//GaussianBlur(slice, slice, Size(min(slice.rows, 9), min(slice.rows, 9)), 2, 2);
 					HoughCircles(slice, circles, HOUGH_GRADIENT, 1, ceil(slice.rows / 2), 5, (slice.cols - slice.rows < 10 ? 10 : slice.cols - slice.rows), 0, slice.rows);
 					if (1 < circles.size()) {
 						for (unsigned int j = 0; j < circles.size(); j++) {
@@ -258,8 +312,6 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 	default:;
 	}
 
-	calcCirclePositions(circlevector, image.cols);
-
 	return circlevector;
 }
 
@@ -276,7 +328,6 @@ void CircleDetection::findBoundaries(vector<Point>& hull, Point& top, Point& rig
 		if (bottom.y < hull[i].y) bottom	= hull[i];
 	}
 }
-
 
 void CircleDetection::drawCircles(Mat& image, vector<circleInfo>& circles) {
 	putText(image, format("Marbles: %d", circles.size()), Point(20, 20), FONT_HERSHEY_SIMPLEX, 0.4, Scalar(255, 255, 255), 1, LINE_AA);
@@ -295,34 +346,62 @@ void CircleDetection::drawCircles(Mat& image, vector<circleInfo>& circles) {
 	}
 }
 
-void CircleDetection::calcCirclePositions(vector<circleInfo>& circles, int imagewidth) {
-	const float r = 0.5, theta = 1.047;
-
+void CircleDetection::calcCirclePositions(vector<circleInfo>& spottedCircles, Mat& image, vector<circleInfo>& circles, Mat& map, double x_robot, double y_robot, double angle_robot) {
+		// Reset all circles spotted value;
 	for (unsigned int i = 0; i < circles.size(); i++) {
-		circles[i].d			= r / tan(theta * circles[i].r / imagewidth);
-		circles[i].angle	= theta * (0.5 - float(circles[i].x0) / imagewidth);
+		circles[i].prevspotted = circles[i].spotted;
+		circles[i].spotted = false;
+	}
+
+	const int h_shift = map.rows / 2;
+	const int w_shift = map.cols / 2;
+
+	// Calculate distance to marble, angle to circle center and coordinates of marbles
+	for (unsigned int i = 0; i < spottedCircles.size(); i++) {
+		spottedCircles[i].d			= MARBLE_RADIUS_M / tan(IMAGE_FOV * spottedCircles[i].r / image.cols);
+		spottedCircles[i].angle	= IMAGE_FOV * (0.5 - float(spottedCircles[i].x0) / image.cols);
+		spottedCircles[i].map_x	= w_shift + M_TO_PIX * (spottedCircles[i].d * cos(angle_robot + spottedCircles[i].angle) + x_robot);
+		spottedCircles[i].map_y	= h_shift - M_TO_PIX * (spottedCircles[i].d * sin(angle_robot + spottedCircles[i].angle) + y_robot);
 	}
 }
 
-void CircleDetection::mapMarbles(Mat& map, double x_robot, double y_robot, double angle_robot, vector<circleInfo>& circles, int (&detections)[4]) {
-	const double mtopix = MAP_ENLARGEMENT * 10 / 7;
-	const double radius = 0.5 * mtopix;
-	const int h_shift = MAP_ENLARGEMENT * 80 / 2;
-	const int w_shift = MAP_ENLARGEMENT * 120 / 2;
-	Vec3b* current_pixel;
-	unsigned char certainty = 255;
-
+void CircleDetection::mergeMarbles(vector<circleInfo>& circles, vector<circleInfo> spottedCircles) {
+	// For all spotted circles
 	for (unsigned int i = 0; i < circles.size(); i++) {
-		certainty = ceil(2 / sqrt(circles[i].d));
-		current_pixel = &map.at<Vec3b>(Point(w_shift + mtopix * (circles[i].d * cos(angle_robot + circles[i].angle) + x_robot), h_shift - mtopix * (circles[i].d * sin(angle_robot + circles[i].angle) + y_robot)));
-		if (current_pixel->val[1] == 255 || current_pixel->val[0] + certainty <= 255) {
-			*current_pixel = circles[i].d <= 10 ? Vec3b(current_pixel->val[0] + certainty, 0, 0) : Vec3b(0, 0, current_pixel->val[0] + certainty);
+		// Check if circle was seen before
+		int spottedIndex = circles[i].isSpotted(spottedCircles);
+		if (spottedIndex != -1) {
+			circles[i].update(spottedCircles[spottedIndex]);
+			spottedCircles.erase(spottedCircles.begin() + spottedIndex);
 		}
-		detections[int(circles[i].d < 100 ? circles[i].d / 10 : 10)]++;
-		/*if (circles[i].d <= 10) {
-			circle(map, Point(w_shift + mtopix * (circles[i].d * cos(angle_robot + circles[i].angle) + x_robot), h_shift - mtopix * (circles[i].d * sin(angle_robot + circles[i].angle) + y_robot)), radius, Scalar(certainty, 0, 0));
-		}*/
 	}
 
-	//map.at<Vec3b>(Point(w_shift + mtopix * x_robot, h_shift - mtopix * y_robot)) = Vec3b(0, 0, 255);
+	// Add new circles
+	for (unsigned int i = 0; i < spottedCircles.size(); i++) {
+		circles.push_back(spottedCircles[i]);
+	}
+
+	// Merge close marbles
+	for (unsigned int i = 0; i < circles.size(); i++) {
+		for (unsigned int j = i + 1; j < circles.size(); j++) {
+			if (sqrt(pow(circles[i].map_x - circles[j].map_x, 2) + pow(circles[i].map_y - circles[j].map_y, 2)) <= 2 * MARBLE_RADIUS_P) {
+				circles[i].merge(circles[j]);
+				circles.erase(circles.begin() + j--);
+			}
+		}
+	}
+}
+
+void CircleDetection::mapMarbles(Mat& map, vector<circleInfo>& circles) {
+	static Mat map_orig;
+	if (!map_orig.data) {
+		map_orig = map.clone();
+	}
+	map = map_orig.clone();
+	putText(map, format("%d circles!", circles.size()), Point(20, 40), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255));
+
+	for (unsigned int i = 0; i < circles.size(); i++) {
+		putText(map, format("%d", circles[i].n), Point(circles[i].map_x + 10, circles[i].map_y), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(0, 0, 255));
+		circle(map, Point(int(round(circles[i].map_x)), int(round(circles[i].map_y))), int(MARBLE_RADIUS_P), Scalar(255, 0, 0));
+	}
 }
