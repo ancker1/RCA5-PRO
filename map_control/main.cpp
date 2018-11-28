@@ -50,12 +50,12 @@ int main( ) {
                 points.push_back( Point(x,y) );
     for ( auto& p : points )
         src.at<Vec3b>( p ) = red;
-    print_map( src, "Voronoi Diagram" );
+//    print_map( src, "Voronoi Diagram" );
 
     Mat img = big_map.clone();
     Path_planning *path = new Path_planning();
     Mat dst1 = path->make_visibility_map( img, points );
-    print_map( dst1, "Visibility Voronoi" );
+//    print_map( dst1, "Visibility Voronoi" );
 
     Mat src1 = big_map.clone();
     cvtColor( src1, src1, CV_BGR2GRAY );
@@ -70,11 +70,11 @@ int main( ) {
     Mat src2 = big_map.clone();
     for ( auto& p : points )
         src2.at<Vec3b>( p ) = red;
-    print_map( src2, "Beosthruphdon" );
+//    print_map( src2, "Beosthruphdon" );
 
     Mat img1 = big_map.clone();
     Mat dst2 = path->make_visibility_map( img1, points );
-    print_map( dst2, "Visibility Beosthruphdon" );
+//    print_map( dst2, "Visibility Beosthruphdon" );
 
     waitKey(0);
     return 0;

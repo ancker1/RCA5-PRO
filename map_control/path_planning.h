@@ -4,6 +4,10 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
+#include <thread>
+#include <chrono>
+
+// Opencv
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 #include "opencv2/imgcodecs.hpp"
@@ -40,6 +44,8 @@ public:
                              const std::vector<cv::Point> &road_map_points);
 
 private:
+    void print_map( const cv::Mat &img, const std::string &s );
+
     /**
      * @brief go_left
      * @param p
@@ -78,6 +84,12 @@ private:
      */
     bool obstacle_detected(Point start, Point goal, Mat &img);
 
+    /**
+     * @brief obs_detect_color
+     * @param start
+     * @param goal
+     * @param img
+     */
     void obs_detect_color( const cv::Point start,
                            const cv::Point goal,
                            cv::Mat &img );

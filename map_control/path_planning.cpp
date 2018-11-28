@@ -282,6 +282,7 @@ Mat Path_planning::make_visibility_map( const cv::Mat &map,
 {
     Mat result = map.clone();  // Make deep copy of map
 
+    int i = 0;
     for ( auto& point : road_map_points )
     {
         for (int y = 0; y < result.rows; y++)
@@ -290,6 +291,17 @@ Mat Path_planning::make_visibility_map( const cv::Mat &map,
                 Point start( point ), goal(x,y);
                 obs_detect_color( start, goal, result );
             }
+
+        result.at<Vec3b>( point ) = Vec3b(0,0,255);
+
+        print_map( result, "Visbility" );
+
+        i++;
+        if ( i > 10 )
+        {
+            cv::waitKey(0);
+            i = 0;
+        }
     }
 
     for ( auto& point : road_map_points )
@@ -317,7 +329,17 @@ void Path_planning::obs_detect_color( const cv::Point start,
     }
 
     for ( auto& point : line_points )
-        img.at<Vec3b>( point ) = Vec3b(50,255,0);
+        if ( img.at<Vec3b>( point ) != Vec3b(0,0,255) )
+            img.at<Vec3b>( point ) = Vec3b(50,255,0);
+}
+
+// -----------------------------------------------------------------
+
+void Path_planning::print_map(const cv::Mat &img, const string &s)
+{
+    Mat resizeMap;
+    resize( img, resizeMap, img.size()*10, 0, 0, INTER_NEAREST);
+    imshow(s, resizeMap);
 }
 
 // -----------------------------------------------------------------
