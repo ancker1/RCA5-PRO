@@ -94,7 +94,7 @@ class A_Star {
         ~A_Star();
 
     private:
-        Mat map, map_a_star = big_map.clone();
+        Mat map, map_a_star;
         vector<Map_Node *> open_list;
         Map_Node *start_node, *goal_node;
         Map_Size map_size;
