@@ -175,7 +175,7 @@ void Map::drawNShowPoints(string pictureText, vector<Point> points)
     imshow(pictureText, tempMap);
 }
 
-void Map::drawCellsPath(string pictureText, vector<Cell> cells)
+Mat Map::drawCellsPath(string pictureText, vector<Cell> cells)
 {
     Mat tempMap;
     // Line options
@@ -199,9 +199,10 @@ void Map::drawCellsPath(string pictureText, vector<Cell> cells)
              // Udkommenter hvis følg med imshow(pictureText, tempMap);
         }
     }
+    Mat result = tempMap.clone();
     resize(tempMap,tempMap,map.size()*scaling,0,0,INTER_NEAREST);
     imshow(pictureText, tempMap);
-
+    return result;
 }
 
 vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTrap)
@@ -414,7 +415,7 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
     }
 
 
-    drawCellsPath("t",detectedCells);
+//    drawCellsPath("t",detectedCells);
     return detectedCells;
 }
 

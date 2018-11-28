@@ -16,11 +16,10 @@
 #include "Map.h"
 #include "path_planning.h"
 #include "Voronoi_Diagram.h"
+#include "A_Star.h"
 
 using namespace std;
 using namespace cv;
-
-Vec3b red(0,0,255), black(0,0,0), white(255,255,255), blue(255,0,0);
 
 void print_map(Mat &map, string s) {
     Mat resizeMap;
@@ -35,8 +34,9 @@ void draw_pixel_red(vector<Point> &v, Mat &img) {
     }
 }
 
-int main( )
-{
+Vec3b red(0,0,255), black(0,0,0), white(255,255,255), blue(255,0,0);
+
+int main( ) {
     Mat big_map = cv::imread( "../map_control/big_floor_plan.png", IMREAD_COLOR);
     Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
 
@@ -161,6 +161,24 @@ int main( )
     }
     myfile1.close();
     */
+    std::vector<Point> points;
+    for (int y = 0; y < dst.rows; y++)
+        for (int x = 0; x < dst.cols; x++)
+            if ( (int)dst.at<uchar>(y,x) == 255 )
+                points.push_back( Point(x,y) );
+    for ( auto& p : points )
+        src.at<Vec3b>( p ) = red;
+    print_map( src, "Voronoi Diagram" );
+
+    A_Star *a = new A_Star();
+    std::vector<cv::Point> v = a->get_path( src, points[0], points[ points.size()-1 ] );
+    Mat img = big_map.clone();
+    for ( auto& p : v )
+        img.at<Vec3b>( p ) = red;
+    print_map( img, "Map" );
+
+    Mat map = a->get_a_star();
+    print_map( map, "A_Star");
 
     waitKey(0);
     return 0;

@@ -48,7 +48,7 @@ public:
     void printMap();
     void print_map(Mat &img, string s);
     void drawNShowPoints(string pictureText, vector<Point> points);
-    void drawCellsPath(string pictureText, vector<Cell> cells);
+    Mat drawCellsPath(string pictureText, vector<Cell> cells);
     // BUSHFIRE
     Mat brushfire_img(Mat &img);
     vector<Point> find_centers(Mat &img);
