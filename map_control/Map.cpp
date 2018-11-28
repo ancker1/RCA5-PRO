@@ -526,7 +526,7 @@ vector<Point> Map::sortxAndRemoveDuplicate(vector<Point> list)
                 samex++;
             }
         }
-        if(samex == t.size())
+        if(samex == (int)t.size())
             t.push_back(list[i]);
     }
 

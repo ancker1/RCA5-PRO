@@ -55,7 +55,8 @@ public:
 
 
     //PLANNNING ALGORITHM
-    vector<Point> astar(vector<Cellpoint> cellpoints, Point startCellPoint, Point goalCellPoint); // MAKE IT WORK
+    vector<Point> astar(vector<Cellpoint> cellpoints, Point startCellPoint, Point goalCellPoint); // MAKE IT WORk
+
     ~Map();
 
 private:
