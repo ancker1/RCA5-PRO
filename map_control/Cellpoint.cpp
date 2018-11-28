@@ -10,39 +10,48 @@ Cellpoint::Cellpoint(Point onCell)
     this->onCell = onCell;
 }
 
-void Cellpoint::setPointLeft(Point leftCell)
+void Cellpoint::addConnection(Link connection)
 {
-    this->connectedToLeft.push_back(leftCell);
+    connectedTo.push_back(connection);
 }
 
-void Cellpoint::setPointRight(Point rightCell)
+vector<Link> Cellpoint::getLinks()
 {
-    this->connectedToRight.push_back(rightCell);
+    return this->connectedTo;
 }
 
-vector<Point> Cellpoint::getPointLeft()
+void Cellpoint::removePointFromLinks(Point p)
 {
-    return this->connectedToLeft;
-}
-
-vector<Point> Cellpoint::getPointRight()
-{
-    return this->connectedToRight;
-}
-
-void Cellpoint::removePointLeft(int space)
-{
-    this->connectedToLeft.erase(connectedToLeft.begin()+space);
-}
-
-void Cellpoint::removePointRight(int space)
-{
-    this->connectedToRight.erase(connectedToRight.begin()+space);
+    for(size_t i = 0; i < this->connectedTo.size(); i++)
+    {
+        if(this->connectedTo[i].getConnectedTo() == p)
+            this->connectedTo.erase(this->connectedTo.begin()+i);
+    }
 }
 
 Point Cellpoint::getOnCell()
 {
     return this->onCell;
+}
+
+double Cellpoint::getHeuristicdist()
+{
+    return this->heuristicdist;
+}
+
+double Cellpoint::getCombinedHeuristic()
+{
+    return this->combinedHeuristic;
+}
+
+void Cellpoint::calculateHeuristicdist(Point goal)
+{
+    this->heuristicdist = sqrt(pow(this->onCell.x - goal.x,2) + pow(this->onCell.y - goal.y,2)); // PYTTE
+}
+
+void Cellpoint::setCombinedHeuristic(double t)
+{
+    this->combinedHeuristic = t;
 }
 
 Cellpoint::~Cellpoint()
