@@ -1,11 +1,9 @@
 #include "Node.h"
 
-
-
-
-Node::Node(wchar_t v)
+Node::Node(wchar_t v, float p)
 {
 	value = v;
+	marble_probability = p;
 }
 
 void Node::AddNeighbor(Node * n)
@@ -29,6 +27,21 @@ std::vector<Node*> Node::GetNeighbors()
 wchar_t Node::GetValue()
 {
 	return value;
+}
+
+void Node::SetMarbles(int amount)
+{
+	marbles = amount;
+}
+
+int Node::GetMarbles()
+{
+	return marbles;
+}
+
+float Node::GetProbability()
+{
+	return marble_probability;
 }
 
 
