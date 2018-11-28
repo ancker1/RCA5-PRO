@@ -11,10 +11,10 @@ GraphLearner::GraphLearner()
 
 void GraphLearner::QLearning()
 {
-	for (int j = 0; j < 1; j++)
+	for (int j = 0; j < 10; j++)
 	{
 		Q = new LinkedList(*new LinkNode(0, 0, 0, 0));
-		for (int i = 0; i < 5000; i++)
+		for (int i = 0; i < 50000; i++)
 		{
 
 			graph.Init();			// Will place current node at starting node.
@@ -48,9 +48,9 @@ void GraphLearner::QLearning()
 			yplot.push_back(sum_r);
 			//GetRewardSum();
 			zplot.push_back(change / steps);
+
 		}
-		if (j % 10 == 0)
-			std::cout << j << std::endl;
+		std::cout << j << std::endl;
 		
 }
 	//Q2->print_data();
@@ -80,9 +80,9 @@ float GraphLearner::GetReward(state s, action a)		// This is used to simulate a 
 {
 	state ns = GetNextState(s, a);
 	if (!((s.visited_nodes >> ns.current_node->GetValue()) & 1U))	// Check if next node have already been visited.
-		return 10;
+		return ns.current_node->GetMarbles() * 10.0;
 	else
-		return -5;
+		return 0;
 	return 0;
 }
 
@@ -215,17 +215,17 @@ bool GraphLearner::random_choice()
 void GraphLearner::init_environment()
 {
 	/* Creation of the graph */
-	Node* node0 = new Node(0,   0.15);
-	Node* node1 = new Node(1,   0.31);
-	Node* node2 = new Node(2,   0.05);
-	Node* node3 = new Node(3,   0.10);
-	Node* node4 = new Node(4,   0.15);
-	Node* node5 = new Node(5,   0.20);
-	Node* node6 = new Node(6,   0.21);
-	Node* node7 = new Node(7,   0.41);
-	Node* node8 = new Node(8,   0.71);
-	Node* node9 = new Node(9,   0.20);
-	Node* node10 = new Node(10, 0.24);
+	Node* node0 = new Node(0, 0.15);
+	Node* node1 = new Node(1, 0.31);
+	Node* node2 = new Node(2, 0.05);
+	Node* node3 = new Node(3, 0.40);
+	Node* node4 = new Node(4, 0.15);
+	Node* node5 = new Node(5, 0.20);
+	Node* node6 = new Node(6, 0.21);
+	Node* node7 = new Node(7, 0.41);
+	Node* node8 = new Node(8, 0.71);
+	Node* node9 = new Node(9, 0.20);
+	Node* node10 = new Node(10, 0.60);
 	Node* node11 = new Node(11, 0.20);
 	Node* node12 = new Node(12, 0.15);
 	Node* node13 = new Node(13, 0.32);

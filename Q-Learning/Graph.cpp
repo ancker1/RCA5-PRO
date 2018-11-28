@@ -89,7 +89,7 @@ void Graph::DistributeMarbles()
 		for (int i = 0; i < nodes.size(); i++)
 		{
 			random_num = rand() % 101;	// Generate random num between 0 and 100.
-			if (nodes[i]->GetProbability() * 100 < random_num)
+			if (nodes[i]->GetProbability() * 100 > random_num)
 			{
 				nodes[i]->SetMarbles(nodes[i]->GetMarbles() + 1);
 				distributed_marbles++;
