@@ -152,9 +152,6 @@ void Voronoi_Diagram::make_voronoi( cv::Mat &img )
 
     do
     {
-        print_map( img, "Voronoi Diagram" );
-        cv::waitKey(0);
-
         thinning_iteration( img, 0 );
         thinning_iteration( img, 1 );
         cv::absdiff( img, prev, diff );
