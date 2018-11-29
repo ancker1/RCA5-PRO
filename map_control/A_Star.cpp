@@ -12,7 +12,8 @@ A_Star::~A_Star() {}
 
 std::vector<cv::Point> A_Star::get_path(const cv::Mat &road_map,
                                         const cv::Point &start,
-                                        const cv::Point &goal) {
+                                        const cv::Point &goal)
+{
     // Map for displaying a_star
     map_a_star = big_map.clone();
 

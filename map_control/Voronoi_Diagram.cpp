@@ -10,24 +10,15 @@ Voronoi_Diagram::~Voronoi_Diagram() {}
 
 // -------------------------------------------------------------------------
 
-void Voronoi_Diagram::get_voronoi_img( const cv::Mat &src, cv::Mat &dst )
-{
-    voronoi( src, dst );
-}
+void Voronoi_Diagram::get_voronoi_img( const cv::Mat &src, cv::Mat &dst ) { voronoi( src, dst ); }
 
 // -------------------------------------------------------------------------
 
-void Voronoi_Diagram::get_thinning_img( const cv::Mat &src, cv::Mat &dst )
-{
-    opencv_thinning( src, dst );
-}
+void Voronoi_Diagram::get_thinning_img( const cv::Mat &src, cv::Mat &dst ) { opencv_thinning( src, dst ); }
 
 // -------------------------------------------------------------------------
 
-void Voronoi_Diagram::get_skeletinize_img( const cv::Mat &src, cv::Mat &dst)
-{
-    skeletinize( src, dst );
-}
+void Voronoi_Diagram::get_skeletinize_img( const cv::Mat &src, cv::Mat &dst) { skeletinize( src, dst ); }
 
 // -------------------------------------------------------------------------
 

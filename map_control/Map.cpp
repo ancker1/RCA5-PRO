@@ -1,29 +1,15 @@
 #include "Map.h"
 
-Map::Map()
-{
+Map::Map() {}
 
-}
+Map::Map(Mat picture) { map = picture; }
 
-Map::Map(Mat picture)
-{
-    map = picture;
-}
+int Map::getMapRows() { return map.rows; }
 
-int Map::getMapRows()
-{
-    return map.rows;
-}
+int Map::getMapCols() { return map.cols; }
 
-int Map::getMapCols()
-{
-    return map.cols;
-}
+Mat Map::getSweepLineMap() { return sweepLineMap; }
 
-Mat Map::getSweepLineMap()
-{
-    return sweepLineMap;
-}
 void Map::printMap()
 {
     Mat resizeMap;
@@ -778,14 +764,21 @@ Map::~Map()
  *  BUSHFIRE
  * *************************************************/
 
-Mat Map::brushfire_img(Mat &img) {
-    Mat binary_img = img.clone();
-    binarize_img(binary_img);
-    make_brushfire_grid(binary_img);
-    return binary_img;
+Mat Map::brushfire_img( const cv::Mat &img )
+{
+    Mat result = img.clone();
+
+    binarize_img( result );
+
+    make_brushfire_grid( result );
+
+    return result;
 }
 
-vector<Point> Map::find_centers(Mat &img) {
+// --------------------------------------------------
+
+vector<Point> Map::find_centers( const cv::Mat &img )
+{
     Mat1b kernel_lm( Size(5,5), 1u);
     Mat image_dilate;
     dilate(img, image_dilate, kernel_lm);
@@ -820,14 +813,23 @@ vector<Point> Map::find_centers(Mat &img) {
     return v;
 }
 
-void Map::binarize_img(Mat &img) {
+// --------------------------------------------------------------
+
+void Map::binarize_img( cv::Mat &img )
+{
     Mat gray;
     cvtColor(img, gray, CV_RGB2GRAY);
     threshold(gray, img, 128.0, 255.0, THRESH_BINARY);
     img = img > 128;
 }
 
-void Map::find_neighbors(vector<Point> &v, Mat &img, int x, int y) {
+// --------------------------------------------------------------
+
+void Map::find_neighbors( std::vector<Point> &v,
+                          const cv::Mat &img,
+                          const int &x,
+                          const int &y)
+{
     Point p;
     if ((int)img.at<uchar>(x-1,y-1)==255) {
         p.x=x-1;
@@ -871,7 +873,10 @@ void Map::find_neighbors(vector<Point> &v, Mat &img, int x, int y) {
     }
 }
 
-void Map::make_brushfire_grid(Mat &img) {
+// -----------------------------------------------------------
+
+void Map::make_brushfire_grid( cv::Mat &img )
+{
     vector<Point> neighbors;
     for (int y = 0; y < img.cols; y++) {
         for (int x = 0; x < img.rows; x++) {
@@ -882,7 +887,8 @@ void Map::make_brushfire_grid(Mat &img) {
     }
 
     int color = 1;
-    while (!neighbors.empty()) {
+    while (!neighbors.empty())
+    {
         vector<Point> new_neighbors;
         for (size_t i = 0; i < neighbors.size(); i++) {
             if (img.at<uchar>(neighbors[i].x,neighbors[i].y)==255) {
@@ -890,12 +896,17 @@ void Map::make_brushfire_grid(Mat &img) {
                 img.at<uchar>(neighbors[i].x,neighbors[i].y) = color;
             }
         }
+
         color++;
         neighbors = new_neighbors;
     }
 }
 
-void Map::remove_points_in_corners(vector<Point> &v, Mat &img) {
+// --------------------------------------------------------
+
+void Map::remove_points_in_corners( std::vector<Point> &v,
+                                    const cv::Mat &img)
+{
     for (size_t i = 0; i < v.size(); i++) {
         if ((int)img.at<uchar>(v[i].y-1,v[i].x-1)==0) {
             v.erase(v.begin()+i);
@@ -923,6 +934,8 @@ void Map::remove_points_in_corners(vector<Point> &v, Mat &img) {
         }
     }
 }
+
+// -------------------------------------------------------
 
 vector<Point> Map::astar(vector<Cellpoint> cellpoints, Point startCellPoint, Point goalCellPoint) // Start and Goal Cells need to be on the Cell list
 {
