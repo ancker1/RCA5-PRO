@@ -10,24 +10,15 @@ Voronoi_Diagram::~Voronoi_Diagram() {}
 
 // -------------------------------------------------------------------------
 
-void Voronoi_Diagram::get_voronoi_img( const cv::Mat &src, cv::Mat &dst )
-{
-    voronoi( src, dst );
-}
+void Voronoi_Diagram::get_voronoi_img( const cv::Mat &src, cv::Mat &dst ) { voronoi( src, dst ); }
 
 // -------------------------------------------------------------------------
 
-void Voronoi_Diagram::get_thinning_img( const cv::Mat &src, cv::Mat &dst )
-{
-    opencv_thinning( src, dst );
-}
+void Voronoi_Diagram::get_thinning_img( const cv::Mat &src, cv::Mat &dst ) { opencv_thinning( src, dst ); }
 
 // -------------------------------------------------------------------------
 
-void Voronoi_Diagram::get_skeletinize_img( const cv::Mat &src, cv::Mat &dst)
-{
-    skeletinize( src, dst );
-}
+void Voronoi_Diagram::get_skeletinize_img( const cv::Mat &src, cv::Mat &dst) { skeletinize( src, dst ); }
 
 // -------------------------------------------------------------------------
 
@@ -152,9 +143,6 @@ void Voronoi_Diagram::make_voronoi( cv::Mat &img )
 
     do
     {
-        print_map( img, "Voronoi Diagram" );
-        cv::waitKey(0);
-
         thinning_iteration( img, 0 );
         thinning_iteration( img, 1 );
         cv::absdiff( img, prev, diff );
