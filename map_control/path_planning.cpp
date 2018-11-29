@@ -7,8 +7,8 @@ Path_planning::~Path_planning() {}
 int Path_planning::way_around_obstacle(Point start, Point goal, Mat &src) {
     Map grid;
     Mat img = grid.brushfire_img(src);
-    if (obstacle_detected(start, goal, img)) {
-        LineIterator it(img, start, goal, 8);
+    if ( obstacle_detected( start, goal, img ) ) {
+        LineIterator it( img, start, goal, 8 );
         vector<Point> v = get_points(it);
         Point start_left = get_p_before_obstacle(v, img);
         Point start_right = get_p_before_obstacle(v, img);
@@ -261,6 +261,8 @@ Point Path_planning::get_p_before_obstacle(vector<Point> &v, Mat &img) {
     return p;
 }
 
+// -----------------------------------------------------------------
+
 bool Path_planning::obstacle_detected(Point start, Point goal, Mat &img) {
     LineIterator it(img, start, goal, 8);
     vector<Point> v = get_points(it);
@@ -272,3 +274,72 @@ bool Path_planning::obstacle_detected(Point start, Point goal, Mat &img) {
     }
     return false;
 }
+
+// -----------------------------------------------------------------
+
+Mat Path_planning::make_visibility_map( const cv::Mat &map,
+                                        const std::vector<Point> &road_map_points)
+{
+    Mat result = map.clone();  // Make deep copy of map
+
+    int i = 10;
+    for ( auto& point : road_map_points )
+    {
+        for (int y = 0; y < result.rows; y++)
+            for (int x = 0; x < result.cols; x++)
+            {
+                Point start( point ), goal(x,y);
+                obs_detect_color( start, goal, result );
+            }
+
+        result.at<Vec3b>( point ) = Vec3b(0,0,255);
+
+        print_map( result, "Visibility - Boustrophedon Decomposition" );
+
+        i++;
+        if ( i > 9 )
+        {
+            cv::waitKey(0);
+            i = 0;
+        }
+    }
+
+    for ( auto& point : road_map_points )
+        result.at<Vec3b>( point ) = Vec3b(0,0,255);
+
+    return result;
+}
+
+// -----------------------------------------------------------------
+
+void Path_planning::obs_detect_color( const cv::Point start,
+                                      const cv::Point goal,
+                                      cv::Mat &img)
+{
+    LineIterator it( img, start, goal, 4 );
+
+    std::vector<Point> line_points;
+    for (int i = 0; i < it.count; i++, it++)
+    {
+        Point p( it.pos() );
+        if ( img.at<Vec3b>( p ) == Vec3b(0,0,0) )
+            break;
+        else
+            line_points.push_back( p );
+    }
+
+    for ( auto& point : line_points )
+        if ( img.at<Vec3b>( point ) != Vec3b(0,0,255) )
+            img.at<Vec3b>( point ) = Vec3b(50,255,0);
+}
+
+// -----------------------------------------------------------------
+
+void Path_planning::print_map(const cv::Mat &img, const string &s)
+{
+    Mat resizeMap;
+    resize( img, resizeMap, img.size()*10, 0, 0, INTER_NEAREST);
+    imshow(s, resizeMap);
+}
+
+// -----------------------------------------------------------------
