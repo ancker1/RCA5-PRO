@@ -7,12 +7,16 @@
 #include "Graph.h"
 #include "Node.h"
 #include <fstream>
+#include <stdlib.h>
 
 #include "LinkedList.h"
 #include "LinkNode.h"
 
 #define GREEDY		1
 #define NONGREEDY	0
+
+#define VISITED_ALL		65535
+#define AMOUNT_STEPS	6
 
 struct state
 {
@@ -39,12 +43,15 @@ public:
 	bool greedy_or_nongreedy(float epsilon);
 
 	void print_route();
+	void GetRewardSum();
 
 	float GetRandomReward(float mean, float std_deviation);
 
 	std::vector<int> get_xplot();
 	std::vector<float> get_yplot();
-	std::vector<int> get_zplot();
+	std::vector<float> get_zplot();
+
+	void init_environment();
 
 	~GraphLearner();
 private:
@@ -53,7 +60,7 @@ private:
 	bool random_choice();
 
 	Graph graph;
-	void init_environment();
+	
 	int amount_nodes = 0;
 
 	LinkNode* head = new LinkNode( 0, 0, 0, 0 );
@@ -62,12 +69,11 @@ private:
 
 	float discount_factor = 0.15;
 	float learning_rate = 0.5;
-	float alpha = 0.5;
 	float epsilon = 0.1;
 
 	std::vector<int> xplot;
 	std::vector<float> yplot;
-	std::vector<int> zplot;
+	std::vector<float> zplot;
 
 	std::string action_text[16] = { "GOTO0", "GOTO1", "GOTO2", "GOTO3", "GOTO4", "GOTO5", "GOTO6", "GOTO7", "GOTO8", "GOTO9", "GOTO10", "GOTO11", "GOTO12", "GOTO13", "GOTO14", "GOTO15" };
 };
