@@ -200,7 +200,8 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 				putText(image, format("Right = %5.1f",	right_area),	Point(50, 60), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));
 				putText(image, format("Hull  = %5.1f",	hull_area),		Point(50, 70), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));
 				putText(image, format("Circ  = %5.2f",	circularity),	Point(50, 80), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));
-				putText(image, format("Ratio = %5.3f",	ratio),				Point(50, 90), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));*/
+				putText(image, format("Ratio = %5.3f",	ratio),				Point(bounding_rect.x, bounding_rect.y), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));
+				rectangle(image, bounding_rect, Scalar(255, 255, 255));*/
 
 				// Is circle?
 				if ((0.95 <= circularity && circularity <= 1.01) || (0.9 <= ratio && ratio <= 1.1)) {
