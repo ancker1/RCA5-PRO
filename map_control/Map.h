@@ -91,11 +91,7 @@ private:
     Cellpoint findCellPointFromPoint(vector<Cellpoint> cellpoints, Point point);
     Cellpoint findSmallestCombinedHeuristic(vector<Cellpoint> cellpoints);
     Cell findClosestCellFromStart(vector<Cell> cells, Point start, int &cellNumber);
-    // PUT INTO ASTAR CLASS
-    double calculateDiagonalDist(Point p1, Point p2);
-    Point findWayToRoadMap(Mat roadmap, Point entryExitPoint);
-    vector<double> findAstarPathLengthsForRoadmap(Mat roadmap);
-    vector<Point> findFirstStartNGoalWithoutObs(Mat roadmap, int starti, int startj, int endi, int endj);
+
 };
 
 #endif // MAP_H

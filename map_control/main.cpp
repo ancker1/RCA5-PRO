@@ -33,10 +33,10 @@ void draw_pixel_red(vector<Point> &v, Mat &img) {
         img.at<Vec3b>(v[i].y, v[i].x) = color;
     }
 }
-
+ /* MIKKEL STYKKE TIL RAPPORT SKRIVNING
 int main(int argc, char** argv)
 {
-    /* MIKKEL STYKKE TIL RAPPORT SKRIVNING
+
     //const char* default_file = "../map_control/floor_plan.png";
     const char* default_file = "../map_control/big_floor_plan.png";
     const char* filename = argc >=2 ? argv[1] : default_file;
@@ -96,7 +96,6 @@ int main(int argc, char** argv)
     Mat img_Boustrophedon = smallMap.drawCellsPath("Boustrophedon", t);
     */
 
-    //smallMap.astar(allCellpoint, Point(2,63), Point(114,55));
     //smallMap.drawCellsPath("Cell Path", t);
     /*
     for(size_t i = 0; i < t.size(); i++)
@@ -123,6 +122,7 @@ int main(int argc, char** argv)
             }
         }
     }
+    */
 Vec3b red(0,0,255), black(0,0,0), white(255,255,255), blue(255,0,0);
 
 // CONSTANTS
@@ -148,7 +148,12 @@ int main( ) {
     for ( auto& p : v )
         img.at<Vec3b>( p ) = red;
     print_map( img, "Map" );
-
+    // NOGET GALT I MIN FUNKTION
+    vector<double> voronoiLength = a->findAstarPathLengthsForRoadmap(src);
+    for ( size_t i = 0; i < voronoiLength.size(); i++)
+    {
+        cout << "Number start-end point: " << i+1 << " Total Length " << voronoiLength[i] << endl;
+    }
     waitKey(0);
     return 0;
 }

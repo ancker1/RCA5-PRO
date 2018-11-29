@@ -93,6 +93,8 @@ class A_Star {
          */
         void draw_path(cv::Mat &img, const std::vector<Point> path );
 
+        // Experiment functions
+        vector<double> findAstarPathLengthsForRoadmap(Mat roadmap);
         ~A_Star();
 
     private:
@@ -163,6 +165,14 @@ class A_Star {
          * @brief draw_open_list
          */
         void draw_open_list(Mat &img);
+
+        // Experiment functions
+        vector<Point> get_points(LineIterator &it);
+        bool obstacleDetectedWithLine(Mat roadmap, Point start, Point end);
+        double calculateDiagonalDist(Point p1, Point p2);
+        Point findWayToRoadMap(Mat roadmap, Point entryExitPoint);
+        Point findStartWithoutObs(Mat roadmap, int starti, int startj);
+        Point findGoalWithoutObs(Mat roadmap, int endi, int endj);
 };
 
 #endif // A_STAR_H
