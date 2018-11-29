@@ -148,12 +148,30 @@ int main( ) {
     for ( auto& p : v )
         img.at<Vec3b>( p ) = red;
     print_map( img, "Map" );
-    // NOGET GALT I MIN FUNKTION
+
     vector<double> voronoiLength = a->findAstarPathLengthsForRoadmap(src);
+    cout << "Astar Path length Voronoi: " << voronoiLength.size() << endl;
+    /*
     for ( size_t i = 0; i < voronoiLength.size(); i++)
     {
         cout << "Number start-end point: " << i+1 << " Total Length " << voronoiLength[i] << endl;
     }
+    */
+    /*
+    // Boustrophedon
+    Mat src1 = big_map.clone();
+    cvtColor(src1, src1, CV_BGR2GRAY);
+    Map Boustrophedon(src1);
+    vector<Point> detectedCorners = Boustrophedon.cornerDetection();
+    Boustrophedon.trapezoidalLines(detectedCorners);
+    vector<Point> upper = Boustrophedon.getUpperTrapezoidalGoals();
+    vector<Point> lower = Boustrophedon.getLowerTrapezoidalGoals();
+    vector<Cell> t = Boustrophedon.calculateCells(upper, lower);
+    Mat img_Boustrophedon = Boustrophedon.drawCellsPath("Boustrophedon", t);
+    voronoiLength = a->findAstarPathLengthsForRoadmap(img_Boustrophedon);
+    cout << "Astar Path length Boustrophedon: " << voronoiLength.size() << endl;
+    */
+
     waitKey(0);
     return 0;
 }

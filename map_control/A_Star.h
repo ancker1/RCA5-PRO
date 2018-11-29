@@ -170,7 +170,7 @@ class A_Star {
         vector<Point> get_points(LineIterator &it);
         bool obstacleDetectedWithLine(Mat roadmap, Point start, Point end);
         double calculateDiagonalDist(Point p1, Point p2);
-        Point findWayToRoadMap(Mat roadmap, Point entryExitPoint);
+        Point findWayToRoadMap(Mat roadmap, vector<Point> roadmapPoints, Point entryExitPoint);
         Point findStartWithoutObs(Mat roadmap, int starti, int startj);
         Point findGoalWithoutObs(Mat roadmap, int endi, int endj);
 };

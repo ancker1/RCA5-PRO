@@ -296,39 +296,50 @@ vector<double> A_Star::findAstarPathLengthsForRoadmap(Mat roadmap)
         }
     }
     */
-
+    // Finds all roadmap points
+    vector<Point> roadmapPoints;
+    for (int y = 0; y < roadmap.rows; y++)
+        for (int x = 0; x < roadmap.cols; x++)
+            if ( roadmap.at<Vec3b>(y,x) == Vec3b(0,0,255) )
+                roadmapPoints.push_back( Point(x,y) );
+    vector<Point> testPoints;
     for(int i = 0; i < roadmap.rows; i++)
     {
         for(int j = 0; j < roadmap.cols; j++) // i j is startpoint
         {
             cout << j << endl;
-            if(roadmap.at<Vec3b>(i, j) == Vec3b(0,0,0)) // If black pixel inside obstacle find new start point
-                continue;
-            startPointOnRoadmap = findWayToRoadMap(roadmap, Point(j,i));
-            if(startPointOnRoadmap == Point(roadmap.cols + 1, roadmap.rows + 1)) // Have not found a starting point without obstacle to roadmap
-                continue;
-
-            for(int k = i + 1; k < roadmap.rows; k++)
+            if(roadmap.at<Vec3b>(i, j) != Vec3b(0,0,0)) // If black pixel inside obstacle find new start point
             {
-                for(int n = j + 1; n < roadmap.cols; n++ ) // k n is goalpoint
+                startPointOnRoadmap = findWayToRoadMap(roadmap, roadmapPoints, Point(j,i));
+                if(startPointOnRoadmap != Point(NULL, NULL)) // Have not found a starting point without obstacle to roadmap
                 {
-                    if(roadmap.at<Vec3b>(k, n) == Vec3b(0,0,0)) // If black pixel inside obstacle find new goal point
-                        continue;
-                    endPointOnRoadmap = findWayToRoadMap(roadmap, Point(n,k));
-                    if(startPointOnRoadmap == Point(roadmap.cols + 1, roadmap.rows + 1)) // Have not found a goal point without obstacle to roadmap
-                        continue;
-                    // Have found a startpoint and a endpoint without obs therefore calculate distance
-                    tempDist = 0;
-                    //aStarPath = get_path(roadmap, startPointOnRoadmap, endPointOnRoadmap);
-                    tempDist = calculateDiagonalDist(Point(j,i), startPointOnRoadmap); // From start to start on roadmap
-                    tempDist += tempDist += calculateDiagonalDist(Point(n,k), endPointOnRoadmap); // From goal to goal on roadmap
-                    //tempDist += aStarPath.size(); // Path length of astar
-                    pathLengths.push_back(tempDist);
+                    testPoints.push_back(Point(j,i));
+                    /*
+                    for(int k = i + 1; k < roadmap.rows; k++)
+                    {
+                        for(int n = j + 1; n < roadmap.cols; n++ ) // k n is goalpoint
+                        {
+                            if(roadmap.at<Vec3b>(k, n) == Vec3b(0,0,0)) // If black pixel inside obstacle find new goal point
+                                continue;
+                            endPointOnRoadmap = findWayToRoadMap(roadmap, roadmapPoints, Point(n,k));
+
+                            if(endPointOnRoadmap == Point(roadmap.cols + 1, roadmap.rows + 1)) // Have not found a goal point without obstacle to roadmap
+                                continue;
+                            // Have found a startpoint and a endpoint without obs therefore calculate distance
+                            tempDist = 0;
+                            //aStarPath = get_path(roadmap, startPointOnRoadmap, endPointOnRoadmap);
+                            tempDist = calculateDiagonalDist(Point(j,i), startPointOnRoadmap); // From start to start on roadmap
+                            tempDist += tempDist += calculateDiagonalDist(Point(n,k), endPointOnRoadmap); // From goal to goal on roadmap
+                            //tempDist += aStarPath.size(); // Path length of astar
+                            pathLengths.push_back(tempDist);
+
+                        }
+                    }
+                    */
                 }
             }
-
         }
-        //cout << i << endl;
+
     }
 
     return pathLengths;
@@ -354,24 +365,23 @@ void A_Star::print_map(const Mat &img, const string &s) {
 }
 
 
-Point A_Star::findWayToRoadMap(Mat roadmap, Point entryExitPoint)
+Point A_Star::findWayToRoadMap(Mat roadmap, vector<Point> roadmapPoints, Point entryExitPoint)
 {
-    Point roadmapEntryExit = Point(roadmap.cols + 1, roadmap.rows + 1); // Must initlize other than 0
-    for(int i = 0; i < roadmap.rows; i++)
+    Point roadmapEntryExit = Point(NULL, NULL);
+    bool first = true;
+    for(size_t i = 0; i < roadmapPoints.size(); i++)
     {
-        for(int j = 0; j < roadmap.cols; j++)
+        if(!obstacleDetectedWithLine(roadmap, roadmapPoints[i], entryExitPoint))
         {
-            if(roadmap.at<Vec3b>(i,j) == Vec3b(0,0,255))
+            if(first)
+                roadmapEntryExit = roadmapPoints[i];
+            else
             {
-                if(!obstacleDetectedWithLine(roadmap, Point(j,i), entryExitPoint))
-                {
-                    if(calculateDiagonalDist(roadmapEntryExit, entryExitPoint) > calculateDiagonalDist(Point(j,i), entryExitPoint))
-                        roadmapEntryExit = Point(j,i);
-                }
+                if(calculateDiagonalDist(roadmapEntryExit, entryExitPoint) >= calculateDiagonalDist(roadmapPoints[i], entryExitPoint))
+                    roadmapEntryExit = roadmapPoints[i];
             }
         }
     }
-
     return roadmapEntryExit;
 }
 
@@ -437,13 +447,11 @@ vector<Point> A_Star::get_points(LineIterator &it)
 
 bool A_Star::obstacleDetectedWithLine(Mat roadmap,Point start, Point end)
 {
-    LineIterator it(roadmap, start, end, 8);
-    vector<Point> v = get_points(it);
-    for (size_t i = 0; i < v.size(); i++) {
-        if ( roadmap.at<Vec3b>(v[i]) == Vec3b(0,0,0) ) // MEETS BLACK
-        {
+    LineIterator it(roadmap, start, end, 8); // 8 for diagonal
+    for (int i = 0; i < it.count; i++, it++) // next point on line
+    {
+        if ( roadmap.at<Vec3b>( it.pos() ) == Vec3b(0,0,0) )
             return true;
-        }
     }
     return false;
 }
