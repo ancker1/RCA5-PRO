@@ -13,7 +13,7 @@ int circleInfo::isSpotted(vector<circleInfo>& spottedCircles) {
 	for (unsigned int i = 0; i < spottedCircles.size(); i++) {
 		d = sqrt(pow(this->x0 - spottedCircles[i].x0, 2) + pow(this->y0 - spottedCircles[i].y0, 2));
 
-		if (this->prevspotted == true && d < min_d && d <= 2 * spottedCircles[i].r) {
+		if (this->prevspotted == true && d < min_d && d <= spottedCircles[i].r) {
 			min_d = d;
 			min_i = i;
 		}
@@ -27,7 +27,7 @@ int circleInfo::isSpotted(vector<circleInfo>& spottedCircles) {
 	for (unsigned int i = 0; i < spottedCircles.size(); i++) {
 		d = sqrt(pow(this->map_x - spottedCircles[i].map_x, 2) + pow(this->map_y - spottedCircles[i].map_y, 2));
 
-		if (d < min_d && d <= ceil(this->d / 5) * MARBLE_RADIUS_P) {
+		if (d < min_d && d <= ceil(3 * this->d / 10) * MARBLE_RADIUS_P) {
 			min_d = d;
 			min_i = i;
 		}
@@ -39,22 +39,23 @@ int circleInfo::isSpotted(vector<circleInfo>& spottedCircles) {
 
 void circleInfo::update(circleInfo& spottedCircle) {
 	// Update map positions
-	this->x0 = this->x0 + (spottedCircle.x0 - this->x0) / this->n;
-	this->y0 = this->y0 + (spottedCircle.y0 - this->y0) / this->n;
-	this->n++;
+	this->n			+= spottedCircle.r;
+	this->map_x	= this->map_x + spottedCircle.r * (spottedCircle.map_x - this->map_x) / this->n;
+	this->map_y	= this->map_y + spottedCircle.r * (spottedCircle.map_y - this->map_y) / this->n;
 
 	// Update camera positions
-	this->x0 = spottedCircle.x0;
-	this->y0 = spottedCircle.y0;
-	this->angle = spottedCircle.angle;
-	this->d = spottedCircle.d;
+	this->x0		= spottedCircle.x0;
+	this->y0		= spottedCircle.y0;
+	this->r			= spottedCircle.r;
+	this->angle	= spottedCircle.angle;
+	this->d			= spottedCircle.d;
 
 	this->spotted = true;
 }
 
 void circleInfo::merge(circleInfo& circle) {
-	this->x0 = (this->n * this->x0 + circle.n * circle.x0)/(this->n + circle.n);
-	this->x0 = (this->n * this->y0 + circle.n * circle.y0)/(this->n + circle.n);
+	this->map_x = (this->n * this->map_x + circle.n * circle.map_x)/(this->n + circle.n);
+	this->map_y = (this->n * this->map_y + circle.n * circle.map_y)/(this->n + circle.n);
 	this->n += circle.n;
 }
 
@@ -235,7 +236,7 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 					Mat slice;
 					image_filtered(bounding_rect).copyTo(slice);
 					//GaussianBlur(slice, slice, Size(min(slice.rows, 9), min(slice.rows, 9)), 2, 2);
-					HoughCircles(slice, circles, HOUGH_GRADIENT, 1, ceil(slice.rows / 2), 5, (slice.cols - slice.rows < 10 ? 10 : slice.cols - slice.rows), 0, slice.rows);
+					//HoughCircles(slice, circles, HOUGH_GRADIENT, 1, ceil(slice.rows / 2), 5, (slice.cols - slice.rows < 10 ? 10 : slice.cols - slice.rows), 0, slice.rows);
 					if (1 < circles.size()) {
 						for (unsigned int j = 0; j < circles.size(); j++) {
 							circlevector.push_back(circleInfo());
@@ -346,13 +347,7 @@ void CircleDetection::drawCircles(Mat& image, vector<circleInfo>& circles) {
 	}
 }
 
-void CircleDetection::calcCirclePositions(vector<circleInfo>& spottedCircles, Mat& image, vector<circleInfo>& circles, Mat& map, double x_robot, double y_robot, double angle_robot) {
-		// Reset all circles spotted value;
-	for (unsigned int i = 0; i < circles.size(); i++) {
-		circles[i].prevspotted = circles[i].spotted;
-		circles[i].spotted = false;
-	}
-
+void CircleDetection::calcCirclePositions(vector<circleInfo>& spottedCircles, Mat& image, Mat& map, double x_robot, double y_robot, double angle_robot) {
 	const int h_shift = map.rows / 2;
 	const int w_shift = map.cols / 2;
 
@@ -366,6 +361,12 @@ void CircleDetection::calcCirclePositions(vector<circleInfo>& spottedCircles, Ma
 }
 
 void CircleDetection::mergeMarbles(vector<circleInfo>& circles, vector<circleInfo> spottedCircles) {
+	// Reset all circles spotted value;
+	for (unsigned int i = 0; i < circles.size(); i++) {
+		circles[i].prevspotted = circles[i].spotted;
+		circles[i].spotted = false;
+	}
+
 	// For all spotted circles
 	for (unsigned int i = 0; i < circles.size(); i++) {
 		// Check if circle was seen before
@@ -390,13 +391,33 @@ void CircleDetection::mergeMarbles(vector<circleInfo>& circles, vector<circleInf
 			}
 		}
 	}
+
+	// Remove marbles with low counts
+	static char counter;
+	counter = (counter + 1) % 100;
+	unsigned char remove_below[3] = {50, 25, 5};
+	for (unsigned int i = 0; i < sizeof(remove_below)/sizeof(*remove_below); i++) {
+		if (counter % (2 * remove_below[i]) == 0) {
+			for (unsigned int j = 0; j < circles.size(); j++) {
+				if (circles[j].n < remove_below[i]) {
+					circles.erase(circles.begin() + j);
+				}
+			}
+			break;
+		}
+	}
 }
 
-void CircleDetection::mapMarbles(Mat& map, vector<circleInfo>& circles) {
+void CircleDetection::mapMarbles(Mat& map, vector<circleInfo>& circles, vector<circleInfo>& spottedCircles) {
 	static Mat map_orig;
 	if (!map_orig.data) {
 		map_orig = map.clone();
 	}
+
+	for (unsigned int i = 0; i < spottedCircles.size(); i++) {
+		map_orig.at<Vec3b>(Point(spottedCircles[i].map_x, spottedCircles[i].map_y)) = Vec3b(0, 150, 0);
+	}
+
 	map = map_orig.clone();
 	putText(map, format("%d circles!", circles.size()), Point(20, 40), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255));
 

@@ -30,6 +30,8 @@ struct circleInfo {
 	float					r, angle, d;
 	double				map_x, map_y;
 	bool					prevspotted, spotted = true;
+	Scalar				color;
+
 	int						isSpotted(vector<circleInfo>& spottedCircles);
 	void					update(circleInfo& spottedCircle);
 	void					merge(circleInfo& circle);
@@ -44,9 +46,9 @@ public:
 	vector<circleInfo>	detectCircles(Mat& image, detection_algorithm algo = CD_HOUGH);
 	void								findBoundaries(vector<Point>& hull, Point& top, Point& right, Point& bottom, Point& left);
 	void								drawCircles(Mat& image, vector<circleInfo>& circles);
-	void								calcCirclePositions(vector<circleInfo>& spottedCircles, Mat& image, vector<circleInfo>& circles, Mat& map, double x_robot, double y_robot, double angle_robot);
+	void								calcCirclePositions(vector<circleInfo>& spottedCircles, Mat& image, Mat& map, double x_robot, double y_robot, double angle_robot);
 	void								mergeMarbles(vector<circleInfo>& circles, vector<circleInfo> spottedCircles);
-	void								mapMarbles(Mat& map, vector<circleInfo>& circles);
+	void								mapMarbles(Mat& map, vector<circleInfo>& circles, vector<circleInfo>& spottedCircles);
 
 private:
 };
