@@ -294,7 +294,7 @@ Mat Path_planning::make_visibility_map( const cv::Mat &map,
 
         result.at<Vec3b>( point ) = Vec3b(0,0,255);
 
-        print_map( result, "Visbility" );
+        print_map( result, "Visibility - Boustrophedon Decomposition" );
 
         i++;
         if ( i > 10 )

@@ -98,19 +98,19 @@ class Voronoi_Diagram {
                           cv::Mat &output );
 
         /**
-         * @brief thinning_iteration
-         *      Perform one thinning iteration
-         * @param img => Binary image with range = 0-1
-         * @param iter => 0 = step one, 1 = step two
+         * @brief thinning_iteration -> Perform one thinning iteration
+         * @param img -> Binary image with range = 0-1
+         * @param iter -> 0 = step one, 1 = step two
          */
         void thinning_iteration( cv::Mat &img, int iter );
 
         /**
-         * @brief make_voronoi
-         *      Function for thinning the given binary image
-         * @param img => binary image with range = 0 - 255
+         * @brief make_voronoi -> Function for thinning the given binary image
+         * @param img -> binary image with range = 0 - 255
          */
         void make_voronoi( cv::Mat &img );
+
+        void print_map( const cv::Mat &img, const string &s );
 };
 
 #endif // VORONI_DIAGRAM_H
