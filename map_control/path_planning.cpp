@@ -282,7 +282,7 @@ Mat Path_planning::make_visibility_map( const cv::Mat &map,
 {
     Mat result = map.clone();  // Make deep copy of map
 
-    int i = 0;
+    int i = 10;
     for ( auto& point : road_map_points )
     {
         for (int y = 0; y < result.rows; y++)
@@ -297,7 +297,7 @@ Mat Path_planning::make_visibility_map( const cv::Mat &map,
         print_map( result, "Visibility - Boustrophedon Decomposition" );
 
         i++;
-        if ( i > 10 )
+        if ( i > 9 )
         {
             cv::waitKey(0);
             i = 0;
