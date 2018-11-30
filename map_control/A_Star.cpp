@@ -221,131 +221,81 @@ vector<double> A_Star::findAstarPathLengthsForRoadmap(Mat roadmap)
     vector<double> pathLengths;
     double tempDist;
     vector<Point> aStarPath;
-    Point startPoint = Point(0,0);
-    Point endPoint = Point(roadmap.cols, roadmap.rows);
     Point startPointOnRoadmap;
     Point endPointOnRoadmap;
-    int startPointi = 0;
-    int startPointj = 0;
-    int endPointi = roadmap.rows - 1;
-    int endPointj = roadmap.cols - 1;
-    cout << "TESET: " << findStartWithoutObs(roadmap, 0, 101) << endl;
-    // Calculation of distance over all points on map
-    /*
-    while ( (startPointi != endPointi) && (startPointj != endPointj) )
-    {
-        cout << "Starti: " << startPointi << " Startj: " << startPointj << endl;
-        cout << "Endi: " << endPointi << " Endj: " << endPointj << endl;
-        //cout << "Start Point " << startPoint << " End Point " << endPoint << endl;
-        //startPoint = findStartWithoutObs(roadmap, startPointi, startPointj);
-        //endPoint = findGoalWithoutObs(roadmap, endPointi, endPointj);
-        startPointOnRoadmap = findWayToRoadMap(roadmap, startPoint);
-        endPointOnRoadmap = findWayToRoadMap(roadmap, endPoint);
-        if ( startPointOnRoadmap == Point(roadmap.cols + 1, roadmap.rows + 1) || roadmap.at<Vec3b>(startPointi, startPointj) == Vec3b(0,0,0) ) // Have not found a point without obstacle to roadmap
-        {
-            if(startPointi == roadmap.rows - 1)
-                startPointi = 0;
-            if(startPointj == roadmap.cols - 1)
-            {
-                startPointj = 0;
-                startPointi++;
-            }
-            else
-                startPointj++;
-        }
-        else if (  endPointOnRoadmap == Point(roadmap.cols + 1, roadmap.rows + 1) || roadmap.at<Vec3b>(endPointi, endPointj) == Vec3b(0,0,0) ) // Have not found a point without obstacle to roadmap
-        {
-            if(endPointi == 0)
-                endPointi = roadmap.rows - 1 ;
-            if(endPointj == 0)
-            {
-                endPointj = roadmap.cols - 1 ;
-                endPointi--;
-            }
-            else
-                endPointj--;
-        }
-        else // Have found a startpoint and a endpoint without obs therefore calculate distance
-        {
-            tempDist = 0;
-            aStarPath = get_path(roadmap, startPointOnRoadmap, endPointOnRoadmap);
-            tempDist = calculateDiagonalDist(startPoint, startPointOnRoadmap); // From start to start on roadmap
-            tempDist += tempDist += calculateDiagonalDist(endPoint, endPointOnRoadmap); // From goal to goal on roadmap
-            tempDist += aStarPath.size(); // Path length of astar
-            pathLengths.push_back(tempDist);
-            // Next point for start and end
-            if(startPointi == roadmap.rows - 1)
-                startPointi = 0;
-            if(startPointj == roadmap.cols - 1)
-            {
-                startPointj = 0;
-                startPointi++;
-            }
-            else
-                startPointj++;
 
-            if(endPointi == 0)
-                endPointi = roadmap.rows - 1;
-            if(endPointj == 0)
-            {
-                endPointj = roadmap.cols - 1;
-                endPointi--;
-            }
-            else
-                endPointj--;
-        }
-    }
-    */
     // Finds all roadmap points
     vector<Point> roadmapPoints;
     for (int y = 0; y < roadmap.rows; y++)
         for (int x = 0; x < roadmap.cols; x++)
             if ( roadmap.at<Vec3b>(y,x) == Vec3b(0,0,255) )
                 roadmapPoints.push_back( Point(x,y) );
+
+    // Finds test points
     vector<Point> testPoints;
     for(int i = 0; i < roadmap.rows; i++)
     {
         for(int j = 0; j < roadmap.cols; j++) // i j is startpoint
         {
-            cout << j << endl;
             if(roadmap.at<Vec3b>(i, j) != Vec3b(0,0,0)) // If black pixel inside obstacle find new start point
             {
                 startPointOnRoadmap = findWayToRoadMap(roadmap, roadmapPoints, Point(j,i));
                 if(startPointOnRoadmap != Point(NULL, NULL)) // Have not found a starting point without obstacle to roadmap
-                {
                     testPoints.push_back(Point(j,i));
-                    /*
-                    for(int k = i + 1; k < roadmap.rows; k++)
-                    {
-                        for(int n = j + 1; n < roadmap.cols; n++ ) // k n is goalpoint
-                        {
-                            if(roadmap.at<Vec3b>(k, n) == Vec3b(0,0,0)) // If black pixel inside obstacle find new goal point
-                                continue;
-                            endPointOnRoadmap = findWayToRoadMap(roadmap, roadmapPoints, Point(n,k));
-
-                            if(endPointOnRoadmap == Point(roadmap.cols + 1, roadmap.rows + 1)) // Have not found a goal point without obstacle to roadmap
-                                continue;
-                            // Have found a startpoint and a endpoint without obs therefore calculate distance
-                            tempDist = 0;
-                            //aStarPath = get_path(roadmap, startPointOnRoadmap, endPointOnRoadmap);
-                            tempDist = calculateDiagonalDist(Point(j,i), startPointOnRoadmap); // From start to start on roadmap
-                            tempDist += tempDist += calculateDiagonalDist(Point(n,k), endPointOnRoadmap); // From goal to goal on roadmap
-                            //tempDist += aStarPath.size(); // Path length of astar
-                            pathLengths.push_back(tempDist);
-
-                        }
-                    }
-                    */
-                }
             }
         }
-
+        cout << i << endl;
     }
+    /*
+    for(size_t i = 0; i < testPoints.size() ; i++)
+    {
+        cout << i << endl;
+        startPointOnRoadmap = findWayToRoadMap(roadmap, roadmapPoints, testPoints[i]);
+        for(size_t j = i + 1; j < testPoints.size(); j++)
+        {
+            endPointOnRoadmap = findWayToRoadMap(roadmap, roadmapPoints, testPoints[j]);
+            tempDist = 0;
+            //aStarPath = get_path(roadmap, startPointOnRoadmap, endPointOnRoadmap);
+            tempDist = calculateDiagonalDist(testPoints[i], startPointOnRoadmap); // From start to start on roadmap
+            tempDist += tempDist += calculateDiagonalDist(testPoints[j], endPointOnRoadmap); // From goal to goal on roadmap
+            //tempDist += aStarPath.size(); // Path length of astar
+            pathLengths.push_back(tempDist);
+        }
+    }
+    */
+    vector<double> *r1;
+    vector<double> *r2;
+    vector<double> *r3;
+    vector<double> *r4;
+    /*
+    thread first (&A_Star::calculateDistThread, this, &r1, roadmap, testPoints, roadmapPoints, 1);
+    thread second (&A_Star::calculateDistThread, this, &r2, roadmap, testPoints, roadmapPoints, 2);
+    thread third (&A_Star::calculateDistThread, this, &r3, roadmap, testPoints, roadmapPoints, 3);
+    thread fourth (&A_Star::calculateDistThread, this, &r4, roadmap, testPoints, roadmapPoints, 4);
 
+    // synchronize threads:
+    /*
+    first.join();
+    second.join();
+    third.join();
+    fourth.join();
+    */
+/*
+    pathLengths.reserve(r1->size() + r2->size() + r3->size() + r4->size()); // preallocate memory
+    pathLengths.insert(pathLengths.end(), r1->begin(), r1->end());
+    pathLengths.insert(pathLengths.end(), r2->begin(), r2->end());
+    pathLengths.insert(pathLengths.end(), r3->begin(), r3->end());
+    pathLengths.insert(pathLengths.end(), r4->begin(), r4->end());
+*/
     return pathLengths;
 }
 
 // -----------------------------------------------------------------------
+
+void virker()
+{
+    cout << virker << endl;
+}
 
 void A_Star::draw_open_list( cv::Mat &img ) {
     for ( auto& o : open_list ) {
@@ -390,50 +340,29 @@ double A_Star::calculateDiagonalDist(Point p1, Point p2)
     return sqrt(pow(p1.x-p2.x,2) + pow(p1.y-p2.y,2));
 }
 
-
-
-Point A_Star::findStartWithoutObs(Mat roadmap, int starti, int startj)
+void A_Star::calculateDistThread(vector<double> &results, Mat roadmap, vector<Point> testPoints, vector<Point> roadmapPoints, int threadNumber)
 {
-    Point start = Point(0,0);
-    bool foundFirst = false;
-    // Find First Starting point without obstacle
-    for(int i = starti; i < roadmap.rows; i++)
+    int amount = testPoints.size()/4;
+    int start = amount*(threadNumber -1);
+    int stop = amount*(threadNumber);
+    Point startPointOnRoadmap;
+    Point endPointOnRoadmap;
+    int tempDist = 0;
+    for(int i = start; i < stop; i++)
     {
-        for(int j = startj; j < roadmap.cols; j++)
+        cout << "Tread Number: " << threadNumber << " i: " << i << endl;
+        startPointOnRoadmap = findWayToRoadMap(roadmap, roadmapPoints, testPoints[i]);
+        for(size_t j = i + 1; j < testPoints.size(); j++)
         {
-            if(roadmap.at<Vec3b>(i,j) != Vec3b(0,0,0)) // If not black
-            {
-                foundFirst = true;
-                start = Point(j,i);
-                break;
-            }
+            endPointOnRoadmap = findWayToRoadMap(roadmap, roadmapPoints, testPoints[j]);
+            tempDist = 0;
+            //aStarPath = get_path(roadmap, startPointOnRoadmap, endPointOnRoadmap);
+            tempDist = calculateDiagonalDist(testPoints[i], startPointOnRoadmap); // From start to start on roadmap
+            tempDist += tempDist += calculateDiagonalDist(testPoints[j], endPointOnRoadmap); // From goal to goal on roadmap
+            //tempDist += aStarPath.size(); // Path length of astar
+            results.push_back(tempDist);
         }
-        if(foundFirst)
-            break;
     }
-    return start;
-}
-
-Point A_Star::findGoalWithoutObs(Mat roadmap, int endi, int endj)
-{
-    Point goal = Point(0,0);
-    bool foundFirst = false;
-    // Finds First ending point without obstacle
-    for(int i = endi; i > 0; i--)
-    {
-        for(int j = endj; j > 0; j--)
-        {
-            if(roadmap.at<Vec3b>(i,j) != Vec3b(0,0,0)) // If not black
-            {
-                foundFirst = true;
-                goal = Point(j,i);
-                break;
-            }
-        }
-        if(foundFirst)
-            break;
-    }
-    return goal;
 }
 
 vector<Point> A_Star::get_points(LineIterator &it)

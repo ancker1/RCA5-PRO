@@ -17,6 +17,7 @@
 #include "path_planning.h"
 #include "Voronoi_Diagram.h"
 #include "A_Star.h"
+//#include <
 
 using namespace std;
 using namespace cv;
@@ -33,6 +34,7 @@ void draw_pixel_red(vector<Point> &v, Mat &img) {
         img.at<Vec3b>(v[i].y, v[i].x) = color;
     }
 }
+
  /* MIKKEL STYKKE TIL RAPPORT SKRIVNING
 int main(int argc, char** argv)
 {
@@ -157,7 +159,7 @@ int main( ) {
         cout << "Number start-end point: " << i+1 << " Total Length " << voronoiLength[i] << endl;
     }
     */
-    /*
+
     // Boustrophedon
     Mat src1 = big_map.clone();
     cvtColor(src1, src1, CV_BGR2GRAY);
@@ -170,7 +172,7 @@ int main( ) {
     Mat img_Boustrophedon = Boustrophedon.drawCellsPath("Boustrophedon", t);
     voronoiLength = a->findAstarPathLengthsForRoadmap(img_Boustrophedon);
     cout << "Astar Path length Boustrophedon: " << voronoiLength.size() << endl;
-    */
+
 
     waitKey(0);
     return 0;

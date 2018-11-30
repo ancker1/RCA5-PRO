@@ -8,6 +8,7 @@
 #include "opencv2/imgproc.hpp"
 #include "opencv2/ximgproc.hpp"
 
+#include <thread>
 #include <iostream>
 #include <vector>
 
@@ -96,7 +97,7 @@ class A_Star {
         // Experiment functions
         vector<double> findAstarPathLengthsForRoadmap(Mat roadmap);
         ~A_Star();
-
+void virker();
     private:
         Mat map;
         vector<Map_Node *> open_list;
@@ -171,8 +172,8 @@ class A_Star {
         bool obstacleDetectedWithLine(Mat roadmap, Point start, Point end);
         double calculateDiagonalDist(Point p1, Point p2);
         Point findWayToRoadMap(Mat roadmap, vector<Point> roadmapPoints, Point entryExitPoint);
-        Point findStartWithoutObs(Mat roadmap, int starti, int startj);
-        Point findGoalWithoutObs(Mat roadmap, int endi, int endj);
+        void calculateDistThread(vector<double> &results, Mat roadmap, vector<Point> testPoints, vector<Point> roadmapPoints, int threadNumber);
+
 };
 
 #endif // A_STAR_H
