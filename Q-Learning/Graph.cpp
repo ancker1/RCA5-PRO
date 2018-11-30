@@ -49,7 +49,7 @@ void Graph::Init()
 {
 	cnode = nodes[0];
 	visited.reset();
-	DistributeMarbles();
+	//DistributeMarbles();
 }
 
 int Graph::GetAmountNodes()

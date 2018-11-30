@@ -1,9 +1,10 @@
 #include "Node.h"
 
-Node::Node(wchar_t v, float p)
+Node::Node(wchar_t v, float m, float s)
 {
 	value = v;
-	marble_probability = p;
+	mean = m;
+	std_deviation = s;
 }
 
 void Node::AddNeighbor(Node * n)
@@ -37,6 +38,16 @@ void Node::SetMarbles(int amount)
 int Node::GetMarbles()
 {
 	return marbles;
+}
+
+float Node::GetMean()
+{
+	return mean;
+}
+
+float Node::GetStdDev()
+{
+	return std_deviation;
 }
 
 float Node::GetProbability()

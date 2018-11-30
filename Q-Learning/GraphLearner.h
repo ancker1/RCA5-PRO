@@ -43,7 +43,6 @@ public:
 	bool greedy_or_nongreedy(float epsilon);
 
 	void print_route();
-	void GetRewardSum();
 
 	float GetRandomReward(float mean, float std_deviation);
 
@@ -52,6 +51,10 @@ public:
 	std::vector<float> get_zplot();
 
 	void init_environment();
+	float GetEpsilon();
+	float GetLearningRate();
+	float GetDiscountFactor();
+	float GetEpsilonDecay();
 
 	~GraphLearner();
 private:
@@ -70,6 +73,8 @@ private:
 	float discount_factor = 0.15;
 	float learning_rate = 0.5;
 	float epsilon = 0.1;
+	float epsilon_org;
+	float epsilon_decay = 0.9995;
 
 	std::vector<int> xplot;
 	std::vector<float> yplot;

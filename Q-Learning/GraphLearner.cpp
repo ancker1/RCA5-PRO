@@ -6,15 +6,17 @@ GraphLearner::GraphLearner()
 {
 	srand(time(NULL));
 	init_environment();
+	epsilon_org = epsilon;
 }
 
 
 void GraphLearner::QLearning()
 {
-	for (int j = 0; j < 10; j++)
+	for (int j = 0; j < 100; j++)
 	{
 		Q = new LinkedList(*new LinkNode(0, 0, 0, 0));
-		for (int i = 0; i < 50000; i++)
+		epsilon = epsilon_org;
+		for (int i = 0; i < 10000; i++)
 		{
 
 			graph.Init();			// Will place current node at starting node.
@@ -26,6 +28,7 @@ void GraphLearner::QLearning()
 			float sum_r = 0; // TEST
 			int steps = 0;
 			float change = 0;
+			
 			while ((int)cstate.visited_nodes != VISITED_ALL && steps <= AMOUNT_STEPS)	// Should be after x time units.. / moves / all rooms visited
 			{
 				action a = GetNextAction(cstate);
@@ -40,10 +43,11 @@ void GraphLearner::QLearning()
 				Q->SetValue(node, cstate.visited_nodes, a, updated_Q);
 
 				cstate = nstate;
-
+				
 				steps++;	// Used for plot
 				change = abs(q_val - updated_Q);
 			}
+			epsilon = epsilon*epsilon_decay;
 			xplot.push_back(epsilon);
 			yplot.push_back(sum_r);
 			//GetRewardSum();
@@ -80,9 +84,9 @@ float GraphLearner::GetReward(state s, action a)		// This is used to simulate a 
 {
 	state ns = GetNextState(s, a);
 	if (!((s.visited_nodes >> ns.current_node->GetValue()) & 1U))	// Check if next node have already been visited.
-		return ns.current_node->GetMarbles() * 10.0;
+		return GetRandomReward(ns.current_node->GetMean(), ns.current_node->GetStdDev());		// Return the reward of the next state, if it have not been visited
 	else
-		return 0;
+		return -5;
 	return 0;
 }
 
@@ -127,11 +131,10 @@ float GraphLearner::GetHighestActionValue(state s)
 bool GraphLearner::greedy_or_nongreedy(float e)
 {
 	// Probability of choosing a random action: epsilon*(amount(actions)-1) / amount(actions)
-	float random_num = (rand() % 1001) / 10.0;		// Generate random number between 0.0 and 100.0
+	float random_num = (rand() % 10001) / 100.0;		// Generate random number between 0.00 and 100.00
 	int amount_actions = cstate.current_node->GetNeighbors().size();
 
 	float value = e*(amount_actions - 1) / (float)amount_actions * 100.0;	// The possibility of taking a non greedy action
-
 																			//	std::cout << "Random num: " << random_num << std::endl;
 																			//	std::cout << "Treshold: " << value << std::endl;
 
@@ -171,33 +174,15 @@ void GraphLearner::print_route()
 	}
 }
 
-void GraphLearner::GetRewardSum()
-{
-	graph.Init();			// Will place current node at starting node.
-	cstate.current_node = graph.GetCurrentNode();	// Load current node into cstate.
-	cstate.visited_nodes = (char)1;
-	int steps = 0;
-	float reward_sum = 0;
-	while ((int)cstate.visited_nodes != VISITED_ALL && steps <= AMOUNT_STEPS)	// Should be after x time units.. / moves / all rooms visited
-	{
-		//std::cout << "Visited: " << (int)cstate.visited_nodes << std::endl;
-		action a = GetNextGreedyAction(cstate);
-		std::vector<Node*> possible = cstate.current_node->GetNeighbors();
-		state nstate = GetNextState(cstate, a);
-		float reward = GetReward(cstate, a);
-		cstate = nstate;
-		reward_sum += reward;
-		steps++;
-	}
-	yplot.push_back(reward_sum);
-}
-
 float GraphLearner::GetRandomReward(float mean, float std_deviation) // will return a random variable generated from a normal distribution.
 {
 	std::random_device random_seed;
 	std::default_random_engine random_engine(random_seed());
 	std::normal_distribution<float> distribution(mean, std_deviation);
-	return distribution(random_engine);
+	float rew = round(distribution(random_engine));
+	if (rew < 0)
+		rew = 0;
+	return rew * 10;
 }
 
 
@@ -215,22 +200,22 @@ bool GraphLearner::random_choice()
 void GraphLearner::init_environment()
 {
 	/* Creation of the graph */
-	Node* node0 = new Node(0, 0.15);
-	Node* node1 = new Node(1, 0.31);
-	Node* node2 = new Node(2, 0.05);
-	Node* node3 = new Node(3, 0.40);
-	Node* node4 = new Node(4, 0.15);
-	Node* node5 = new Node(5, 0.20);
-	Node* node6 = new Node(6, 0.21);
-	Node* node7 = new Node(7, 0.41);
-	Node* node8 = new Node(8, 0.71);
-	Node* node9 = new Node(9, 0.20);
-	Node* node10 = new Node(10, 0.60);
-	Node* node11 = new Node(11, 0.20);
-	Node* node12 = new Node(12, 0.15);
-	Node* node13 = new Node(13, 0.32);
-	Node* node14 = new Node(14, 0.25);
-	Node* node15 = new Node(15, 0.25);
+	Node* node0  = new Node(0,  1.0, 0.1);
+	Node* node1  = new Node(1,  1.0, 1.0);
+	Node* node2  = new Node(2,  2.0, 0.5);
+	Node* node3  = new Node(3,  2.7, 0.4);
+	Node* node4  = new Node(4,  1.0, 0.5);
+	Node* node5  = new Node(5,  2.0, 0.4);
+	Node* node6  = new Node(6,  2.1, 0.5);
+	Node* node7  = new Node(7,  2.0, 0.4);
+	Node* node8  = new Node(8,  3.0, 0.5);
+	Node* node9  = new Node(9,  2.0, 0.5);
+	Node* node10 = new Node(10, 4.0, 1.0);
+	Node* node11 = new Node(11, 2.7, 0.5);
+	Node* node12 = new Node(12, 1.0, 0.5);
+	Node* node13 = new Node(13, 1.0, 0.5);
+	Node* node14 = new Node(14, 2.0, 0.5);
+	Node* node15 = new Node(15, 1.0, 0.5);
 
 	graph.AddNode(node0);
 	graph.AddNode(node1);
@@ -270,6 +255,26 @@ void GraphLearner::init_environment()
 
 	graph.Init();
 	amount_nodes = graph.GetAmountNodes();
+}
+
+float GraphLearner::GetEpsilon()
+{
+	return epsilon_org;
+}
+
+float GraphLearner::GetLearningRate()
+{
+	return learning_rate;
+}
+
+float GraphLearner::GetDiscountFactor()
+{
+	return discount_factor;
+}
+
+float GraphLearner::GetEpsilonDecay()
+{
+	return epsilon_decay;
 }
 
 std::vector<int> GraphLearner::get_xplot()
