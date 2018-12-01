@@ -107,7 +107,7 @@ void Voronoi_Diagram::thinning_iteration( cv::Mat &img, int iter)
             int p7 = (int)img.at<uchar>( y+1, x-1 );
             int p8 = (int)img.at<uchar>( y, x-1 );
 
-            // The number of neighboring black pixels is at least 2 and not greater than 6
+            // The number of neighboring white pixels is at least 2 and not greater than 6
             int sum  = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
             if ( sum < 2 || sum > 6 )
                 continue;
@@ -121,11 +121,11 @@ void Voronoi_Diagram::thinning_iteration( cv::Mat &img, int iter)
                 continue;
 
             // if iter = 0 => step one
-            //      m1 => at least one of P2, P4 or P6 is white
-            //      m2 => at least one of P4, P6 or P8 is white
+            //      m1 => at least one of P2, P4 or P6 is black
+            //      m2 => at least one of P4, P6 or P8 is black
             // if iter = 1 => step two
-            //      m1 => at least one of P2, P4 or P8 is white
-            //      m2 => at least one of P2, P6 or P8 is white
+            //      m1 => at least one of P2, P4 or P8 is black
+            //      m2 => at least one of P2, P6 or P8 is black
             int m1 = ( iter == 0 ) ? (p2 * p4 * p6) : (p2 * p4 * p8);
             int m2 = ( iter == 0 ) ? (p4 * p6 * p8) : (p2 * p6 * p8);
             if (m1 == 0 && m2 == 0)
@@ -140,7 +140,6 @@ void Voronoi_Diagram::thinning_iteration( cv::Mat &img, int iter)
 void Voronoi_Diagram::make_voronoi( cv::Mat &img )
 {
     cv::Mat prev = cv::Mat::zeros( img.size(), CV_8UC1 ), diff;
-
     do
     {
         thinning_iteration( img, 0 );

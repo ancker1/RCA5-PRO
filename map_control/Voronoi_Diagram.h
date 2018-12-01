@@ -28,18 +28,18 @@ class Voronoi_Diagram {
      *
      *  Step one
      *      Search through the image and check if all conditions are fulfilled
-     *          1. The number of neighboring black pixels is at least 2 and not greater than 6
+     *          1. The number of neighboring white pixels is at least 2 and not greater than 6
      *          2. The number of white-to-black transitions around P1 is equal to 1
-     *          3. At least one of P2, P4 or P6 is white
-     *          4. At least one of P4, P6 or P8 is white
+     *          3. At least one of P2, P4 or P6 is black
+     *          4. At least one of P4, P6 or P8 is black
      *              All P1 that meets the criteria is set to white
      *
      *  Step two
      *      Search through the image and check if all conditions are fulfilled
      *          1. (same as step one)
      *          2. (same as step one)
-     *          3. At least one of P2, P4 or P8 is white
-     *          4. At least one of P2, P6 or P8 is white
+     *          3. At least one of P2, P4 or P8 is black
+     *          4. At least one of P2, P6 or P8 is black
      *              All P1 that meets the criteria is set to white
      *
      *  Step one and two are reapeated until image pixels are no longer changing

@@ -38,12 +38,14 @@ Vec3b red(0,0,255), black(0,0,0), white(255,255,255), blue(255,0,0);
 
 int main( ) {
     Mat big_map = cv::imread( "../map_control/big_floor_plan.png", IMREAD_COLOR);
+    Mat big_map2 = cv::imread( "../map_control/big_floor_test.png", IMREAD_COLOR );
+    Mat big_map3 = cv::imread( "../map_control/big_floor_test2.png", IMREAD_COLOR );
     Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
 
     Mat src = big_map.clone(), dst;
     Voronoi_Diagram *v = new Voronoi_Diagram();
-    v->get_voronoi_img( src, dst );
-    print_map( dst, "Voronoi Diagram" );
+    v->get_voronoi_img(src, dst);
+    print_map(dst, "dst");
 
     waitKey(0);
     return 0;
