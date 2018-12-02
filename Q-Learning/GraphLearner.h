@@ -71,10 +71,10 @@ private:
 	
 
 	float discount_factor = 0.15;
-	float learning_rate = 0.5;
+	float learning_rate = 0.8;
 	float epsilon = 0.1;
 	float epsilon_org;
-	float epsilon_decay = 0.9995;
+	float epsilon_decay = 0.9990;
 
 	std::vector<int> xplot;
 	std::vector<float> yplot;
