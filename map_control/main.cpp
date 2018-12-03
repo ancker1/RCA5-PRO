@@ -12,12 +12,11 @@
 #include <Cell.h>
 #include <Cellpoint.h>
 #include <vector>
-
+#include <thread>
 #include "Map.h"
 #include "path_planning.h"
 #include "Voronoi_Diagram.h"
 #include "A_Star.h"
-//#include <
 
 using namespace std;
 using namespace cv;
@@ -33,6 +32,14 @@ void draw_pixel_red(vector<Point> &v, Mat &img) {
         Vec3b color(0, 0, 255);
         img.at<Vec3b>(v[i].y, v[i].x) = color;
     }
+}
+
+Point generateRandomPoint(int rows, int cols)
+{
+    Point t;
+    t.x = rand() % cols;
+    t.y = rand() % rows;
+    return t;
 }
 
  /* MIKKEL STYKKE TIL RAPPORT SKRIVNING
@@ -145,20 +152,45 @@ int main( ) {
     print_map( src, "Voronoi Diagram" );
 
     A_Star *a = new A_Star();
-    std::vector<cv::Point> v = a->get_path( src, points[0], points[ points.size()-1 ] );
+    std::vector<cv::Point> v = a->get_path( src, Point(8,7), Point(102,11) ); // Goes towards each other
     Mat img = big_map.clone();
     for ( auto& p : v )
         img.at<Vec3b>( p ) = red;
     print_map( img, "Map" );
+    /* TAKES TOO LONG TIME
+    // Calulation of whole map path for Voronoi
+    vector<Point> roadmapPoints = a->calculateRoadmapPoints(src);
+    vector<Point> testPoints = a->calculateTestPoints(src, roadmapPoints);
+    thread thread1 (&A_Star::calculateDistThread, A_Star(), src, testPoints, roadmapPoints, 1, 8);
+    thread thread2 (&A_Star::calculateDistThread, A_Star(), src, testPoints, roadmapPoints, 2, 8);
+    thread thread3 (&A_Star::calculateDistThread, A_Star(), src, testPoints, roadmapPoints, 3, 8);
+    thread thread4 (&A_Star::calculateDistThread, A_Star(), src, testPoints, roadmapPoints, 4, 8);
+    thread thread5 (&A_Star::calculateDistThread, A_Star(), src, testPoints, roadmapPoints, 5, 8);
+    thread thread6 (&A_Star::calculateDistThread, A_Star(), src, testPoints, roadmapPoints, 6, 8);
+    thread thread7 (&A_Star::calculateDistThread, A_Star(), src, testPoints, roadmapPoints, 7, 8);
+    thread thread8 (&A_Star::calculateDistThread, A_Star(), src, testPoints, roadmapPoints, 8, 8);
 
-    vector<double> voronoiLength = a->findAstarPathLengthsForRoadmap(src);
-    cout << "Astar Path length Voronoi: " << voronoiLength.size() << endl;
-    /*
-    for ( size_t i = 0; i < voronoiLength.size(); i++)
-    {
-        cout << "Number start-end point: " << i+1 << " Total Length " << voronoiLength[i] << endl;
-    }
+    thread1.join();
+    thread2.join();
+    thread3.join();
+    thread4.join();
+    thread5.join();
+    thread6.join();
+    thread7.join();
+    thread8.join();
     */
+    int sampleSize = 10000;
+    vector<Point> startPoints;
+    vector<Point> endPoints;
+    srand(time(0));
+    for(int i = 0; i < sampleSize; i++)
+    {
+        startPoints.push_back(generateRandomPoint(src.rows, src.cols));
+        endPoints.push_back(generateRandomPoint(src.rows, src.cols));
+    }
+    vector<Point> roadmapPoints_voronoi = a->calculateRoadmapPoints(src);
+    vector<Point> startPoints_voronoi = a->checkInvalidTestPoints(src, roadmapPoints_voronoi, startPoints);
+    vector<Point> endPoints_voronoi = a->checkInvalidTestPoints(src, roadmapPoints_voronoi, endPoints);
 
     // Boustrophedon
     Mat src1 = big_map.clone();
@@ -170,9 +202,55 @@ int main( ) {
     vector<Point> lower = Boustrophedon.getLowerTrapezoidalGoals();
     vector<Cell> t = Boustrophedon.calculateCells(upper, lower);
     Mat img_Boustrophedon = Boustrophedon.drawCellsPath("Boustrophedon", t);
-    voronoiLength = a->findAstarPathLengthsForRoadmap(img_Boustrophedon);
-    cout << "Astar Path length Boustrophedon: " << voronoiLength.size() << endl;
 
+    vector<Point> roadmapPoints_boustrophedon = a->calculateRoadmapPoints(img_Boustrophedon);
+    vector<Point> startPoints_Boustrophedoni = a->checkInvalidTestPoints(img_Boustrophedon, roadmapPoints_boustrophedon, startPoints);
+    vector<Point> endPoints_Boustrophedon = a->checkInvalidTestPoints(img_Boustrophedon, roadmapPoints_boustrophedon, endPoints);
+    startPoints = a->findNRemoveDiff(startPoints_voronoi, startPoints_Boustrophedoni);
+    endPoints = a->findNRemoveDiff(endPoints_voronoi, endPoints_Boustrophedon);
+    cout << "test startpoint size: " << startPoints.size() << "test endpoints size: " << endPoints.size() << endl;
+
+    vector<double> voronoiLength = a->findAstarPathLengthsForRoadmapRandom(src, roadmapPoints_voronoi, startPoints, endPoints); // random start- and end- points
+    //vector<double> voronoiLength = a->findAstarPathLengthsForRoadmap(src); // Towards eachother
+
+    vector<double> BoustrophedonLength = a->findAstarPathLengthsForRoadmapRandom(img_Boustrophedon, roadmapPoints_boustrophedon, startPoints, endPoints); // random start- and end- points
+    //vector<double> BoustrophedonLength = a->findAstarPathLengthsForRoadmap(img_Boustrophedon); // Towards eachother
+
+    vector<double> sorted_voronoi_length;
+    vector<double> sorted_boustrophedon_length;
+    double smallest;
+    size_t indexBoustro;
+    while(!voronoiLength.empty())
+    {
+        smallest = voronoiLength[0];
+        for(size_t i = 0; i < voronoiLength.size(); i++)
+        {
+            if(voronoiLength[i] <= smallest)
+            {
+                indexBoustro = i;
+                smallest = voronoiLength[i];
+            }
+        }
+
+        sorted_voronoi_length.push_back(voronoiLength[indexBoustro]);
+        sorted_boustrophedon_length.push_back(BoustrophedonLength[indexBoustro]);
+        voronoiLength.erase(voronoiLength.begin()+indexBoustro);
+        BoustrophedonLength.erase(BoustrophedonLength.begin()+indexBoustro);
+    }
+    // Writing Results:
+    cout << "lort: " << sorted_voronoi_length.size() << endl;
+    string file = "voronoi_length_test_rand.txt";
+    ofstream myFile;
+    myFile.open(file);
+    for(size_t i = 0; i < sorted_voronoi_length.size(); i++)
+        myFile << sorted_voronoi_length[i] << endl;
+    myFile.close();
+
+    file = "Boustrophedon_length_test_rand.txt";
+    myFile.open(file);
+    for(size_t i = 0; i < sorted_boustrophedon_length.size(); i++)
+        myFile << sorted_boustrophedon_length[i] << endl;
+    myFile.close();
 
     waitKey(0);
     return 0;

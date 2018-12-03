@@ -8,6 +8,8 @@
 #include "opencv2/imgproc.hpp"
 #include "opencv2/ximgproc.hpp"
 
+#include <fstream>
+#include <string>
 #include <thread>
 #include <iostream>
 #include <vector>
@@ -95,16 +97,25 @@ class A_Star {
         void draw_path(cv::Mat &img, const std::vector<Point> path );
 
         // Experiment functions
-        vector<double> findAstarPathLengthsForRoadmap(Mat roadmap);
+        vector<double> findAstarPathLengthsForRoadmap(Mat roadmap); // Takes too long time therefor made as threads in main
+        vector<Point> calculateRoadmapPoints(Mat roadmap);
+        vector<Point> calculateTestPoints(Mat roadmap, vector<Point> roadmapPoints);
+        vector<double> getResults();
+        void calculateDistThread(Mat roadmap, vector<Point> testPoints, vector<Point> roadmapPoints, int threadNumber, int amountOfThreads); // is not used because of threads in qt
+        vector<double> findAstarPathLengthsForRoadmapRandom(Mat roadmap, vector<Point> roadmapPoints ,vector<Point> startPoints, vector<Point> endPoints);
+        vector<Point> checkInvalidTestPoints(Mat roadmap, vector<Point> roadmapPoints, vector<Point> checkpoints);
+        vector<Point> findNRemoveDiff(vector<Point> testPoint1, vector<Point> testPoint2);
         ~A_Star();
-void virker();
-    private:
+
+    protected:
+        // Attributes
         Mat map;
         vector<Map_Node *> open_list;
         Map_Node *start_node, *goal_node;
         Map_Size map_size;
         vector<Map_Node> map_data;
-
+        // Experiments results
+        vector<double> results;
         void print_map( const cv::Mat &img,
                         const string &s);
 
@@ -172,7 +183,7 @@ void virker();
         bool obstacleDetectedWithLine(Mat roadmap, Point start, Point end);
         double calculateDiagonalDist(Point p1, Point p2);
         Point findWayToRoadMap(Mat roadmap, vector<Point> roadmapPoints, Point entryExitPoint);
-        void calculateDistThread(vector<double> &results, Mat roadmap, vector<Point> testPoints, vector<Point> roadmapPoints, int threadNumber);
+
 
 };
 
