@@ -21,18 +21,22 @@
 using namespace std;
 using namespace cv;
 
-void print_map(Mat &map, string s) {
+void print_map(Mat &map, string s)
+{
     Mat resizeMap;
     resize( map, resizeMap, map.size()*10, 0, 0, INTER_NEAREST);
     imshow(s, resizeMap);
 }
 
-void draw_pixel_red(vector<Point> &v, Mat &img) {
+void draw_pixel_red(vector<Point> &v, Mat &img)
+{
     for (size_t i = 0; i < v.size(); i++) {
         Vec3b color(0, 0, 255);
         img.at<Vec3b>(v[i].y, v[i].x) = color;
     }
 }
+
+
 
 Vec3b red(0,0,255), black(0,0,0), white(255,255,255), blue(255,0,0);
 
@@ -43,14 +47,50 @@ int main( ) {
     Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
 
     Mat src = big_map.clone();
-    print_map( src, "Source" );
 
+    // Get brushfire grid
     Map *m = new Map();
-    Mat imgBrushfire = m->brushfire_img(src);
+    Mat imgBrushfire = m->brushfire_img( src );
 
-    threshold( imgBrushfire, imgBrushfire, 6, 255, THRESH_BINARY );
+    // Detected rooms
+    Mat imgDilate, element = getStructuringElement( MORPH_CROSS, Size(4,4), Point(0,0) );
+    dilate( imgBrushfire, imgDilate, element );
+    convertScaleAbs( imgDilate, imgDilate, 10 );
+    for (int y = 0; y < imgDilate.rows; y++)
+        for (int x = 0; x < imgDilate.cols; x++)
+        {
+            if ( (int)imgDilate.at<uchar>(y,x) >= 60 )
+                imgDilate.at<uchar>(y,x) = 255;
+            else
+                imgDilate.at<uchar>(y,x) = 0;
+        }
 
-    print_map( imgBrushfire, "Fields" );
+    // Get contours
+    Mat cannyOutput;
+    vector<vector<Point>> contours;
+    vector<Vec4i> hierarchy;
+    Canny( imgDilate, cannyOutput, 100, 200, 3 );
+    findContours( cannyOutput, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0,0) );
+
+    // Get the moments
+    vector<Moments> mu( contours.size() );
+    for (size_t i = 0; i < contours.size(); i++)
+        mu[i] = moments( contours[i], false );
+
+    // Get mass center
+    vector<Point> mc( contours.size() );
+    for (size_t i = 0; i < contours.size(); i++)
+        mc[i] = Point( ( mu[i].m10/mu[i].m00 ), ( mu[i].m01/mu[i].m00 ) );
+
+    Mat drawing = big_map.clone();
+    for (size_t i = 0; i < contours.size(); i++)
+    {
+        drawContours( drawing, contours, (int)i, Scalar(0,0,250) );
+        drawing.at<Vec3b>( mc[i] ) = blue;
+
+        print_map( drawing, "Contours" );
+        cv::waitKey(0);
+    }
 
     waitKey(0);
     return 0;

@@ -217,8 +217,6 @@ void Voronoi_Diagram::imageSegmentation(const Mat &src, Mat &dst)
                 else
                     dst.at<Vec3b>(y,x) = Vec3b(0,0,0);
             }
-
-    print_map( dst, "Final" );
 }
 
 // -------------------------------------------------------------------
