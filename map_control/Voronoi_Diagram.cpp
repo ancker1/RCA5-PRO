@@ -164,3 +164,61 @@ void Voronoi_Diagram::print_map( const cv::Mat &img,
 }
 
 // -------------------------------------------------------------------
+
+void Voronoi_Diagram::imageSegmentation(const Mat &src, Mat &dst)
+{
+    Mat img = src.clone();
+
+    // Create a binary image from source image
+    Mat imgBinary;
+    cvtColor( img, imgBinary, COLOR_BGR2GRAY );
+    threshold( imgBinary, imgBinary, 127, 255, THRESH_BINARY );
+
+    // Perform the distance transform algorithm
+    Mat imgDist;
+    distanceTransform( imgBinary, imgDist, DIST_L2, 3 );
+
+    // Normalize the distance image for range = { 0.0, 1.0 }
+    normalize( imgDist, imgDist, 0, 1.0, NORM_MINMAX );
+
+    // Threshold to obtain the peaks
+    threshold( imgDist, imgDist, 0.4, 1.0, THRESH_BINARY );
+
+    // Dilate the dist image
+    Mat kernel1 = Mat::ones( 1, 2, CV_8U );
+    dilate( imgDist, imgDist, kernel1 );
+
+    // Create the CV_8U version of the distance image
+    Mat imgDist8u;
+    imgDist.convertTo( imgDist8u, CV_8U );
+
+    // Find total markers
+    vector<vector<Point>> contours;
+    findContours( imgDist8u, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE );
+
+    // Create the marker image for the watershed algorithm
+    Mat markers = Mat::zeros( imgDist.size(), CV_32S );
+
+    // Draw the markers
+    for (size_t i = 0; i < contours.size(); i++)
+        drawContours( markers, contours, (int)i, Scalar( ((int)i)+1, -1 ) );
+
+    // Perform the watershed algorithm
+    watershed( img, markers );
+
+    // Fill labeled objects with random colors
+    dst = src.clone();
+    for (int y = 0; y < markers.rows; y++)
+        for (int x = 0; x < markers.cols; x++)
+            if ( dst.at<Vec3b>(y,x) != Vec3b(0,0,0) )
+            {
+                if ( markers.at<int>(y,x) != -1 )
+                    dst.at<Vec3b>(y,x) = Vec3b(0,0,255);
+                else
+                    dst.at<Vec3b>(y,x) = Vec3b(0,0,0);
+            }
+
+    print_map( dst, "Final" );
+}
+
+// -------------------------------------------------------------------

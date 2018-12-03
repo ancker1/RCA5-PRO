@@ -783,30 +783,28 @@ vector<Point> Map::find_centers( const cv::Mat &img )
     Mat image_dilate;
     dilate(img, image_dilate, kernel_lm);
     Mat1b local_max = (img >= image_dilate);
-    vector<Point> v;
-    for (int y = 0; y < local_max.rows; y++) {
-        for (int x = 0; x < local_max.cols; x++) {
-            if ((int)local_max.at<uchar>(y,x) == 255) {
-                for (int j = 1; (int)local_max.at<uchar>(y+j,x) == 255; j++) {
-                    local_max.at<uchar>(y,x) = 0;
-                    j++;
-                }
-                for (int j = 1; (int)local_max.at<uchar>(y,x+j) == 255; j++) {
-                    local_max.at<uchar>(y,x) = 0;
-                    j++;
-                }
-            }
-        }
-    }
 
-    for (int y = 0; y < local_max.rows; y++) {
-        for (int x = 0; x < local_max.cols; x++) {
-            if ((int)local_max.at<uchar>(y,x) == 255) {
-                Point p(x,y);
-                v.push_back(p);
+    vector<Point> v;
+    for (int y = 0; y < local_max.rows; y++)
+        for (int x = 0; x < local_max.cols; x++)
+            if ((int)local_max.at<uchar>(y,x) == 255)
+            {
+                for (int j = 1; (int)local_max.at<uchar>(y+j,x) == 255; j++)
+                {
+                    local_max.at<uchar>(y,x) = 0;
+                    j++;
+                }
+                for (int j = 1; (int)local_max.at<uchar>(y,x+j) == 255; j++)
+                {
+                    local_max.at<uchar>(y,x) = 0;
+                    j++;
+                }
             }
-        }
-    }
+
+    for (int y = 0; y < local_max.rows; y++)
+        for (int x = 0; x < local_max.cols; x++)
+            if ((int)local_max.at<uchar>(y,x) == 255)
+                v.push_back( Point(x,y) );
 
     remove_points_in_corners(v, img);
 
@@ -831,46 +829,30 @@ void Map::find_neighbors( std::vector<Point> &v,
                           const int &y)
 {
     Point p;
-    if ((int)img.at<uchar>(x-1,y-1)==255) {
-        p.x=x-1;
-        p.y=y-1;
-        v.push_back(p);
-    }
-    if ((int)img.at<uchar>(x,y-1)==255) {
-        p.x=x;
-        p.y=y-1;
-        v.push_back(p);
-    }
-    if ((int)img.at<uchar>(x+1,y-1)==255) {
-        p.x=x+1;
-        p.y=y-1;
-        v.push_back(p);
-    }
-    if ((int)img.at<uchar>(x-1,y)==255) {
-        p.x=x-1;
-        p.y=y;
-        v.push_back(p);
-    }
-    if ((int)img.at<uchar>(x+1,y)==255) {
-        p.x=x+1;
-        p.y=y;
-        v.push_back(p);
-    }
-    if ((int)img.at<uchar>(x-1,y+1)==255) {
-        p.x=x-1;
-        p.y=y+1;
-        v.push_back(p);
-    }
-    if ((int)img.at<uchar>(x,y+1)==255) {
-        p.x=x;
-        p.y=y+1;
-        v.push_back(p);
-    }
-    if ((int)img.at<uchar>(x+1,y+1)==255) {
-        p.x=x+1;
-        p.y=y+1;
-        v.push_back(p);
-    }
+
+    if ((int)img.at<uchar>(x-1,y-1)==255)
+        v.push_back( Point( x-1, y-1 ));
+
+    if ((int)img.at<uchar>(x,y-1)==255)
+        v.push_back( Point( x, y-1 ));
+
+    if ((int)img.at<uchar>(x+1,y-1)==255)
+        v.push_back( Point( x+1, y-1 ));
+
+    if ((int)img.at<uchar>(x-1,y)==255)
+        v.push_back( Point( x-1, y ) );
+
+    if ((int)img.at<uchar>(x+1,y)==255)
+        v.push_back( Point( x+1, y ) );
+
+    if ((int)img.at<uchar>(x-1,y+1)==255)
+        v.push_back( Point( x-1, y+1 ) );
+
+    if ((int)img.at<uchar>(x,y+1)==255)
+        v.push_back( Point( x, y+1 ) );
+
+    if ((int)img.at<uchar>(x+1,y+1)==255)
+        v.push_back( Point( x+1, y+1 ) );
 }
 
 // -----------------------------------------------------------
@@ -878,24 +860,21 @@ void Map::find_neighbors( std::vector<Point> &v,
 void Map::make_brushfire_grid( cv::Mat &img )
 {
     vector<Point> neighbors;
-    for (int y = 0; y < img.cols; y++) {
-        for (int x = 0; x < img.rows; x++) {
-            if ((int)img.at<uchar>(x,y) == 0) {
+    for (int y = 0; y < img.cols; y++)
+        for (int x = 0; x < img.rows; x++)
+            if ((int)img.at<uchar>(x,y) == 0)
                 find_neighbors(neighbors, img, x, y);
-            }
-        }
-    }
 
     int color = 1;
     while (!neighbors.empty())
     {
         vector<Point> new_neighbors;
-        for (size_t i = 0; i < neighbors.size(); i++) {
-            if (img.at<uchar>(neighbors[i].x,neighbors[i].y)==255) {
+        for (size_t i = 0; i < neighbors.size(); i++)
+            if (img.at<uchar>(neighbors[i].x,neighbors[i].y)==255)
+            {
                 find_neighbors(new_neighbors, img, neighbors[i].x, neighbors[i].y);
                 img.at<uchar>(neighbors[i].x,neighbors[i].y) = color;
             }
-        }
 
         color++;
         neighbors = new_neighbors;
@@ -907,31 +886,31 @@ void Map::make_brushfire_grid( cv::Mat &img )
 void Map::remove_points_in_corners( std::vector<Point> &v,
                                     const cv::Mat &img)
 {
-    for (size_t i = 0; i < v.size(); i++) {
-        if ((int)img.at<uchar>(v[i].y-1,v[i].x-1)==0) {
+    for (size_t i = 0; i < v.size(); i++)
+    {
+        if ( (int)img.at<uchar>(v[i].y-1,v[i].x-1) == 0 )
             v.erase(v.begin()+i);
-        }
-        if ((int)img.at<uchar>(v[i].y,v[i].x-1)==0) {
+
+        if ( (int)img.at<uchar>(v[i].y,v[i].x-1) == 0 )
             v.erase(v.begin()+i);
-        }
-        if ((int)img.at<uchar>(v[i].y+1,v[i].x-1)==0) {
+
+        if ( (int)img.at<uchar>(v[i].y+1,v[i].x-1) == 0 )
             v.erase(v.begin()+i);
-        }
-        if ((int)img.at<uchar>(v[i].y-1,v[i].x)==0) {
+
+        if ( (int)img.at<uchar>(v[i].y-1,v[i].x) == 0 )
             v.erase(v.begin()+i);
-        }
-        if ((int)img.at<uchar>(v[i].y+1,v[i].x)==0) {
+
+        if ( (int)img.at<uchar>(v[i].y+1,v[i].x) == 0 )
             v.erase(v.begin()+i);
-        }
-        if ((int)img.at<uchar>(v[i].y-1,v[i].x+1)==0) {
+
+        if ( (int)img.at<uchar>(v[i].y-1,v[i].x+1) == 0 )
             v.erase(v.begin()+i);
-        }
-        if ((int)img.at<uchar>(v[i].y,v[i].x+1)==0) {
+
+        if ( (int)img.at<uchar>(v[i].y,v[i].x+1) == 0)
             v.erase(v.begin()+i);
-        }
-        if ((int)img.at<uchar>(v[i].y+1,v[i].x+1)==0) {
+
+        if ( (int)img.at<uchar>(v[i].y+1,v[i].x+1) == 0)
             v.erase(v.begin()+i);
-        }
     }
 }
 

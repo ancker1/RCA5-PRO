@@ -42,10 +42,15 @@ int main( ) {
     Mat big_map3 = cv::imread( "../map_control/big_floor_test2.png", IMREAD_COLOR );
     Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
 
-    Mat src = big_map.clone(), dst;
-    Voronoi_Diagram *v = new Voronoi_Diagram();
-    v->get_voronoi_img(src, dst);
-    print_map(dst, "dst");
+    Mat src = big_map.clone();
+    print_map( src, "Source" );
+
+    Map *m = new Map();
+    Mat imgBrushfire = m->brushfire_img(src);
+
+    threshold( imgBrushfire, imgBrushfire, 6, 255, THRESH_BINARY );
+
+    print_map( imgBrushfire, "Fields" );
 
     waitKey(0);
     return 0;
