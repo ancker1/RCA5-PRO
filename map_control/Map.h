@@ -66,7 +66,7 @@ public:
      * @param img -> brushfire grid
      * @return -> vector with points of centers
      */
-    std::vector<Point> find_centers( const cv::Mat &img );
+    std::vector<Point> findCenters( const cv::Mat &img );
 
     //PLANNNING ALGORITHM
     vector<Point> astar(vector<Cellpoint> cellpoints, Point startCellPoint, Point goalCellPoint); // MAKE IT WORk

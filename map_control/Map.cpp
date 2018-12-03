@@ -777,39 +777,93 @@ Mat Map::brushfire_img( const cv::Mat &img )
 
 // --------------------------------------------------
 
-vector<Point> Map::find_centers( const cv::Mat &img )
+vector<Point> Map::findCenters(const Mat &src)
 {
-    Mat1b kernel_lm( Size(5,5), 1u);
-    Mat image_dilate;
-    dilate(img, image_dilate, kernel_lm);
-    Mat1b local_max = (img >= image_dilate);
+    Mat img = src.clone();
 
-    vector<Point> v;
-    for (int y = 0; y < local_max.rows; y++)
-        for (int x = 0; x < local_max.cols; x++)
-            if ((int)local_max.at<uchar>(y,x) == 255)
-            {
-                for (int j = 1; (int)local_max.at<uchar>(y+j,x) == 255; j++)
-                {
-                    local_max.at<uchar>(y,x) = 0;
-                    j++;
-                }
-                for (int j = 1; (int)local_max.at<uchar>(y,x+j) == 255; j++)
-                {
-                    local_max.at<uchar>(y,x) = 0;
-                    j++;
-                }
-            }
+    // Get brushfire grid
+    Mat imgBrushfire = brushfire_img( img );
 
-    for (int y = 0; y < local_max.rows; y++)
-        for (int x = 0; x < local_max.cols; x++)
-            if ((int)local_max.at<uchar>(y,x) == 255)
-                v.push_back( Point(x,y) );
+    // Detected rooms
+    Mat imgDilate;
+    Mat element = getStructuringElement( MORPH_CROSS,
+                                         Size(4,4),
+                                         Point(0,0) );
 
-    remove_points_in_corners(v, img);
+    dilate( imgBrushfire, imgDilate, element );
 
-    return v;
+    for (int y = 0; y < imgDilate.rows-50; y++)
+        for (int x = 0; x < imgDilate.cols; x++)
+        {
+            if ( (int)imgDilate.at<uchar>(y,x) >= 6 )
+                imgDilate.at<uchar>(y,x) = 255;
+            else
+                imgDilate.at<uchar>(y,x) = 0;
+        }
+
+    for (int y = imgDilate.rows-50; y < imgDilate.rows; y++)
+        for (int x = 0; x < imgDilate.cols; x++)
+        {
+            if ( (int)imgDilate.at<uchar>(y,x) >= 7 )
+                imgDilate.at<uchar>(y,x) = 255;
+            else
+                imgDilate.at<uchar>(y,x) = 0;
+        }
+
+    // Get contours
+    Mat cannyOutput, drawing = src.clone();
+    vector<vector<Point>> contours;
+    vector<Vec4i> hierarchy;
+    Canny( imgDilate, cannyOutput, 100, 200, 3 );
+    findContours( cannyOutput, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE, Point(0,0) );
+
+    // Moments
+    vector<Moments> mu( contours.size() );
+    for (size_t i = 0; i < contours.size(); i++)
+        mu[i] = moments( contours[i], false );
+    vector<Point> mc( contours.size() );
+    for (size_t i = 0; i < contours.size(); i++)
+        mc[i] = Point( ( mu[i].m10/mu[i].m00 ), ( mu[i].m01/mu[i].m00 ) );
+
+    return mc;
 }
+
+
+// --------------------------------------------------
+
+//vector<Point> Map::find_centers( const cv::Mat &img )
+//{
+//    Mat1b kernel_lm( Size(5,5), 1u);
+//    Mat image_dilate;
+//    dilate(img, image_dilate, kernel_lm);
+//    Mat1b local_max = (img >= image_dilate);
+
+//    vector<Point> v;
+//    for (int y = 0; y < local_max.rows; y++)
+//        for (int x = 0; x < local_max.cols; x++)
+//            if ((int)local_max.at<uchar>(y,x) == 255)
+//            {
+//                for (int j = 1; (int)local_max.at<uchar>(y+j,x) == 255; j++)
+//                {
+//                    local_max.at<uchar>(y,x) = 0;
+//                    j++;
+//                }
+//                for (int j = 1; (int)local_max.at<uchar>(y,x+j) == 255; j++)
+//                {
+//                    local_max.at<uchar>(y,x) = 0;
+//                    j++;
+//                }
+//            }
+
+//    for (int y = 0; y < local_max.rows; y++)
+//        for (int x = 0; x < local_max.cols; x++)
+//            if ((int)local_max.at<uchar>(y,x) == 255)
+//                v.push_back( Point(x,y) );
+
+//    remove_points_in_corners(v, img);
+
+//    return v;
+//}
 
 // --------------------------------------------------------------
 
