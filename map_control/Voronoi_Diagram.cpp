@@ -1,26 +1,27 @@
 #include "Voronoi_Diagram.h"
-// -------------------------------------------------------------------------
-Voronoi_Diagram::Voronoi_Diagram() {}
-// -------------------------------------------------------------------------
-Voronoi_Diagram::~Voronoi_Diagram() {}
-// -------------------------------------------------------------------------
-void Voronoi_Diagram::get_voronoi_img( const cv::Mat &src, cv::Mat &dst ) {
-    voronoi( src, dst );
-}
-// -------------------------------------------------------------------------
-void Voronoi_Diagram::get_thinning_img( const cv::Mat &src, cv::Mat &dst ) {
-    opencv_thinning( src, dst );
-}
-// -------------------------------------------------------------------------
-void Voronoi_Diagram::get_skeletinize_img( const cv::Mat &src, cv::Mat &dst) {
-    skeletinize( src, dst );
-}
+
 // -------------------------------------------------------------------------
 
-/***********
- * Private
- **********/
+Voronoi_Diagram::Voronoi_Diagram() {}
+
 // -------------------------------------------------------------------------
+
+Voronoi_Diagram::~Voronoi_Diagram() {}
+
+// -------------------------------------------------------------------------
+
+void Voronoi_Diagram::get_voronoi_img( const cv::Mat &src, cv::Mat &dst ) { voronoi( src, dst ); }
+
+// -------------------------------------------------------------------------
+
+void Voronoi_Diagram::get_thinning_img( const cv::Mat &src, cv::Mat &dst ) { opencv_thinning( src, dst ); }
+
+// -------------------------------------------------------------------------
+
+void Voronoi_Diagram::get_skeletinize_img( const cv::Mat &src, cv::Mat &dst) { skeletinize( src, dst ); }
+
+// -------------------------------------------------------------------------
+
 void Voronoi_Diagram::voronoi( const cv::Mat &input,
                                cv::Mat &output_img )
 {
@@ -38,7 +39,9 @@ void Voronoi_Diagram::voronoi( const cv::Mat &input,
     }
     output_img = gray.clone();
 }
+
 // -------------------------------------------------------------------------
+
 void Voronoi_Diagram::opencv_thinning(const cv::Mat &input,
                                cv::Mat &output_img )
 {
@@ -55,7 +58,9 @@ void Voronoi_Diagram::opencv_thinning(const cv::Mat &input,
     }
     cv::ximgproc::thinning( gray, output_img, cv::ximgproc::THINNING_ZHANGSUEN );
 }
+
 // -------------------------------------------------------------------------
+
 void Voronoi_Diagram::skeletinize( const cv::Mat &input,
                                    cv::Mat &output_img )
 {
@@ -84,11 +89,15 @@ void Voronoi_Diagram::skeletinize( const cv::Mat &input,
     while ( done == false );
     output_img = skel.clone();
 }
+
 // -------------------------------------------------------------------------
-void Voronoi_Diagram::thinning_iteration( cv::Mat &img, int iter) {
+
+void Voronoi_Diagram::thinning_iteration( cv::Mat &img, int iter)
+{
     cv::Mat marker = cv::Mat::zeros( img.size(), CV_8UC1 );
     for (int y = 1; y < img.rows-1; y++)
-        for (int x = 1; x < img.cols-1; x++) {
+        for (int x = 1; x < img.cols-1; x++)
+        {
             int p9 = (int)img.at<uchar>( y-1, x-1 );
             int p2 = (int)img.at<uchar>( y-1, x );
             int p3 = (int)img.at<uchar>( y-1, x+1 );
@@ -98,7 +107,7 @@ void Voronoi_Diagram::thinning_iteration( cv::Mat &img, int iter) {
             int p7 = (int)img.at<uchar>( y+1, x-1 );
             int p8 = (int)img.at<uchar>( y, x-1 );
 
-            // The number of neighboring black pixels is at least 2 and not greater than 6
+            // The number of neighboring white pixels is at least 2 and not greater than 6
             int sum  = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
             if ( sum < 2 || sum > 6 )
                 continue;
@@ -112,11 +121,11 @@ void Voronoi_Diagram::thinning_iteration( cv::Mat &img, int iter) {
                 continue;
 
             // if iter = 0 => step one
-            //      m1 => at least one of P2, P4 or P6 is white
-            //      m2 => at least one of P4, P6 or P8 is white
+            //      m1 => at least one of P2, P4 or P6 is black
+            //      m2 => at least one of P4, P6 or P8 is black
             // if iter = 1 => step two
-            //      m1 => at least one of P2, P4 or P8 is white
-            //      m2 => at least one of P2, P6 or P8 is white
+            //      m1 => at least one of P2, P4 or P8 is black
+            //      m2 => at least one of P2, P6 or P8 is black
             int m1 = ( iter == 0 ) ? (p2 * p4 * p6) : (p2 * p4 * p8);
             int m2 = ( iter == 0 ) ? (p4 * p6 * p8) : (p2 * p6 * p8);
             if (m1 == 0 && m2 == 0)
@@ -125,10 +134,14 @@ void Voronoi_Diagram::thinning_iteration( cv::Mat &img, int iter) {
 
     img &= ~marker;
 }
+
 // -------------------------------------------------------------------
-void Voronoi_Diagram::make_voronoi( cv::Mat &img ) {
+
+void Voronoi_Diagram::make_voronoi( cv::Mat &img )
+{
     cv::Mat prev = cv::Mat::zeros( img.size(), CV_8UC1 ), diff;
-    do {
+    do
+    {
         thinning_iteration( img, 0 );
         thinning_iteration( img, 1 );
         cv::absdiff( img, prev, diff );
@@ -138,3 +151,16 @@ void Voronoi_Diagram::make_voronoi( cv::Mat &img ) {
 
     img *= 255;
 }
+
+// -------------------------------------------------------------------
+
+void Voronoi_Diagram::print_map( const cv::Mat &img,
+                                 const string &s )
+{
+    Mat resizeMap;
+    convertScaleAbs(img, resizeMap, 255);
+    resize( resizeMap, resizeMap, img.size()*10, 0, 0, INTER_NEAREST);
+    imshow(s, resizeMap);
+}
+
+// -------------------------------------------------------------------

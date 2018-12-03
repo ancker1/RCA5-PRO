@@ -134,22 +134,11 @@ int main(int argc, char** argv)
     */
 Vec3b red(0,0,255), black(0,0,0), white(255,255,255), blue(255,0,0);
 
-// CONSTANTS
-Mat big_map = cv::imread( "../map_control/big_floor_plan.png", IMREAD_COLOR);
-Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
-
 int main( ) {
-    Mat src = big_map.clone(), dst;
-    Voronoi_Diagram *v_d = new Voronoi_Diagram();
-    v_d->get_voronoi_img( src, dst );
-    std::vector<Point> points;
-    for (int y = 0; y < dst.rows; y++)
-        for (int x = 0; x < dst.cols; x++)
-            if ( (int)dst.at<uchar>(y,x) == 255 )
-                points.push_back( Point(x,y) );
-    for ( auto& p : points )
-        src.at<Vec3b>( p ) = red;
-    print_map( src, "Voronoi Diagram" );
+    Mat big_map = cv::imread( "../map_control/big_floor_plan.png", IMREAD_COLOR);
+    Mat big_map2 = cv::imread( "../map_control/big_floor_test.png", IMREAD_COLOR );
+    Mat big_map3 = cv::imread( "../map_control/big_floor_test2.png", IMREAD_COLOR );
+    Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
 
     A_Star *a = new A_Star();
     std::vector<cv::Point> v = a->get_path( src, Point(8,7), Point(102,11) ); // Goes towards each other

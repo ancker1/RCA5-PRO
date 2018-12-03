@@ -20,6 +20,9 @@ using namespace cv;
 /***************************************
  * Constants
  ***************************************/
+const Mat big_map = cv::imread( "../map_control/big_floor_plan.png", IMREAD_COLOR);
+const Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
+
 const int ALLOW_VERTEX_PASSTHROUGH = 1;
 const int DRAW_OPEN_LIST = 1;
 
@@ -89,12 +92,7 @@ class A_Star {
                                 const cv::Point &start,
                                 const cv::Point &goal);
 
-        /**
-         * @brief draw_path
-         * @param img
-         * @param path
-         */
-        void draw_path(cv::Mat &img, const std::vector<Point> path );
+        Mat get_a_star();
 
         // Experiment functions
         vector<double> findAstarPathLengthsForRoadmap(Mat roadmap); // Takes too long time therefor made as threads in main
@@ -110,6 +108,8 @@ class A_Star {
     protected:
         // Attributes
         Mat map;
+    private:
+        Mat map, map_a_star;
         vector<Map_Node *> open_list;
         Map_Node *start_node, *goal_node;
         Map_Size map_size;
@@ -176,15 +176,20 @@ class A_Star {
         /**
          * @brief draw_open_list
          */
-        void draw_open_list(Mat &img);
+        void draw_open_list();
 
+        /**
+         * @brief draw_path
+         * @param img
+         * @param path
+         */
+        void draw_path( const std::vector<Map_Node *> path );
+        
         // Experiment functions
         vector<Point> get_points(LineIterator &it);
         bool obstacleDetectedWithLine(Mat roadmap, Point start, Point end);
         double calculateDiagonalDist(Point p1, Point p2);
         Point findWayToRoadMap(Mat roadmap, vector<Point> roadmapPoints, Point entryExitPoint);
-
-
 };
 
 #endif // A_STAR_H

@@ -12,8 +12,16 @@ A_Star::~A_Star() {}
 
 std::vector<cv::Point> A_Star::get_path(const cv::Mat &road_map,
                                         const cv::Point &start,
+<<<<<<< HEAD
                                         const cv::Point &goal) {
     open_list.clear();
+=======
+                                        const cv::Point &goal)
+{
+    // Map for displaying a_star
+    map_a_star = big_map.clone();
+
+>>>>>>> b62ff7efc8e40fac5e40cf9f0bd431e6e3475e7d
     map = road_map.clone();
     map.at<Vec3b>( start ) = Vec3b( 255, 0, 0 );    // Start point = blue
     map.at<Vec3b>( goal ) = Vec3b( 0, 255, 0 );     // End point  = green
@@ -43,8 +51,10 @@ std::vector<cv::Point> A_Star::get_path(const cv::Mat &road_map,
     open_list.push_back( start_node );
     vector<Map_Node *> path = find();
 
+    draw_path( path );
+
     std::vector<cv::Point> result;
-    for ( auto p : path ) {
+    for ( auto& p : path ) {
         result.push_back( Point( p->x, p->y ) );
     }
 
@@ -60,7 +70,7 @@ int A_Star::manhatten_dist(const Map_Node *node1, const Map_Node *node2) {
 // -----------------------------------------------------------------------
 
 int A_Star::diagonal_dist(const Map_Node *node1, const Map_Node *node2) {
-    return max( abs(node2->x - node1->x ), abs( node2->y - node1->y ) );
+    return max( abs( node2->x - node1->x ), abs( node2->y - node1->y ) );
 }
 
 // -----------------------------------------------------------------------
@@ -185,6 +195,8 @@ std::vector<Map_Node *> A_Star::find() {
             }
         }
 
+        draw_open_list();
+
         if ( open_list.size() <= 0 )
             break;
     }
@@ -208,11 +220,9 @@ std::vector<Map_Node *> A_Star::find() {
 
 // -----------------------------------------------------------------------
 
-void A_Star::draw_path( cv::Mat &img,
-                        const std::vector<cv::Point> path) {
-    for ( auto& p : path ) {
-        img.at<Vec3b>( p ) = Vec3b( 0, 0, 255 );
-    }
+void A_Star::draw_path( const std::vector<Map_Node *> path ) {
+    for ( auto& n : path )
+        map_a_star.at<Vec3b>( n->y, n->x ) = Vec3b(0,0,255);
 }
 
 vector<Point> A_Star::calculateRoadmapPoints(Mat roadmap)
@@ -409,21 +419,19 @@ vector<double> A_Star::getResults()
 
 // -----------------------------------------------------------------------
 
-void A_Star::draw_open_list( cv::Mat &img ) {
+void A_Star::draw_open_list() {
     for ( auto& o : open_list ) {
         Map_Node *n = o;
         if ( ( n == start_node ) || ( n == goal_node ) )
             continue;
-        img.at<Vec3b>(n->y, n->x) = Vec3b(210,210,210);
+        map_a_star.at<Vec3b>(n->y, n->x) = Vec3b(210,210,210);
     }
 }
 
 // -----------------------------------------------------------------------
 
-void A_Star::print_map(const Mat &img, const string &s) {
-    cv::Mat resize_img;
-    resize( img, resize_img, img.size()*7, 0, 0, INTER_NEAREST );
-    imshow( s, resize_img );
+Mat A_Star::get_a_star() {
+    return map_a_star;
 }
 
 

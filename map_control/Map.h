@@ -49,10 +49,24 @@ public:
     void print_map(Mat &img, string s);
     void drawNShowPoints(string pictureText, vector<Point> points);
     Mat drawCellsPath(string pictureText, vector<Cell> cells);
-    // BUSHFIRE
-    Mat brushfire_img(Mat &img);
-    vector<Point> find_centers(Mat &img);
 
+    /************************************
+     * BUSHFIRE
+     ***********************************/
+
+    /**
+     * @brief brushfire_img
+     * @param img -> origin
+     * @return -> brushfire gird
+     */
+    cv::Mat brushfire_img( const cv::Mat &img );
+
+    /**
+     * @brief find_centers
+     * @param img -> brushfire grid
+     * @return -> vector with points of centers
+     */
+    std::vector<Point> find_centers( const cv::Mat &img );
 
     //PLANNNING ALGORITHM
 
@@ -81,11 +95,41 @@ private:
     bool isLeftSameCellpoint(vector<Cellpoint> list, Point cellpoint, Point connectionPointLeft);
     bool findNremovePoint(vector<Point> &list, Point point);
 
-    // Bushfire
-    void binarize_img(Mat &img);
-    void find_neighbors(vector<Point> &v, Mat &img, int x, int y);
-    void make_brushfire_grid(Mat &img);
-    void remove_points_in_corners(vector<Point> &v, Mat &img);
+    /**************************************
+     * BRUSHFIRE
+     *************************************/
+
+    /**
+     * @brief binarize_img
+     * @param img
+     */
+    void binarize_img( cv::Mat &img );
+
+    /**
+     * @brief find_neighbors
+     * @param v
+     * @param img
+     * @param x
+     * @param y
+     */
+    void find_neighbors( std::vector<Point> &v,
+                         const cv::Mat &img,
+                         const int &x,
+                         const int &y);
+
+    /**
+     * @brief make_brushfire_grid -> from Lars-Peter Pseudo code
+     * @param img
+     */
+    void make_brushfire_grid( Mat &img );
+
+    /**
+     * @brief remove_points_in_corners
+     * @param v
+     * @param img
+     */
+    void remove_points_in_corners( std::vector<Point> &v,
+                                   const cv::Mat &img);
 
     // PLANNING ALGOORITHM
     Cellpoint findCellPointFromPoint(vector<Cellpoint> cellpoints, Point point);

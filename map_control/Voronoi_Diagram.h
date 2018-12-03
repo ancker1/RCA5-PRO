@@ -28,18 +28,18 @@ class Voronoi_Diagram {
      *
      *  Step one
      *      Search through the image and check if all conditions are fulfilled
-     *          1. The number of neighboring black pixels is at least 2 and not greater than 6
+     *          1. The number of neighboring white pixels is at least 2 and not greater than 6
      *          2. The number of white-to-black transitions around P1 is equal to 1
-     *          3. At least one of P2, P4 or P6 is white
-     *          4. At least one of P4, P6 or P8 is white
+     *          3. At least one of P2, P4 or P6 is black
+     *          4. At least one of P4, P6 or P8 is black
      *              All P1 that meets the criteria is set to white
      *
      *  Step two
      *      Search through the image and check if all conditions are fulfilled
      *          1. (same as step one)
      *          2. (same as step one)
-     *          3. At least one of P2, P4 or P8 is white
-     *          4. At least one of P2, P6 or P8 is white
+     *          3. At least one of P2, P4 or P8 is black
+     *          4. At least one of P2, P6 or P8 is black
      *              All P1 that meets the criteria is set to white
      *
      *  Step one and two are reapeated until image pixels are no longer changing
@@ -98,19 +98,19 @@ class Voronoi_Diagram {
                           cv::Mat &output );
 
         /**
-         * @brief thinning_iteration
-         *      Perform one thinning iteration
-         * @param img => Binary image with range = 0-1
-         * @param iter => 0 = step one, 1 = step two
+         * @brief thinning_iteration -> Perform one thinning iteration
+         * @param img -> Binary image with range = 0-1
+         * @param iter -> 0 = step one, 1 = step two
          */
         void thinning_iteration( cv::Mat &img, int iter );
 
         /**
-         * @brief make_voronoi
-         *      Function for thinning the given binary image
-         * @param img => binary image with range = 0 - 255
+         * @brief make_voronoi -> Function for thinning the given binary image
+         * @param img -> binary image with range = 0 - 255
          */
         void make_voronoi( cv::Mat &img );
+
+        void print_map( const cv::Mat &img, const string &s );
 };
 
 #endif // VORONI_DIAGRAM_H
