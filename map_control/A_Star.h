@@ -20,8 +20,6 @@ using namespace cv;
 /***************************************
  * Constants
  ***************************************/
-const Mat big_map = cv::imread( "../map_control/big_floor_plan.png", IMREAD_COLOR);
-const Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
 
 const int ALLOW_VERTEX_PASSTHROUGH = 1;
 const int DRAW_OPEN_LIST = 1;
@@ -79,7 +77,7 @@ class Map_Size {
 class A_Star {
     public:
         A_Star();
-
+        A_Star(const cv::Mat &draw);
         /**
          * @brief get_path
          * @param road_map =>
@@ -103,11 +101,9 @@ class A_Star {
         vector<double> findAstarPathLengthsForRoadmapRandom(Mat roadmap, vector<Point> roadmapPoints ,vector<Point> startPoints, vector<Point> endPoints);
         vector<Point> checkInvalidTestPoints(Mat roadmap, vector<Point> roadmapPoints, vector<Point> checkpoints);
         vector<Point> findNRemoveDiff(vector<Point> testPoint1, vector<Point> testPoint2);
+        Point findWayToRoadMap(Mat roadmap, vector<Point> roadmapPoints, Point entryExitPoint);
         ~A_Star();
 
-    protected:
-        // Attributes
-        Mat map;
     private:
         Mat map, map_a_star;
         vector<Map_Node *> open_list;
@@ -189,7 +185,7 @@ class A_Star {
         vector<Point> get_points(LineIterator &it);
         bool obstacleDetectedWithLine(Mat roadmap, Point start, Point end);
         double calculateDiagonalDist(Point p1, Point p2);
-        Point findWayToRoadMap(Mat roadmap, vector<Point> roadmapPoints, Point entryExitPoint);
+
 };
 
 #endif // A_STAR_H

@@ -8,20 +8,17 @@ A_Star::A_Star() {}
 
 A_Star::~A_Star() {}
 
+A_Star::A_Star(const cv::Mat &draw)
+{
+    map_a_star = draw.clone();
+}
+
 // -----------------------------------------------------------------------
 
 std::vector<cv::Point> A_Star::get_path(const cv::Mat &road_map,
                                         const cv::Point &start,
-<<<<<<< HEAD
                                         const cv::Point &goal) {
     open_list.clear();
-=======
-                                        const cv::Point &goal)
-{
-    // Map for displaying a_star
-    map_a_star = big_map.clone();
-
->>>>>>> b62ff7efc8e40fac5e40cf9f0bd431e6e3475e7d
     map = road_map.clone();
     map.at<Vec3b>( start ) = Vec3b( 255, 0, 0 );    // Start point = blue
     map.at<Vec3b>( goal ) = Vec3b( 0, 255, 0 );     // End point  = green
@@ -388,6 +385,7 @@ vector<double> A_Star::findAstarPathLengthsForRoadmapRandom(Mat roadmap, vector<
     double tempDist = 0;
     for(size_t i = 0; i < startPoints.size(); i++)
     {
+        aStarPath.clear();
         startPointOnRoadmap = findWayToRoadMap(roadmap, roadmapPoints, startPoints[i]);
         endPointOnRoadmap = findWayToRoadMap(roadmap, roadmapPoints, endPoints[i]);
         if(startPointOnRoadmap != endPointOnRoadmap)
@@ -407,8 +405,6 @@ vector<double> A_Star::findAstarPathLengthsForRoadmapRandom(Mat roadmap, vector<
             pathLengths.push_back(tempDist);
         }
     }
-
-
     return pathLengths;
 }
 

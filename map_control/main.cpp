@@ -17,7 +17,7 @@
 #include "path_planning.h"
 #include "Voronoi_Diagram.h"
 #include "A_Star.h"
-
+#include <random>
 using namespace std;
 using namespace cv;
 
@@ -32,14 +32,6 @@ void draw_pixel_red(vector<Point> &v, Mat &img) {
         Vec3b color(0, 0, 255);
         img.at<Vec3b>(v[i].y, v[i].x) = color;
     }
-}
-
-Point generateRandomPoint(int rows, int cols)
-{
-    Point t;
-    t.x = rand() % cols;
-    t.y = rand() % rows;
-    return t;
 }
 
  /* MIKKEL STYKKE TIL RAPPORT SKRIVNING
@@ -140,12 +132,19 @@ int main( ) {
     Mat big_map3 = cv::imread( "../map_control/big_floor_test2.png", IMREAD_COLOR );
     Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
 
-    A_Star *a = new A_Star();
-    std::vector<cv::Point> v = a->get_path( src, Point(8,7), Point(102,11) ); // Goes towards each other
-    Mat img = big_map.clone();
-    for ( auto& p : v )
-        img.at<Vec3b>( p ) = red;
-    print_map( img, "Map" );
+    A_Star *a = new A_Star(big_map);
+    Mat src = big_map.clone(), dst;
+
+    Voronoi_Diagram *v_d = new Voronoi_Diagram();
+    v_d->get_voronoi_img( src, dst );
+    std::vector<Point> points;
+    for (int y = 0; y < dst.rows; y++)
+       for (int x = 0; x < dst.cols; x++)
+           if ( (int)dst.at<uchar>(y,x) == 255 )
+               points.push_back( Point(x,y) );
+    for ( auto& p : points )
+       src.at<Vec3b>( p ) = red;
+    imshow( "Voronoi Diagram",src  );
     /* TAKES TOO LONG TIME
     // Calulation of whole map path for Voronoi
     vector<Point> roadmapPoints = a->calculateRoadmapPoints(src);
@@ -171,12 +170,28 @@ int main( ) {
     int sampleSize = 10000;
     vector<Point> startPoints;
     vector<Point> endPoints;
-    srand(time(0));
+    //srand(time(0));
+    default_random_engine generator;
+    uniform_int_distribution<int> distribution_row(0,src.rows-1);
+    uniform_int_distribution<int> distribution_cols(0,src.cols-1);
+    Point randTemp;
     for(int i = 0; i < sampleSize; i++)
     {
-        startPoints.push_back(generateRandomPoint(src.rows, src.cols));
-        endPoints.push_back(generateRandomPoint(src.rows, src.cols));
+        randTemp.x = distribution_row(generator);
+        randTemp.y = distribution_cols(generator);
+        startPoints.push_back(randTemp);
     }
+    for(int i = 0; i < sampleSize; i++)
+    {
+        randTemp.x = distribution_row(generator);
+        randTemp.y = distribution_cols(generator);
+        endPoints.push_back(randTemp);
+    }
+    /*
+    for(size_t i = 0; i < endPoints.size(); i++)
+        cout << "start " << startPoints[i] << " end " << endPoints[i] << endl;
+        */
+
     vector<Point> roadmapPoints_voronoi = a->calculateRoadmapPoints(src);
     vector<Point> startPoints_voronoi = a->checkInvalidTestPoints(src, roadmapPoints_voronoi, startPoints);
     vector<Point> endPoints_voronoi = a->checkInvalidTestPoints(src, roadmapPoints_voronoi, endPoints);
@@ -194,6 +209,7 @@ int main( ) {
 
     vector<Point> roadmapPoints_boustrophedon = a->calculateRoadmapPoints(img_Boustrophedon);
     vector<Point> startPoints_Boustrophedoni = a->checkInvalidTestPoints(img_Boustrophedon, roadmapPoints_boustrophedon, startPoints);
+
     vector<Point> endPoints_Boustrophedon = a->checkInvalidTestPoints(img_Boustrophedon, roadmapPoints_boustrophedon, endPoints);
     startPoints = a->findNRemoveDiff(startPoints_voronoi, startPoints_Boustrophedoni);
     endPoints = a->findNRemoveDiff(endPoints_voronoi, endPoints_Boustrophedon);
@@ -201,14 +217,15 @@ int main( ) {
 
     vector<double> voronoiLength = a->findAstarPathLengthsForRoadmapRandom(src, roadmapPoints_voronoi, startPoints, endPoints); // random start- and end- points
     //vector<double> voronoiLength = a->findAstarPathLengthsForRoadmap(src); // Towards eachother
-
     vector<double> BoustrophedonLength = a->findAstarPathLengthsForRoadmapRandom(img_Boustrophedon, roadmapPoints_boustrophedon, startPoints, endPoints); // random start- and end- points
     //vector<double> BoustrophedonLength = a->findAstarPathLengthsForRoadmap(img_Boustrophedon); // Towards eachother
 
     vector<double> sorted_voronoi_length;
     vector<double> sorted_boustrophedon_length;
+    vector<Point> sorted_start_points;
+    vector<Point> sorted_end_points;
     double smallest;
-    size_t indexBoustro;
+    size_t index;
     while(!voronoiLength.empty())
     {
         smallest = voronoiLength[0];
@@ -216,31 +233,62 @@ int main( ) {
         {
             if(voronoiLength[i] <= smallest)
             {
-                indexBoustro = i;
+                index = i;
                 smallest = voronoiLength[i];
             }
         }
 
-        sorted_voronoi_length.push_back(voronoiLength[indexBoustro]);
-        sorted_boustrophedon_length.push_back(BoustrophedonLength[indexBoustro]);
-        voronoiLength.erase(voronoiLength.begin()+indexBoustro);
-        BoustrophedonLength.erase(BoustrophedonLength.begin()+indexBoustro);
+        sorted_voronoi_length.push_back(voronoiLength[index]);
+        sorted_boustrophedon_length.push_back(BoustrophedonLength[index]);
+        sorted_start_points.push_back(startPoints[index]);
+        sorted_end_points.push_back(endPoints[index]);
+        voronoiLength.erase(voronoiLength.begin()+index);
+        BoustrophedonLength.erase(BoustrophedonLength.begin()+index);
+        startPoints.erase(startPoints.begin()+index);
+        endPoints.erase(endPoints.begin()+index);
     }
     // Writing Results:
-    cout << "lort: " << sorted_voronoi_length.size() << endl;
-    string file = "voronoi_length_test_rand.txt";
+    string file = "voronoi_length_test_rand_smallMap.txt";
     ofstream myFile;
     myFile.open(file);
     for(size_t i = 0; i < sorted_voronoi_length.size(); i++)
         myFile << sorted_voronoi_length[i] << endl;
     myFile.close();
 
-    file = "Boustrophedon_length_test_rand.txt";
+    file = "Boustrophedon_length_test_rand_smallMap.txt";
     myFile.open(file);
     for(size_t i = 0; i < sorted_boustrophedon_length.size(); i++)
         myFile << sorted_boustrophedon_length[i] << endl;
     myFile.close();
 
-    waitKey(0);
+    //Plot best and worst case map for Big_Map Boustro best at 3982 Voro best at 4852 //
+    /*
+    int indexToCheck = 3982;
+    Point voroGraphPointStart = a->findWayToRoadMap(src, roadmapPoints_voronoi, sorted_start_points[indexToCheck]);
+    Point voroGraphPointEnd = a->findWayToRoadMap(src, roadmapPoints_voronoi, sorted_end_points[indexToCheck]);
+    Point bostoGraphPointStart = a->findWayToRoadMap(img_Boustrophedon, roadmapPoints_boustrophedon, sorted_start_points[indexToCheck]);
+    Point bostoGraphPointEnd = a->findWayToRoadMap(img_Boustrophedon, roadmapPoints_boustrophedon, sorted_end_points[indexToCheck]);
+    vector<Point> voro = a->get_path(src, voroGraphPointStart, voroGraphPointEnd);
+    vector<Point> bostro = a->get_path(img_Boustrophedon, bostoGraphPointStart, bostoGraphPointEnd);
+    cout << "size af voro path: " << voro.size() << endl;
+    cout << "size af bostro path: " << bostro.size() << endl;
+    Mat vorot = big_map.clone();
+    Mat bostrot = big_map.clone();
+    for ( auto& p : voro )
+       vorot.at<Vec3b>( p ) = red;
+    line(vorot, sorted_start_points[indexToCheck], voroGraphPointStart, Scalar(255,0,0), 1, 8, 0); // Draw line from start point to start point on graph
+    line(vorot, sorted_end_points[indexToCheck], voroGraphPointEnd, Scalar(0,255,0), 1, 8, 0); // Draw line from end point to end point on graph
+    //print_map( vorot, "Voronoi test" );
+    resize(vorot,vorot,vorot.size()*10,0,0,INTER_NEAREST);
+    imwrite("Voronoi_path_sample_10000_index_3982.png", vorot);
+    for ( auto& p : bostro )
+       bostrot.at<Vec3b>( p ) = red;
+    line(bostrot, sorted_start_points[indexToCheck], bostoGraphPointStart, Scalar(255,0,0), 1, 8, 0); // Draw line from start point to start point on graph
+    line(bostrot, sorted_end_points[indexToCheck], bostoGraphPointEnd, Scalar(0,255,0), 1, 8, 0); // Draw line from end point to end point on graph
+    //print_map( bostrot, "Bostrot test" );
+    resize(bostrot,bostrot,bostrot.size()*10,0,0,INTER_NEAREST);
+    imwrite("Boustrophedon_path_sample_10000_index_3982.png", bostrot);
+    //waitKey(0);
     return 0;
+    */
 }
