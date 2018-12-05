@@ -271,7 +271,7 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         tie(answer,closest) = getClosestPointLeft(samex, nonSamex, nonSamex[i]);
         if(answer == "No Point")
         {
-            cout << "Ingen til venstre for i punktet: " << nonSamex[i] << endl;
+            //cout << "Ingen til venstre for i punktet: " << nonSamex[i] << endl;
         }
         else if(answer == "Non Same x")
         {
@@ -300,7 +300,7 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         tie(answer,closest) = getClosestPointRight(samex, nonSamex, nonSamex[i]);
         if(answer == "No Point")
         {
-            cout << "Ingen til højre for i punktet: " << nonSamex[i] << endl;
+            //cout << "Ingen til højre for i punktet: " << nonSamex[i] << endl;
         }
         else if(answer == "Non Same x")
         {
@@ -340,7 +340,7 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         tie(answer,closest) = getClosestPointLeft(samex, nonSamex, samex[i]);
         if(answer == "No Point")
         {
-            cout << "Ingen til venstre for i punktet: " << samex[i] << endl;
+            //cout << "Ingen til venstre for i punktet: " << samex[i] << endl;
         }
         else if(answer == "Non Same x" || answer == "Same x")
         {
@@ -364,7 +364,7 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         tie(answer,closest) = getClosestPointRight(samex, nonSamex, samex[i]);
         if(answer == "No Point")
         {
-            cout << "Ingen til højre for i punktet: " << samex[i] << endl;
+            //cout << "Ingen til højre for i punktet: " << samex[i] << endl;
         }
         else if(answer == "Non Same x" || answer == "Same x")
         {
@@ -935,67 +935,3 @@ void Map::remove_points_in_corners( std::vector<Point> &v,
 }
 
 // -------------------------------------------------------
-
-vector<Point> Map::astar(vector<Cellpoint> cellpoints, Point startCellPoint, Point goalCellPoint) // Start and Goal Cells need to be on the Cell list
-{
-
-    vector<Point> path;
-    vector<Cellpoint> tempCellspoint;
-    vector<Cellpoint> aStarPath;
-
-    aStarPath.push_back(findCellPointFromPoint(cellpoints, startCellPoint)); // Starting Cellpoint
-    //path.push_back(startCellPoint); // Starting Point
-
-    //Init heauristic with distance from point to goal
-    for(size_t i = 0; i < cellpoints.size(); i++)
-    {
-        cellpoints[i].calculateHeuristicdist(goalCellPoint);
-    }
-
-    Cellpoint tempCellpoint ;
-    // Sidder Fast Her
-
-    return path;
-}
-
-Cellpoint Map::findCellPointFromPoint(vector<Cellpoint> cellpoints, Point point)
-{
-    for(size_t i = 0; i < cellpoints.size(); i++)
-    {
-        if(cellpoints[i].getOnCell() == point)
-            return cellpoints[i];
-    }
-}
-
-Cellpoint Map::findSmallestCombinedHeuristic(vector<Cellpoint> cellpoints)
-{
-    Cellpoint tempCellp = cellpoints[0];
-    for(size_t i = 0; i < cellpoints.size(); i++)
-    {
-        if(tempCellp.getHeuristicdist() > cellpoints[i].getCombinedHeuristic())
-            tempCellp = cellpoints[i];
-    }
-    return tempCellp;
-}
-
-Cell Map::findClosestCellFromStart(vector<Cell> cells, Point start, int &cellNumber) // MAKE IT WORK
-{
-    Cell closestCell = cells[0].getAllCellPoints()[0];
-    int closestDist = abs(sqrt(pow(cells[0].getAllCellPoints()[0].getOnCell().x,2)+pow(cells[0].getAllCellPoints()[0].getOnCell().y,2))-sqrt(pow(start.x,2)+pow(start.y,2)));
-    for(size_t i = 0; i < cells.size(); i++)
-    {
-        for(size_t j = 0; j < cells[i].getAllCellPoints().size(); j++)
-        {
-            if(!obstacleDetectedWithLine(start, cells[i].getAllCellPoints()[j].getOnCell()))
-            {
-                if(closestDist > abs(sqrt(pow(cells[i].getAllCellPoints()[j].getOnCell().x,2)+pow(cells[i].getAllCellPoints()[j].getOnCell().y,2))-sqrt(pow(start.x,2)+pow(start.y,2))))
-                {
-                    closestCell = cells[i].getAllCellPoints()[j];
-                    closestDist = abs(sqrt(pow(cells[i].getAllCellPoints()[j].getOnCell().x,2)+pow(cells[i].getAllCellPoints()[j].getOnCell().y,2))-sqrt(pow(start.x,2)+pow(start.y,2)));
-                    cellNumber = j;
-                }
-            }
-        }
-    }
-    return closestCell;
-}

@@ -27,20 +27,26 @@ std::vector<cv::Point> A_Star::get_path(const cv::Mat &road_map,
     map_data = vector<Map_Node>( map_size.size );
 
     for (int y = 0; y < map.rows; y++)
-        for (int x = 0; x < map.cols; x++) {
-            if ( map.at<Vec3b>(y,x) == Vec3b(0,0,255) )
+        for (int x = 0; x < map.cols; x++)
+        {
+            if ( map.at<Vec3b>(y,x) == Vec3b(0,0,255) ) // If pixel red => roadmap
+            {
                 map_data[ y * map_size.width + x ] = Map_Node( x, y, NODE_TYPE_ZERO );
-            else if ( map.at<Vec3b>(y,x) == Vec3b(255,0,0) ) {
+            }
+            else if ( map.at<Vec3b>(y,x) == Vec3b(255,0,0) )    // If pixel blue => start point
+            {
                 Map_Node n( x, y, NODE_TYPE_START );
                 map_data[ y * map_size.width + x ] = n;
                 start_node = &map_data[ y * map_size.width + x ];
             }
-            else if ( map.at<Vec3b>(y,x) == Vec3b(0,255,0) ) {
+            else if ( map.at<Vec3b>(y,x) == Vec3b(0,255,0) )    // If pixel green => end point
+            {
                 Map_Node n( x, y, NODE_TYPE_END );
-                map_data[ y * map_size.width + x ];
+                map_data[ y * map_size.width + x ] = n;
                 goal_node = &map_data[ y * map_size.width + x ];
             }
-            else {
+            else    // If not red, green or blue then obstacle
+            {
                 map_data[ y * map_size.width + x ] = Map_Node( x, y, NODE_TYPE_OBSTACLE);
             }
         }
