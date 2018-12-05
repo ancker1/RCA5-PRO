@@ -23,6 +23,18 @@ std::vector<cv::Point> A_Star::get_path(const cv::Mat &road_map,
     map.at<Vec3b>( start ) = Vec3b( 255, 0, 0 );    // Start point = blue
     map.at<Vec3b>( goal ) = Vec3b( 0, 255, 0 );     // End point  = green
 
+    if ( !obstacleDetectedWithLine( road_map, start, goal ) )
+    {
+        LineIterator it( road_map, start, goal, 8 );
+
+        std::vector<cv::Point> lines( it.count );
+        for (int i = 0; i < it.count; i++, it++)
+            lines.push_back( Point( it.pos() ) );
+
+        return lines;
+    }
+    // No direct path use A_Star
+
     map_size = Map_Size( map.cols, map.rows );
     map_data = vector<Map_Node>( map_size.size );
 
@@ -37,7 +49,7 @@ std::vector<cv::Point> A_Star::get_path(const cv::Mat &road_map,
             }
             else if ( map.at<Vec3b>(y,x) == Vec3b(0,255,0) ) {
                 Map_Node n( x, y, NODE_TYPE_END );
-                map_data[ y * map_size.width + x ];
+                map_data[ y * map_size.width + x ] = n;
                 goal_node = &map_data[ y * map_size.width + x ];
             }
             else {
@@ -385,24 +397,35 @@ vector<double> A_Star::findAstarPathLengthsForRoadmapRandom(Mat roadmap, vector<
     double tempDist = 0;
     for(size_t i = 0; i < startPoints.size(); i++)
     {
+        tempDist = 0;
         aStarPath.clear();
-        startPointOnRoadmap = findWayToRoadMap(roadmap, roadmapPoints, startPoints[i]);
-        endPointOnRoadmap = findWayToRoadMap(roadmap, roadmapPoints, endPoints[i]);
-        if(startPointOnRoadmap != endPointOnRoadmap)
+        if( !obstacleDetectedWithLine( roadmap, startPoints[i], endPoints[i] ) )// Direct path no use of A_Star
         {
-            tempDist = 0;
-            aStarPath = get_path(roadmap, startPointOnRoadmap, endPointOnRoadmap);
-            tempDist = calculateDiagonalDist(startPoints[i], startPointOnRoadmap); // From start to start on roadmap
-            tempDist += calculateDiagonalDist(endPoints[i], endPointOnRoadmap); // From goal to goal on roadmap
-            tempDist += aStarPath.size(); // Path length of astar
+            LineIterator it( roadmap, startPoints[i], endPoints[i], 8 );
+            std::vector<cv::Point> lines( it.count );
+            for (int i = 0; i < it.count; i++, it++)
+                lines.push_back( Point( it.pos() ) );
+            tempDist = lines.size();
             pathLengths.push_back(tempDist);
         }
-        else // If equal to eachother the aStarPath = 0
+        else
         {
-            tempDist = 0;
-            tempDist = calculateDiagonalDist(startPoints[i], startPointOnRoadmap); // From start to start on roadmap
-            tempDist += calculateDiagonalDist(endPoints[i], endPointOnRoadmap); // From goal to goal on roadmap
-            pathLengths.push_back(tempDist);
+            startPointOnRoadmap = findWayToRoadMap(roadmap, roadmapPoints, startPoints[i]);
+            endPointOnRoadmap = findWayToRoadMap(roadmap, roadmapPoints, endPoints[i]);
+            if(startPointOnRoadmap != endPointOnRoadmap)
+            {
+                aStarPath = get_path(roadmap, startPointOnRoadmap, endPointOnRoadmap);
+                tempDist = calculateDiagonalDist(startPoints[i], startPointOnRoadmap); // From start to start on roadmap
+                tempDist += calculateDiagonalDist(endPoints[i], endPointOnRoadmap); // From goal to goal on roadmap
+                tempDist += aStarPath.size(); // Path length of astar
+                pathLengths.push_back(tempDist);
+            }
+            else // If equal to eachother the aStarPath = 0
+            {
+                tempDist = calculateDiagonalDist(startPoints[i], startPointOnRoadmap); // From start to start on roadmap
+                tempDist += calculateDiagonalDist(endPoints[i], endPointOnRoadmap); // From goal to goal on roadmap
+                pathLengths.push_back(tempDist);
+            }
         }
     }
     return pathLengths;

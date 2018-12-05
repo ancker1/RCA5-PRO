@@ -157,23 +157,24 @@ int main( ) {
         startPoints.erase(startPoints.begin()+index);
         endPoints.erase(endPoints.begin()+index);
     }
+    /*
     // Writing Results:
-    string file = "voronoi_length_test_rand_smallMap.txt";
+    string file = "voronoi_length_test_rand_bigMap.txt";
     ofstream myFile;
     myFile.open(file);
     for(size_t i = 0; i < sorted_voronoi_length.size(); i++)
         myFile << sorted_voronoi_length[i] << endl;
     myFile.close();
 
-    file = "Boustrophedon_length_test_rand_smallMap.txt";
+    file = "Boustrophedon_length_test_rand_bigMap.txt";
     myFile.open(file);
     for(size_t i = 0; i < sorted_boustrophedon_length.size(); i++)
         myFile << sorted_boustrophedon_length[i] << endl;
     myFile.close();
+    */
+    //Plot best and worst case map for Big_Map Boustro best at 4250 Voro best at 4595 //
 
-    //Plot best and worst case map for Big_Map Boustro best at 3982 Voro best at 4852 //
-    /*
-    int indexToCheck = 3982;
+    int indexToCheck = 4250;
     Point voroGraphPointStart = a->findWayToRoadMap(src, roadmapPoints_voronoi, sorted_start_points[indexToCheck]);
     Point voroGraphPointEnd = a->findWayToRoadMap(src, roadmapPoints_voronoi, sorted_end_points[indexToCheck]);
     Point bostoGraphPointStart = a->findWayToRoadMap(img_Boustrophedon, roadmapPoints_boustrophedon, sorted_start_points[indexToCheck]);
@@ -190,15 +191,15 @@ int main( ) {
     line(vorot, sorted_end_points[indexToCheck], voroGraphPointEnd, Scalar(0,255,0), 1, 8, 0); // Draw line from end point to end point on graph
     //print_map( vorot, "Voronoi test" );
     resize(vorot,vorot,vorot.size()*10,0,0,INTER_NEAREST);
-    imwrite("Voronoi_path_sample_10000_index_3982.png", vorot);
+    imwrite("Voronoi_path_sample_10000_index_130.png", vorot);
     for ( auto& p : bostro )
        bostrot.at<Vec3b>( p ) = red;
     line(bostrot, sorted_start_points[indexToCheck], bostoGraphPointStart, Scalar(255,0,0), 1, 8, 0); // Draw line from start point to start point on graph
     line(bostrot, sorted_end_points[indexToCheck], bostoGraphPointEnd, Scalar(0,255,0), 1, 8, 0); // Draw line from end point to end point on graph
     //print_map( bostrot, "Bostrot test" );
     resize(bostrot,bostrot,bostrot.size()*10,0,0,INTER_NEAREST);
-    imwrite("Boustrophedon_path_sample_10000_index_3982.png", bostrot);
+    imwrite("Boustrophedon_path_sample_10000_index_130.png", bostrot);
     //waitKey(0);
     return 0;
-    */
+
 }

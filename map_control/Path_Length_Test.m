@@ -19,14 +19,17 @@ avg = movmean(Boustrophedon_length_test_rand_bigMap, 50); % Moving average over 
 figure('Name','Random start- and- end points Big_Map_1');
 hold on
 title('Big Map: Length in pixels function as Start- and End- points data number, Sample = 6027'); % Random number generate = 10000
-a = plot(1:size(voronoi_length_test_rand_bigMap), Boustrophedon_length_test_rand_bigMap)
-plot(1:size(voronoi_length_test_rand_bigMap), voronoi_length_test_rand_bigMap)
-plot(1:size(avg), avg)
+a = plot(0:size(voronoi_length_test_rand_bigMap)-1, Boustrophedon_length_test_rand_bigMap)
+plot(0:size(voronoi_length_test_rand_bigMap)-1, voronoi_length_test_rand_bigMap)
+plot(0:size(avg)-1, avg)
 legend('Boustrophedon roadmap', 'Voronoi roadmap', 'Boustrophedon roadmap with moving average (50)');
 xlabel('Start- and End- points data number');
 ylabel('Total length in pixels');
 hold off
 a.Color(4) = 0.13;
+
+[maxV maxI] = max(Boustrophedon_length_test_rand_bigMap-voronoi_length_test_rand_bigMap)
+[minV minI] = min(Boustrophedon_length_test_rand_bigMap-voronoi_length_test_rand_bigMap)
 
 Boust = sum(Boustrophedon_length_test_rand_bigMap-voronoi_length_test_rand_bigMap < 0);
 Voro = sum(Boustrophedon_length_test_rand_bigMap-voronoi_length_test_rand_bigMap > 0);
