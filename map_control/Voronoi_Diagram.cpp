@@ -67,18 +67,24 @@ void Voronoi_Diagram::skeletinize( const cv::Mat &input,
     Mat gray;
     cv::cvtColor( input, gray, CV_BGR2GRAY );
     cv::threshold( gray, gray, 127, 255, CV_THRESH_BINARY );
-    for (int y = 0; y < gray.rows; y++) {
+
+    for (int y = 0; y < gray.rows; y++)
+    {
         gray.at<uchar>(y, 0) = 0;
         gray.at<uchar>(y, gray.cols-1) = 0;
     }
-    for (int x = 0; x < gray.cols; x++) {
+    for (int x = 0; x < gray.cols; x++)
+    {
         gray.at<uchar>(0, x) = 0;
         gray.at<uchar>(gray.rows-1, x) = 0;
     }
+
     Mat skel( gray.size(), CV_8UC1, Scalar(0) ), temp, eroded, element;
     element = cv::getStructuringElement( MORPH_CROSS, Size(3,3) );
     bool done = false;
-    do {
+
+    do
+    {
         erode( gray, eroded, element );
         dilate( eroded, temp, element );
         subtract( gray, temp, temp );
@@ -87,6 +93,7 @@ void Voronoi_Diagram::skeletinize( const cv::Mat &input,
         done = ( cv::countNonZero( gray ) == 0 );
     }
     while ( done == false );
+
     output_img = skel.clone();
 }
 

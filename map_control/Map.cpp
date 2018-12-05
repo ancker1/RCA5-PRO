@@ -777,93 +777,118 @@ Mat Map::brushfire_img( const cv::Mat &img )
 
 // --------------------------------------------------
 
-vector<Point> Map::findCenters(const Mat &src)
+vector<Point> Map::brushfireFindCenters( const cv::Mat &src )
 {
-    Mat img = src.clone();
+    Mat img = src.clone(), imgBrushfire;
 
-    // Get brushfire grid
-    Mat imgBrushfire = brushfire_img( img );
+    imgBrushfire = brushfire_img( img );    // Get brushfire grid
+
+    // Get walls
+    vector<Point> walls;
+    for (int y = 0; y < imgBrushfire.rows; y++)
+        for (int x = 0; x < imgBrushfire.cols; x++)
+            if ( (int)imgBrushfire.at<uchar>(y,x) == 0 )
+                walls.push_back( Point(x,y) );
 
     // Detected rooms
-    Mat imgDilate;
-    Mat element = getStructuringElement( MORPH_CROSS,
-                                         Size(4,4),
-                                         Point(0,0) );
+    Mat imgDilate, kernel = Mat::ones( Size(25,25), 1u);
+    dilate( imgBrushfire, imgDilate, kernel );
+    imgDilate = ( imgBrushfire >= imgDilate );
 
-    dilate( imgBrushfire, imgDilate, element );
+    // Remove walls
+    for ( auto& point : walls)
+        imgDilate.at<uchar>( point ) = 0;
 
-    for (int y = 0; y < imgDilate.rows-50; y++)
-        for (int x = 0; x < imgDilate.cols; x++)
-        {
-            if ( (int)imgDilate.at<uchar>(y,x) >= 6 )
-                imgDilate.at<uchar>(y,x) = 255;
-            else
-                imgDilate.at<uchar>(y,x) = 0;
-        }
+    // Remove outside floor plan
+    for (int y = 0; y < imgDilate.rows; y++)
+    {
+        imgDilate.at<uchar>( y, 0) = 0;
+        imgDilate.at<uchar>( y, imgDilate.cols-1 ) = 0;
+    }
+    for (int x = 0; x < imgDilate.cols; x++)
+    {
+        imgDilate.at<uchar>( 0, x ) = 0;
+        imgDilate.at<uchar>( imgDilate.rows-1, x ) = 0;
+    }
 
-    for (int y = imgDilate.rows-50; y < imgDilate.rows; y++)
-        for (int x = 0; x < imgDilate.cols; x++)
-        {
-            if ( (int)imgDilate.at<uchar>(y,x) >= 7 )
-                imgDilate.at<uchar>(y,x) = 255;
-            else
-                imgDilate.at<uchar>(y,x) = 0;
-        }
-
-    // Get contours
-    Mat cannyOutput, drawing = src.clone();
+    // Find contours
     vector<vector<Point>> contours;
-    vector<Vec4i> hierarchy;
-    Canny( imgDilate, cannyOutput, 100, 200, 3 );
-    findContours( cannyOutput, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE, Point(0,0) );
+    findContours( imgDilate, contours, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0,0) );
 
-    // Moments
-    vector<Moments> mu( contours.size() );
+    // Get centers of contours
+    vector<Point> centers( contours.size() );
     for (size_t i = 0; i < contours.size(); i++)
-        mu[i] = moments( contours[i], false );
-    vector<Point> mc( contours.size() );
-    for (size_t i = 0; i < contours.size(); i++)
-        mc[i] = Point( ( mu[i].m10/mu[i].m00 ), ( mu[i].m01/mu[i].m00 ) );
+    {
+//        // TEST
+//        Mat drawing = src.clone();
+//        drawContours( drawing, contours, (int)i, Scalar(0,0,255) );
+//        print_map( drawing, "test" );
+//        cv::waitKey(0);
 
-    return mc;
+        Point p;
+
+        if ( contours[i].size() > 2 )
+        {
+            Moments mu = moments( contours[i] );
+            p.x = (int)( mu.m10/mu.m00 );
+            p.y = (int)( mu.m01/mu.m00 );
+        }
+        else if ( contours[i].size() == 2 )
+        {
+            Point start = contours[i][0], end = contours[i][1];
+            p.x = (start.x + (end.x - start.x)/2);
+            p.y = (start.y + (end.y - start.y)/2);
+        }
+        else
+        {
+            p.x = contours[i][0].x;
+            p.y = contours[i][0].y;
+        }
+
+//        // TEST
+//        drawing.at<Vec3b>( p ) = Vec3b(255,0,0);
+//        print_map( drawing, "test" );
+//        cv::waitKey(0);
+
+        centers[i] = p;
+    }
+
+    return centers;
 }
 
+// --------------------------------------------------------------
 
-// --------------------------------------------------
+void Map::getContour( cv::Mat &img, const cv::Point &p, vector<vector<Point>> &contours )
+{
+    vector<Point> contour;
 
-//vector<Point> Map::find_centers( const cv::Mat &img )
-//{
-//    Mat1b kernel_lm( Size(5,5), 1u);
-//    Mat image_dilate;
-//    dilate(img, image_dilate, kernel_lm);
-//    Mat1b local_max = (img >= image_dilate);
+    int y = p.y, x = p.x;
+    for ( ; y < img.rows; y++)
+    {
+        if ( (int)img.at<uchar>(y,x) == 0 )
+            break;
 
-//    vector<Point> v;
-//    for (int y = 0; y < local_max.rows; y++)
-//        for (int x = 0; x < local_max.cols; x++)
-//            if ((int)local_max.at<uchar>(y,x) == 255)
-//            {
-//                for (int j = 1; (int)local_max.at<uchar>(y+j,x) == 255; j++)
-//                {
-//                    local_max.at<uchar>(y,x) = 0;
-//                    j++;
-//                }
-//                for (int j = 1; (int)local_max.at<uchar>(y,x+j) == 255; j++)
-//                {
-//                    local_max.at<uchar>(y,x) = 0;
-//                    j++;
-//                }
-//            }
+        for ( ; x < img.cols; x++)
+        {
+            if ( (int)img.at<uchar>(y,x) == 0 )
+                break;
 
-//    for (int y = 0; y < local_max.rows; y++)
-//        for (int x = 0; x < local_max.cols; x++)
-//            if ((int)local_max.at<uchar>(y,x) == 255)
-//                v.push_back( Point(x,y) );
+            contour.push_back( Point(x,y) );
 
-//    remove_points_in_corners(v, img);
+            img.at<uchar>(y,x) = 0;
+        }
+    }
 
-//    return v;
-//}
+    contours.push_back( contour );
+}
+
+// --------------------------------------------------------------
+
+vector<Point> squareFindCenters( const cv::Mat &img )
+{
+    vector<Point> result;
+    return result;
+}
 
 // --------------------------------------------------------------
 
@@ -920,7 +945,7 @@ void Map::make_brushfire_grid( cv::Mat &img )
                 find_neighbors(neighbors, img, x, y);
 
     int color = 1;
-    while (!neighbors.empty())
+    while ( !neighbors.empty() )
     {
         vector<Point> new_neighbors;
         for (size_t i = 0; i < neighbors.size(); i++)

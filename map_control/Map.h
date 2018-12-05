@@ -63,10 +63,12 @@ public:
 
     /**
      * @brief find_centers
-     * @param img -> brushfire grid
+     * @param img
      * @return -> vector with points of centers
      */
-    std::vector<Point> findCenters( const cv::Mat &img );
+    std::vector<Point> brushfireFindCenters( const cv::Mat &img );
+
+    std::vector<cv::Point> squareFindCenters( const cv::Mat &img );
 
     //PLANNNING ALGORITHM
     vector<Point> astar(vector<Cellpoint> cellpoints, Point startCellPoint, Point goalCellPoint); // MAKE IT WORk
@@ -130,6 +132,10 @@ private:
      */
     void remove_points_in_corners( std::vector<Point> &v,
                                    const cv::Mat &img);
+
+    void getContour( cv::Mat &img,
+                     const cv::Point &p,
+                     vector<vector<Point>> &contours );
 
     // PLANNING ALGOORITHM
     Cellpoint findCellPointFromPoint(vector<Cellpoint> cellpoints, Point point);
