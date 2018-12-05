@@ -80,7 +80,7 @@ int A_Star::diagonal_dist(const Map_Node *node1, const Map_Node *node2)
 int A_Star::compute_h(const Map_Node *node1, const Map_Node *node2) 
 {
     if ( ALLOW_VERTEX_PASSTHROUGH )
-            return diagonal_dist( node1, node2 ) * G_SKEW;
+        return diagonal_dist( node1, node2 ) * G_SKEW;
     else
         return manhatten_dist( node1, node2 ) * G_DIRECT;
 }
