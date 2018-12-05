@@ -145,7 +145,6 @@ int main( ) {
     for ( auto& p : points )
        src.at<Vec3b>( p ) = red;
     print_map(src, "Voronoi Diagram"  );
-
     // Boustrophedon
     Mat src1 = big_map.clone();
     cvtColor(src1, src1, CV_BGR2GRAY);
