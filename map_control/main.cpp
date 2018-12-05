@@ -172,8 +172,8 @@ int main( ) {
         myFile << sorted_boustrophedon_length[i] << endl;
     myFile.close();
     */
-    //Plot best and worst case map for Big_Map Boustro best at 4250 Voro best at 4595 //
 
+    //Plot best and worst case map for Big_Map Boustro best at 4250 Voro best at 4595 //
     int indexToCheck = 4250;
     Point voroGraphPointStart = a->findWayToRoadMap(src, roadmapPoints_voronoi, sorted_start_points[indexToCheck]);
     Point voroGraphPointEnd = a->findWayToRoadMap(src, roadmapPoints_voronoi, sorted_end_points[indexToCheck]);
