@@ -9,13 +9,13 @@
 #include <iostream>
 
 #include <math.h>
-#include "circledetection.h"
+//#include "circledetection.h"
 
 static boost::mutex mutex;
 float arr[7] = { 0 };
 coordinate robot;
 double robot_oz;
-Mat map;
+//Mat map;
 int detections[4];
 
 void statCallback(ConstWorldStatisticsPtr& _msg) {
@@ -75,10 +75,10 @@ void cameraCallback(ConstImageStampedPtr& msg) {
 	const char *data   = msg->image().data().c_str();
 	cv::Mat     im(int(height), int(width), CV_8UC3, const_cast<char *>(data));
 
-	CircleDetection    cd;
-    vector<circleInfo> circles = cd.detectCircles(im, CD_HOUGH);
-	cd.drawCircles(im, circles);
-	cd.mapMarbles(map, robot.x, robot.y, robot_oz, circles, detections);
+//	CircleDetection    cd;
+//    vector<circleInfo> circles = cd.detectCircles(im, CD_HOUGH);
+//	cd.drawCircles(im, circles);
+//	cd.mapMarbles(map, robot.x, robot.y, robot_oz, circles, detections);
 
 	im = im.clone();
 	cvtColor(im, im, CV_BGR2RGB);
@@ -154,12 +154,7 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 }
 
 int main(int _argc, char **_argv) {
-	map = imread("../../map_control/big_floor_plan.png");
-	if (!map.data) return 1;
-	resize(map, map, map.size() * MAP_ENLARGEMENT, 0, 0, INTER_NEAREST);
-	for (int i = 0; i < 4; i++) {
-		detections[i] = 0;
-	}
+
 
 	// Load gazebo
 	gazebo::client::setup(_argc, _argv);
@@ -224,8 +219,8 @@ int main(int _argc, char **_argv) {
 
 		coordinate goal;    // TEST
 
-		goal.x = -7;        // TEST
-		goal.y = 8;         // TEST
+        goal.x = 4;        // TEST
+        goal.y = 3;         // TEST
 
 
 		controller->calcRelativeVectorToGoal(robot, goal);          // TEST
@@ -297,8 +292,8 @@ int main(int _argc, char **_argv) {
 		/*************************************************************/
 		/*       Output variables of Fuzzy Controller is set         */
 		/*************************************************************/
-		//speed = controller->getSpeed();
-		//dir = controller->getDirection();
+        speed = controller->getSpeed();
+        dir = controller->getDirection();
 /*
 		std::cout << "RelAngle: " << controller->getRelativeAngleToGoal() << std::endl
 							<< "RelDist: "  << controller->getRelativeDistanceToGoal() << std::endl;
@@ -310,12 +305,12 @@ int main(int _argc, char **_argv) {
 		/*************************************************************/
 
 
-		if (controller->is_at_goal())
-		{
-				controller->setPath(PATH_S);
-				goal.x = -7;        // TEST
-				goal.y = 12;         // TEST
-		}
+        //if (controller->is_at_goal())
+        //{
+        //		controller->setPath(PATH_S);
+        //		goal.x = -7;        // TEST
+        //		goal.y = 12;         // TEST
+        //}
 
 
 		mutex.lock();
@@ -352,7 +347,7 @@ int main(int _argc, char **_argv) {
 		gazebo::msgs::Set(&msg, pose);
 		movementPublisher->Publish(msg);
 
-
+/*
 		if ( count == 10 && ans.length > 0.1 )
 		{
 				std::cout << "0.1S" << std::endl;
@@ -388,6 +383,7 @@ int main(int _argc, char **_argv) {
 
 
 	}
+    */
 	// Make sure to shut everything down.
 	gazebo::client::shutdown();
 }
