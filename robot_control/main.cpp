@@ -154,13 +154,15 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 }
 
 int main(int _argc, char **_argv) {
+    /*
 	map = imread("../../map_control/big_floor_plan.png");
 	if (!map.data) return 1;
 	resize(map, map, map.size() * MAP_ENLARGEMENT, 0, 0, INTER_NEAREST);
 	for (int i = 0; i < 4; i++) {
 		detections[i] = 0;
 	}
-
+    */
+    cout << "Viker" << endl;
 	// Load gazebo
 	gazebo::client::setup(_argc, _argv);
 
