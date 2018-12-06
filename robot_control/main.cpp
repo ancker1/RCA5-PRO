@@ -32,9 +32,9 @@ void poseCallback(ConstPosesStampedPtr& _msg) {
 
 	for (int i = 0; i < _msg->pose_size(); i++) {
 		if (_msg->pose(i).name() == "pioneer2dx") {
-			std::cout << std::setprecision(2) << std::fixed << std::setw(6)
-								<< _msg->pose(i).position().x() << std::setw(6)
-								<< _msg->pose(i).position().y() << std::setw(6) << std::endl;
+        //	std::cout << std::setprecision(2) << std::fixed << std::setw(6)
+        //						<< _msg->pose(i).position().x() << std::setw(6)
+        //						<< _msg->pose(i).position().y() << std::setw(6) << std::endl;
 									 /*
 								<< _msg->pose(i).position().z() << std::setw(6)
 								<< _msg->pose(i).orientation().w() << std::setw(6)
@@ -215,7 +215,7 @@ int main(int _argc, char **_argv) {
 	float speed = 0.0;
 	float dir   = 0.0;
 
-		FuzzyController* controller = new FuzzyController(GO_TO_GOAL);
+        FuzzyController* controller = new FuzzyController();
 
 		coordinate goal;    // TEST
 
@@ -228,25 +228,16 @@ int main(int _argc, char **_argv) {
 	//  std::cout << "Vector length: " << ans.length << std::endl;  // TEST
 	//  std::cout << "Vector angle: " <<  ans.angle << std::endl;   // TEST
 
-		std::ofstream xTXT("x.txt");
-		std::ofstream yTXT("y.txt");
-		std::ofstream tTXT("t.txt");
-		std::ofstream lTXT("l.txt");
-		std::ofstream aTXT("a.txt");
-		xTXT.close();
-		yTXT.close();
-		tTXT.close();
-		lTXT.close();
-		aTXT.close();
 
 		int count = 0;
 		double time = 0;
 		double relang = 0;
 
-		controller->setPath(PATH_L);
+        controller->setPath(PATH_R);
 
 	// Loop
-	while (true) {
+    while (true)
+    {
 		gazebo::common::Time::MSleep(10);   // MSleep(10) = 10 [ms] sleep.
 
 		count++;
@@ -267,123 +258,42 @@ int main(int _argc, char **_argv) {
 		_vec ans = controller->getRelativeVectorToGoal();         // ^ should calculate the rel dist and angle directly.
 
 
-		std::cout << "ang. bw: " << ans.angle << std::endl;
-		std::cout << "robot orient: " << robot_oz << std::endl;
+        std::cout << "R-G: " << ans.angle << std::endl;
+        std::cout << "Robot: " << robot_oz << std::endl;
 
 
 
-		if (robot_oz > 0 && ans.angle > 0)              // Optimize this.
-				relang = ans.angle - robot_oz;
-		else if (robot_oz > 0 && ans.angle < 0)
-				relang = ans.angle + robot_oz;
-		else if (robot_oz < 0 && ans.angle > 0)
-				relang = ans.angle + robot_oz;
-		else if (robot_oz < 0 && ans.angle < 0)
-				relang = ans.angle - robot_oz;
+        relang = ans.angle - robot_oz;
+        std::cout << "Relang: " << relang << std::endl;
 
 													// Comment out when not using GO_TO_GOAL
-		std::cout << "Obstacle: " << controller->getAngleToClosestObstacle() << std::endl               // Comment out when not using GO_TO_GOAL
-							<< "Distance: " << controller->getDistanceToClosestObstacle() << std::endl               // Comment out when not using GO_TO_GOAL
-							<< "RelDist: " << controller->getRelativeDistanceToGoal() << std::endl;// Comment out when not using GO_TO_GOAL
+        std::cout << "Obstacle: " << controller->getAngleToClosestObstacle()     << std::endl               // Comment out when not using GO_TO_GOAL
+                  << "Distance: " << controller->getDistanceToClosestObstacle()  << std::endl               // Comment out when not using GO_TO_GOAL
+                  << "RelDist: "  << controller->getRelativeDistanceToGoal()     << std::endl;// Comment out when not using GO_TO_GOAL
 		controller->setRelativeAngleToGoal(relang);                 // Comment out when not using GO_TO_GOAL
 		controller->setRelativeDistanceToGoal(ans.length);          // Comment out when not using GO_TO_GOAL
 
 		controller->process();
+
+
 		/*************************************************************/
 		/*       Output variables of Fuzzy Controller is set         */
 		/*************************************************************/
         speed = controller->getSpeed();
         dir = controller->getDirection();
-/*
-		std::cout << "RelAngle: " << controller->getRelativeAngleToGoal() << std::endl
-							<< "RelDist: "  << controller->getRelativeDistanceToGoal() << std::endl;
-
-		std::cout << "Dir: " << dir << std::endl;
-		*/
-		/*************************************************************/
-		/*       The following is used for testing purposes          */
-		/*************************************************************/
 
 
-        //if (controller->is_at_goal())
-        //{
-        //		controller->setPath(PATH_S);
-        //		goal.x = -7;        // TEST
-        //		goal.y = 12;         // TEST
-        //}
-
-
-		mutex.lock();
-		int key = cv::waitKey(1);
-		mutex.unlock();
-
-		if (key == key_esc) {
-			// Display map
-			/*for (int i = 0; i < 3; i++) {
-				putText(map, format("%2d-%2d: %d", i * 10, i * 10 + 9, detections[i]), Point(10, (i + 2) * 15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 0, 0));
-			}
-			putText(map, format("  30+: %d", detections[3]), Point(10, 5 * 15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 0, 0));
-
-			imshow("Map", map);
-			waitKey();*/
-			break;
-		}
-
-		if ((key == key_up) && (speed <= 1.2f)) speed += 0.05;
-		else if ((key == key_down) && (speed >= -1.2f)) speed -= 0.05;
-		else if ((key == key_right) && (dir <= 0.4f)) dir += 0.05;
-		else if ((key == key_left) && (dir >= -0.4f)) dir -= 0.05;
-		else {
-			// slow down
-			//      speed *= 0.1;
-			//      dir *= 0.1;
-		}
 
 		// Generate a pose
-		ignition::math::Pose3d pose(double(speed), 0, 0, 0, 0, double(dir));
+        ignition::math::Pose3d pose(double(speed), 0, 0, 0, 0, double(dir));
 
 		// Convert to a pose message
 		gazebo::msgs::Pose msg;
 		gazebo::msgs::Set(&msg, pose);
 		movementPublisher->Publish(msg);
 
-/*
-		if ( count == 10 && ans.length > 0.1 )
-		{
-				std::cout << "0.1S" << std::endl;
-				xTXT.open("x.txt", std::ios_base::app);
-				yTXT.open("y.txt", std::ios_base::app);
-				if (xTXT.is_open() && yTXT.is_open())
-				{
-						xTXT << robot.x << "\n";
-						yTXT << robot.y << "\n";
-				}
-				else
-						std::cout << "FAIL" << std::endl;
-				xTXT.close();
-				yTXT.close();
-
-				std::cout << "ALT" << std::endl;
-				tTXT.open("t.txt", std::ios_base::app);
-				lTXT.open("l.txt", std::ios_base::app);
-				aTXT.open("a.txt", std::ios_base::app);
-				if (tTXT.is_open() && lTXT.is_open() && aTXT.is_open())
-				{
-						tTXT << time << "\n";
-						lTXT << ans.length << "\n";
-						aTXT << relang << "\n";
-				}
-				else
-						std::cout << "FAIL" << std::endl;
-				count = 0;
-				tTXT.close();
-				lTXT.close();
-				aTXT.close();
-		}
-
-
 	}
-    */
+
 	// Make sure to shut everything down.
 	gazebo::client::shutdown();
 }
