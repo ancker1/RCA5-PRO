@@ -1,1 +1,3 @@
-gz model -m pioneer2dx -x 2 //For at give direction i x 
+std::string command = "/home/mikkel/Documents/git_workspace/RCA5-PRO/gazebo_spawn.sh";
+    command = command + " " + "-x 1 -y 2";
+    system(command.c_str());

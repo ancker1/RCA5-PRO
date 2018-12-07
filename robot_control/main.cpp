@@ -7,6 +7,7 @@
 #include "fuzzycontroller.h"
 
 #include <iostream>
+#include <string>
 
 #include <math.h>
 #include "circledetection.h"
@@ -154,15 +155,14 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 }
 
 int main(int _argc, char **_argv) {
-    /*
+/*
 	map = imread("../../map_control/big_floor_plan.png");
 	if (!map.data) return 1;
 	resize(map, map, map.size() * MAP_ENLARGEMENT, 0, 0, INTER_NEAREST);
 	for (int i = 0; i < 4; i++) {
 		detections[i] = 0;
 	}
-    */
-    cout << "Viker" << endl;
+
 	// Load gazebo
 	gazebo::client::setup(_argc, _argv);
 
@@ -200,12 +200,12 @@ int main(int _argc, char **_argv) {
 	float angle_min = arr[1];
 	float range_min = arr[2];
 	float range_max = arr[3];
-/*
+
 	std::cout << "angle_max: " << angle_max << std::endl;
 	std::cout << "angle_min: " << angle_min << std::endl;
 	std::cout << "range_min: " << range_min << std::endl;
 	std::cout << "range_max: " << range_max << std::endl;
-*/
+
 
 	float left_border = M_PI/6;
 	float left_border2 = M_PI/2;
@@ -266,7 +266,7 @@ int main(int _argc, char **_argv) {
 		/*       Input variables of Fuzzy Controller is set          */
 		/*************************************************************/
 
-
+/*
 		controller->setDistanceToClosestObstacle(range);
 		controller->setAngleToClosestObstacle(angle);
 
@@ -311,7 +311,7 @@ int main(int _argc, char **_argv) {
 		/*       The following is used for testing purposes          */
 		/*************************************************************/
 
-
+/*
 		if (controller->is_at_goal())
 		{
 				controller->setPath(PATH_S);
@@ -332,7 +332,7 @@ int main(int _argc, char **_argv) {
 			putText(map, format("  30+: %d", detections[3]), Point(10, 5 * 15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 0, 0));
 
 			imshow("Map", map);
-			waitKey();*/
+            waitKey();
 			break;
 		}
 
@@ -392,4 +392,9 @@ int main(int _argc, char **_argv) {
 	}
 	// Make sure to shut everything down.
 	gazebo::client::shutdown();
+    */
+
+    std::string command = "/home/mikkel/Documents/git_workspace/RCA5-PRO/gazebo_spawn.sh";
+    command = command + " " + "-x 1 -y 2";
+    system(command.c_str());
 }
