@@ -39,32 +39,99 @@ void draw_pixel_red(vector<Point> &v, Mat &img)
     }
 }
 
-void makeRectangle( cv::Mat &img,
-                    const cv::Point &p,
-                    std::vector<cv::Point> &centers )
+static double angle(Point pt1, Point pt2, Point pt0)
 {
+    double result;
+    double dx1 = pt1.x - pt0.x;
+    double dy1 = pt1.y - pt0.y;
+    double dx2 = pt2.x - pt0.x;
+    double dy2 = pt2.y - pt0.y;
+    result = (dx1 * dx2 + dy1 * dy2) / sqrt((dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2 ) + 1e-10);
+    return result;
+}
 
-    int y = p.y, x = p.x;
-    for ( ; y < img.rows; y++)
-        if ( (int)img.at<uchar>( y, p.x ) == 0 )
+static void findSquares( const cv::Mat &img, vector<vector<Point>> &squares)
+{
+    squares.clear();
+
+    int thresh = 50, N = 11;
+
+    Mat pyr, timg, gray0(img.size(), CV_8U), gray;
+
+    // downscale and upscale the image to filter out the noise
+    pyrDown(img, pyr, Size(img.cols/2, img.rows/2));
+    pyrUp(pyr, timg, img.size());
+
+    // Find squares in the image
+    vector<vector<Point>> contours;
+    for (int c = 0; c < 3; c++)
+    {
+        int ch[] = {c, 0};
+        mixChannels(&timg, 1, &gray0, 1, ch, 1);
+
+        // Try several threshold levels
+        for (int l = 0; l < N; l++)
         {
-            y--;
-            break;
+            if (l == 0)
+            {
+                Canny(gray0, gray, 0, thresh, 5);
+                dilate(gray, gray, Mat(), Point(-1,-1));
+
+                // TEST
+                print_map(gray, "test");
+                cv::waitKey(0);
+            }
+            else
+            {
+                gray = gray0 >= (l + 1) * 255/N;    // Apply threshold if l != 0
+
+                // TEST
+                print_map(gray, "test");
+                cv::waitKey(0);
+            }
+
+            // Find contours and store them all as a list
+            findContours(gray, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
+
+            vector<Point> approx;
+
+            // Test each contour
+            for (size_t i = 0; i < contours.size(); i++)
+            {
+                // Approximate contour with accuracy proportional to the contour perimeter
+                approxPolyDP(contours[i], approx, arcLength(contours[i], true) * 0.02, true);
+
+                if ( (approx.size() == 4) &&
+                     (fabs(contourArea(approx)) > 1000) &&
+                     (isContourConvex(approx)) )
+                {
+                    double maxCosine = 0;
+
+                    for (int j = 2; j < 5; j++)
+                    {
+                        // Find the maximum cosine of the angle between joint edges
+                        double cosine = fabs(angle(approx[j % 4], approx[j - 2], approx[j - 1]));
+                        maxCosine = MAX(maxCosine, cosine);
+                    }
+
+                    if (maxCosine < 0.3)
+                        squares.push_back(approx);
+                }
+            }
         }
+    }
+}
 
-    for ( ; x < img.cols; x++)
-        if ( (int)img.at<uchar>( p.y, x ) == 0 )
-        {
-            x--;
-            break;
-        }
+static void drawSquares( Mat &img, const vector<vector<Point>> &squares )
+{
+    for (size_t i = 0; i < squares.size(); i++)
+    {
+        const Point * p = &squares[i][0];
+        int n = (int)squares[i].size();
+        polylines(img, &p, &n, 1, true, Scalar(0, 255, 0), 3, LINE_AA);
+    }
 
-    Point center( (p.x+x)/2, (p.y+y)/2 );
-    centers.push_back( center );
-
-    for (int i = p.y-7 ; i < y+7; i++ )
-        for (int j = p.x-7; j < x+7; j++)
-            img.at<uchar>( i, j ) = 0;
+    print_map(img, "Squares");
 }
 
 int main( ) {
@@ -73,87 +140,17 @@ int main( ) {
     Mat big_map3 = cv::imread( "../map_control/big_floor_test2.png", IMREAD_COLOR );
     Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
 
-//    Mat src = big_map.clone(), img;
-//    cvtColor( src, img, CV_BGR2GRAY );
-//    threshold( img, img, 100, 255, THRESH_BINARY );
-//    Mat element = getStructuringElement( MORPH_RECT, Size(10,10) );
-//    erode( img, img, element );
-//    print_map( img, "B" );
-
-//    vector<Point> centers;
-//    for (int y = 4; y < img.rows-4; y++)
-//        for (int x = 4; x < img.cols-4; x++)
-//            if ( (int)img.at<uchar>(y,x) == 255 )
-//                makeRectangle( img, Point(x,y), centers );
-
-//    Mat dst = big_map.clone();
-//    for ( auto& point : centers )
-//        dst.at<Vec3b>( point ) = red;
-
-//    print_map( dst, "C" );
-
-//    Mat src = big_map.clone();
-
-//    Mat imgBinary;
-//    cvtColor( src, imgBinary, CV_BGR2GRAY );
-//    threshold( imgBinary, imgBinary, 100, 255, CV_THRESH_BINARY );
-
-//    // Get walls
-//    vector<Point> walls;
-//    for (int y = 0; y < imgBinary.rows; y++)
-//        for (int x = 0; x < imgBinary.cols; x++)
-//            if ( (int)imgBinary.at<uchar>(y,x) == 0 )
-//                walls.push_back( Point(x,y) );
-
+//    Mat src = big_map2.clone();
 //    Map *m = new Map();
+//    vector<Point> centers = m->squareFindCenters( src );
+////    for ( auto& point : centers )
+////        src.at<Vec3b>( point ) = red;
+////    print_map( src, "Centers" );
 
-//    Mat imgBrushfire = m->brushfire_img( src );
-
-//    convertScaleAbs( imgBrushfire, imgBrushfire, 20 );
-
-//    // Generate gradX and gradY
-//    Mat grad, gradX, gradY, absGradX, absGradY;
-
-//    // Gradient X
-//    Sobel( imgBrushfire, gradX, CV_16S, 1, 0 );
-//    convertScaleAbs( gradX, absGradX );
-
-//    // Gradient Y
-//    Sobel( imgBrushfire, gradY, CV_16S, 0, 1 );
-//    convertScaleAbs( gradY, absGradY );
-
-//    // Total Gradient (approximate)
-//    addWeighted( absGradX, 1, absGradY, 1, 0, grad );
-
-//    for ( auto& point : walls )
-//        grad.at<uchar>( point ) = 255;
-
-//    for (int y = 0; y < grad.rows; y++)
-//        for (int x = 0; x < grad.cols; x++)
-//        {
-//            if ( (int)grad.at<uchar>(y,x) < 100 )
-//                grad.at<uchar>(y,x) = 0;
-
-//            grad.at<uchar>( y, 0 ) = 255;
-//            grad.at<uchar>( y, grad.cols-1 ) = 255;
-
-//            grad.at<uchar>( 0, x ) = 255;
-//            grad.at<uchar>( grad.rows-1, x ) = 255;
-//        }
-
-//    print_map( grad, "Grad" );
-
-    Mat src, img, imgVisibility;
-    Map *m = new Map();
-    Path_planning *pp = new Path_planning();
-    vector<Point> centers;
-
-    centers.clear();
-    src = big_map3.clone();
-    centers = m->brushfireFindCenters( src );
-    img = big_map3.clone();
-    imgVisibility = pp->make_visibility_map(img, centers);
-    print_map( imgVisibility, "Map" );
+    Mat img = big_map.clone();
+    vector<vector<Point>> squares;
+    findSquares(img, squares);
+    drawSquares(img, squares);
 
     waitKey(0);
     return 0;

@@ -760,9 +760,9 @@ Map::~Map()
 
 }
 
-/****************************************************
- *  BUSHFIRE
- * *************************************************/
+// --------------------------------------------------
+//                      BUSHFIRE
+// --------------------------------------------------
 
 Mat Map::brushfire_img( const cv::Mat &img )
 {
@@ -819,12 +819,6 @@ vector<Point> Map::brushfireFindCenters( const cv::Mat &src )
     vector<Point> centers( contours.size() );
     for (size_t i = 0; i < contours.size(); i++)
     {
-//        // TEST
-//        Mat drawing = src.clone();
-//        drawContours( drawing, contours, (int)i, Scalar(0,0,255) );
-//        print_map( drawing, "test" );
-//        cv::waitKey(0);
-
         Point p;
 
         if ( contours[i].size() > 2 )
@@ -845,11 +839,6 @@ vector<Point> Map::brushfireFindCenters( const cv::Mat &src )
             p.y = contours[i][0].y;
         }
 
-//        // TEST
-//        drawing.at<Vec3b>( p ) = Vec3b(255,0,0);
-//        print_map( drawing, "test" );
-//        cv::waitKey(0);
-
         centers[i] = p;
     }
 
@@ -858,36 +847,79 @@ vector<Point> Map::brushfireFindCenters( const cv::Mat &src )
 
 // --------------------------------------------------------------
 
-void Map::getContour( cv::Mat &img, const cv::Point &p, vector<vector<Point>> &contours )
+vector<Point> Map::squareFindCenters( const cv::Mat &src )
 {
-    vector<Point> contour;
+    vector<Point> centers;
 
-    int y = p.y, x = p.x;
-    for ( ; y < img.rows; y++)
-    {
-        if ( (int)img.at<uchar>(y,x) == 0 )
-            break;
+    // Convert source image to binary image
+    Mat img;
+    cvtColor( src, img, CV_BGR2GRAY );
+    threshold( img, img, 40, 255, THRESH_BINARY );
 
-        for ( ; x < img.cols; x++)
-        {
-            if ( (int)img.at<uchar>(y,x) == 0 )
-                break;
+    Mat kernel = Mat::ones( Size(3,3), 1u );
+    erode(img, img, kernel);
 
-            contour.push_back( Point(x,y) );
+    print_map(img, "test");
+    cv::waitKey(0);
 
-            img.at<uchar>(y,x) = 0;
-        }
-    }
+//    vector<Point> centers;
+//    for (int y = 1; y < img.rows-1; y++)
+//    {
+//        for (int x = 1; x < img.cols-1; x++)
+//        {
+//            if ( (int)img.at<uchar>(y,x) == 255 )
+//            {
+//                makeRectangle( img, Point(x,y), centers );
+//            }
+//        }
+//    }
 
-    contours.push_back( contour );
+    return centers;
 }
 
 // --------------------------------------------------------------
 
-vector<Point> squareFindCenters( const cv::Mat &img )
+void Map::makeRectangle( cv::Mat &img,
+                         const cv::Point &p,
+                         vector<Point> &v )
 {
-    vector<Point> result;
-    return result;
+    int width, height;
+
+    // Get width
+    for (int x = p.x; x < img.cols; x++)
+    {
+        if ( (int)img.at<uchar>(p.y, x) == 0 )
+        {
+            width = x;
+            break;
+        }
+    }
+
+    // Get height
+    for (int y = p.y; y < img.rows; y++)
+    {
+        if ( (int)img.at<uchar>(y, p.x) == 0 )
+        {
+            height = y;
+            break;
+        }
+    }
+
+    int area = (width - p.x) * (height - p.y);
+    cout << area << endl;
+    if (area > 100)
+        v.push_back( Point( (p.x + width)/2, (p.y + height)/2 ) );
+
+    // TEST
+    Mat drawing;
+    cvtColor( img, drawing, CV_GRAY2BGR );
+    drawing.at<Vec3b>( v[ v.size()-1 ] ) = Vec3b(0,0,255);
+    print_map( drawing, "C" );
+    cv::waitKey(0);
+
+    for (int y = p.y ; (y < height+4) && (y < img.rows); y++ )
+        for (int x = p.x; (x < width+1) && (x < img.cols); x++)
+            img.at<uchar>( y, x ) = 0;
 }
 
 // --------------------------------------------------------------

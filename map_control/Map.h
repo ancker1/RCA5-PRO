@@ -133,9 +133,9 @@ private:
     void remove_points_in_corners( std::vector<Point> &v,
                                    const cv::Mat &img);
 
-    void getContour( cv::Mat &img,
-                     const cv::Point &p,
-                     vector<vector<Point>> &contours );
+    void makeRectangle( cv::Mat &img,
+                        const cv::Point &p,
+                        vector<Point> &v );
 
     // PLANNING ALGOORITHM
     Cellpoint findCellPointFromPoint(vector<Cellpoint> cellpoints, Point point);
