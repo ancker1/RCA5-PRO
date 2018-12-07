@@ -6,11 +6,17 @@ Path_planning::~Path_planning() {}
 
 // --------------------------------------------
 
-int Path_planning::way_around_obstacle(Point start, Point goal, Mat &src)
+int Path_planning::way_around_obstacle( cv::Point start,
+                                        cv::Point goal,
+                                        const cv::Mat &src )
 {
+    // Convert image to binary
     Mat img;
     cvtColor(src, img, CV_BGR2GRAY);
     threshold(img, img, 127, 255, CV_THRESH_BINARY);
+
+    // Convert gazebo coordinates to image coordinates
+
 
     if (obstacle_detected(start, goal, img))
     {
@@ -43,7 +49,18 @@ int Path_planning::way_around_obstacle(Point start, Point goal, Mat &src)
 
 // --------------------------------------------
 
-void Path_planning::go_left(Point &p, Mat &img)
+void Path_planning::convertToImageCoordinates(Point &start, Point &goal)
+{
+    start.x = round( (7 + start.x) * (20 / 14) );
+    start.y = round( (5.5 - start.y) * (15 / 11) );
+
+    goal.x = round( (7 + goal.x) * (20 / 14) );
+    goal.y = round( (5.5 - goal.y) * (15 / 11) );
+}
+
+// --------------------------------------------
+
+void Path_planning::go_left( cv::Point &p, const cv::Mat &img)
 {
     Point left(p.x-1, p.y);
     Point left_up(p.x-1, p.y-1);
@@ -164,7 +181,7 @@ void Path_planning::go_left(Point &p, Mat &img)
 
 // -----------------------------------------------
 
-void Path_planning::go_right(Point &p, Mat &img)
+void Path_planning::go_right( cv::Point &p, const cv::Mat &img )
 {
     Point left(p.x-1, p.y);
     Point left_up(p.x-1, p.y-1);
@@ -274,7 +291,7 @@ void Path_planning::go_right(Point &p, Mat &img)
 
 // ------------------------------------------------------
 
-vector<Point> Path_planning::get_points(LineIterator &it)
+std::vector<cv::Point> Path_planning::get_points( cv::LineIterator &it )
 {
     vector<Point> result(it.count);
 
@@ -286,7 +303,8 @@ vector<Point> Path_planning::get_points(LineIterator &it)
 
 // ------------------------------------------------------------------
 
-Point Path_planning::get_p_before_obstacle(vector<Point> &v, Mat &img)
+cv::Point Path_planning::get_p_before_obstacle( const std::vector<cv::Point> &v,
+                                            const cv::Mat &img )
 {
     Point p;
 
@@ -304,7 +322,10 @@ Point Path_planning::get_p_before_obstacle(vector<Point> &v, Mat &img)
 
 // -----------------------------------------------------------------
 
-bool Path_planning::obstacle_detected(Point start, Point goal, Mat &img) {
+bool Path_planning::obstacle_detected( const cv::Point &start,
+                                       const cv::Point &goal,
+                                       const cv::Mat &img )
+{
     LineIterator it(img, start, goal, 8);
 
     vector<Point> v = get_points(it);
@@ -364,7 +385,7 @@ void Path_planning::obs_detect_color( const cv::Point start,
 
 // -----------------------------------------------------------------
 
-void Path_planning::print_map(const cv::Mat &img, const string &s)
+void Path_planning::print_map( const cv::Mat &img, const string &s )
 {
     Mat resizeMap;
     resize( img, resizeMap, img.size()*10, 0, 0, INTER_NEAREST);

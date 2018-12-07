@@ -33,7 +33,9 @@ public:
      * @param src -> map
      * @return -> Which way to take arounde obstacle (Straight, left or right)
      */
-    int way_around_obstacle(Point start, Point goal, Mat &src);
+    int way_around_obstacle( const cv::Point start,
+                             const cv::Point goal,
+                             const cv::Mat &src );
 
     /**
      * @brief make_visibility_map -> Makes a visibility map of the roadmap
@@ -51,21 +53,21 @@ private:
      * @param p
      * @param img
      */
-    void go_left(Point &p, Mat &img);
+    void go_left( cv::Point &p, const cv::Mat &img);
 
     /**
      * @brief go_right
      * @param p
      * @param img
      */
-    void go_right(Point &p, Mat &img);
+    void go_right( cv::Point &p, const cv::Mat &img);
 
     /**
      * @brief get_points
      * @param it
      * @return
      */
-    vector<Point> get_points(LineIterator &it);
+    std::vector<cv::Point> get_points( cv::LineIterator &it );
 
     /**
      * @brief get_p_before_obstacle
@@ -73,7 +75,8 @@ private:
      * @param img
      * @return
      */
-    Point get_p_before_obstacle(vector<Point> &v, Mat &img);
+    cv::Point get_p_before_obstacle( const std::vector<cv::Point> &v,
+                                     const cv::Mat &img );
 
     /**
      * @brief obstacle_detected
@@ -82,7 +85,9 @@ private:
      * @param img
      * @return
      */
-    bool obstacle_detected(Point start, Point goal, Mat &img);
+    bool obstacle_detected( const cv::Point &start,
+                            const cv::Point &goal,
+                            const cv::Mat &img );
 
     /**
      * @brief obs_detect_color
@@ -93,6 +98,14 @@ private:
     void obs_detect_color( const cv::Point start,
                            const cv::Point goal,
                            cv::Mat &img );
+
+    /**
+     * @brief convertToImageCoordinates:
+     *  Converts gazebo coordinates to image coordinates
+     * @param start
+     * @param goal
+     */
+    void convertToImageCoordinates( cv::Point &start, cv::Point &goal );
 };
 
 #endif // PATH_PLANNING_H
