@@ -220,7 +220,7 @@ int main(int _argc, char **_argv) {
 		coordinate goal;    // TEST
 
         goal.x = 4;        // TEST
-        goal.y = 3;         // TEST
+        goal.y = -3;         // TEST
 
 
 		controller->calcRelativeVectorToGoal(robot, goal);          // TEST
@@ -233,7 +233,7 @@ int main(int _argc, char **_argv) {
 		double time = 0;
 		double relang = 0;
 
-        controller->setPath(PATH_R);
+        controller->setPath(PATH_L);
 
 	// Loop
     while (true)

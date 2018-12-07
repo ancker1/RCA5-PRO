@@ -44,7 +44,7 @@ FuzzyController::FuzzyController()
     obstacle->setRange(angle_min, angle_max);
     obstacle->setLockValueInRange(false);
     obstacle->addTerm(new Rectangle("OKL", left_border2, angle_max));
-    obstacle->addTerm(new Rectangle("OKR", right_border2, angle_min));
+    obstacle->addTerm(new Rectangle("OKR", angle_min, right_border2));
     obstacle->addTerm(new Trapezoid("L", M_PI/60, M_PI/4, left_border2, left_border2));
     obstacle->addTerm(new Trapezoid("R", right_border2, right_border2, -M_PI/4, -M_PI/60));
     obstacle->addTerm(new Triangle("F", -M_PI/30, 0, M_PI/30));
@@ -123,18 +123,43 @@ FuzzyController::FuzzyController()
     rules.push_back("if Path is R and Distance is M and Obstacle is OKL and RelAngle is L and RelDist is Large then Direction is VL");
 
 
-        /* MET AN OBSTACLE: GO RIGHT */
+        /* ALL CLOSE CASES */
     rules.push_back("if Path is R and Distance is C and Obstacle is R and RelDist is Large then Direction is VR");
     rules.push_back("if Path is R and Distance is C and Obstacle is F and RelDist is Large then Direction is VR");
     rules.push_back("if Path is R and Distance is C and Obstacle is L and RelDist is Large then Direction is VR");
-        /* Obstacle near : clear */
-    rules.push_back("if Path is R and Obstacle is OKL and RelAngle is F and RelDist is Large then Speed is Fast");
     rules.push_back("if Path is R and Distance is C and Obstacle is OKL and RelAngle is L and RelDist is Large then Direction is VL and Speed is Slow");
     rules.push_back("if Path is R and Distance is C and Obstacle is OKL and RelAngle is R and RelDist is Large then Direction is VR and Speed is Slow");
 
-        /* Obstacle is OKR */
-    rules.push_back("if Path is R and Obstacle is OKR and RelAngle is F and RelDist is Large then Speed is Fast");
+        /* GENERAL CASES */
+    rules.push_back("if Path is R and Obstacle is OKL and RelAngle is F and RelDist is Large then Speed is Fast");
+    rules.push_back("if Path is R and Obstacle is OKR and RelDist is Large then Speed is Go");
 
+    /* CASE: PATH is L */
+        /* ALL FAR CASES */
+    rules.push_back("if Path is L and Distance is F and RelAngle is L and RelDist is Large then Direction is VL");
+    rules.push_back("if Path is L and Distance is F and RelAngle is R and RelDist is Large then Direction is VR");
+    rules.push_back("if Path is L and Distance is F and RelAngle is F and RelDist is Large then Speed is Fast and Direction is F");
+
+    /* ALL MEDIUM CASES */
+            /* Speed is always Slow */
+    rules.push_back("if Path is L and Distance is M and RelDist is Large then Speed is Slow");
+            /* Direction is dependent on obstacle location */
+    rules.push_back("if Path is L and Distance is M and Obstacle is R and RelDist is Large then Direction is VL");
+    rules.push_back("if Path is L and Distance is M and Obstacle is F and RelDist is Large then Direction is VL");
+    rules.push_back("if Path is L and Distance is M and Obstacle is L and RelDist is Large then Direction is VL");
+    rules.push_back("if Path is L and Distance is M and Obstacle is OKR and RelAngle is R and RelDist is Large then Direction is VR");
+
+
+        /* ALL CLOSE CASES */
+    rules.push_back("if Path is L and Distance is C and Obstacle is R and RelDist is Large then Direction is VL");
+    rules.push_back("if Path is L and Distance is C and Obstacle is F and RelDist is Large then Direction is VL");
+    rules.push_back("if Path is L and Distance is C and Obstacle is L and RelDist is Large then Direction is VL");
+    rules.push_back("if Path is L and Distance is C and Obstacle is OKR and RelAngle is L and RelDist is Large then Direction is VL and Speed is Slow");
+    rules.push_back("if Path is L and Distance is C and Obstacle is OKR and RelAngle is R and RelDist is Large then Direction is VR and Speed is Slow");
+
+        /* GENERAL CASES */
+    rules.push_back("if Path is L and Obstacle is OKR and RelAngle is F and RelDist is Large then Speed is Fast");
+    rules.push_back("if Path is L and Obstacle is OKL and RelDist is Large then Speed is Go");
 
 
 
