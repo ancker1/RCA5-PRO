@@ -849,30 +849,22 @@ vector<Point> Map::brushfireFindCenters( const cv::Mat &src )
 
 vector<Point> Map::squareFindCenters( const cv::Mat &src )
 {
-    vector<Point> centers;
-
     // Convert source image to binary image
     Mat img;
     cvtColor( src, img, CV_BGR2GRAY );
     threshold( img, img, 40, 255, THRESH_BINARY );
 
-    Mat kernel = Mat::ones( Size(3,3), 1u );
-    erode(img, img, kernel);
-
-    print_map(img, "test");
-    cv::waitKey(0);
-
-//    vector<Point> centers;
-//    for (int y = 1; y < img.rows-1; y++)
-//    {
-//        for (int x = 1; x < img.cols-1; x++)
-//        {
-//            if ( (int)img.at<uchar>(y,x) == 255 )
-//            {
-//                makeRectangle( img, Point(x,y), centers );
-//            }
-//        }
-//    }
+    vector<Point> centers;
+    for (int y = 5; y < img.rows-5; y++)
+    {
+        for (int x = 5; x < img.cols-5; x++)
+        {
+            if ( (int)img.at<uchar>(y,x) == 255 )
+            {
+                makeRectangle( img, Point(x,y), centers );
+            }
+        }
+    }
 
     return centers;
 }
@@ -906,23 +898,32 @@ void Map::makeRectangle( cv::Mat &img,
     }
 
     int area = (width - p.x) * (height - p.y);
-    cout << area << endl;
-    if (area > 100)
+    if (area >= 100)
+    {
+        Point point( (p.x + width)/2, (p.y + height)/2 );
+
+        while(img.at<uchar>(point) == 0)
+        {
+            width--;
+            point.x = (p.x + width)/2;
+        }
+
         v.push_back( Point( (p.x + width)/2, (p.y + height)/2 ) );
+    }
 
-    // TEST
-    Mat drawing;
-    cvtColor( img, drawing, CV_GRAY2BGR );
-    drawing.at<Vec3b>( v[ v.size()-1 ] ) = Vec3b(0,0,255);
-    print_map( drawing, "C" );
-    cv::waitKey(0);
+//    // TEST
+//    Mat drawing;
+//    cvtColor( img, drawing, CV_GRAY2BGR );
+//    drawing.at<Vec3b>( v[ v.size()-1 ] ) = Vec3b(0,0,255);
+//    print_map( drawing, "C" );
+//    cv::waitKey(0);
 
-    for (int y = p.y ; (y < height+4) && (y < img.rows); y++ )
-        for (int x = p.x; (x < width+1) && (x < img.cols); x++)
+    for (int y = p.y ; (y < height+2) && (y < img.rows); y++ )
+        for (int x = p.x; (x < width+2) && (x < img.cols); x++)
             img.at<uchar>( y, x ) = 0;
 }
 
-// --------------------------------------------------------------
+// ----------------------------------------------------------
 
 void Map::binarize_img( cv::Mat &img )
 {

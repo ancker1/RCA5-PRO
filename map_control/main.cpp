@@ -140,17 +140,13 @@ int main( ) {
     Mat big_map3 = cv::imread( "../map_control/big_floor_test2.png", IMREAD_COLOR );
     Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
 
-//    Mat src = big_map2.clone();
-//    Map *m = new Map();
-//    vector<Point> centers = m->squareFindCenters( src );
-////    for ( auto& point : centers )
-////        src.at<Vec3b>( point ) = red;
-////    print_map( src, "Centers" );
+    Mat src = small_map.clone();
 
-    Mat img = big_map.clone();
-    vector<vector<Point>> squares;
-    findSquares(img, squares);
-    drawSquares(img, squares);
+    Path_planning *pp = new Path_planning();
+
+    int result = pp->way_around_obstacle(Point(2, 2), Point(14, 2), src);
+
+    cout << result << endl;
 
     waitKey(0);
     return 0;
