@@ -760,9 +760,9 @@ Map::~Map()
 
 }
 
-/****************************************************
- *  BUSHFIRE
- * *************************************************/
+// --------------------------------------------------
+//                      BUSHFIRE
+// --------------------------------------------------
 
 Mat Map::brushfire_img( const cv::Mat &img )
 {
@@ -777,43 +777,153 @@ Mat Map::brushfire_img( const cv::Mat &img )
 
 // --------------------------------------------------
 
-vector<Point> Map::find_centers( const cv::Mat &img )
+vector<Point> Map::brushfireFindCenters( const cv::Mat &src )
 {
-    Mat1b kernel_lm( Size(5,5), 1u);
-    Mat image_dilate;
-    dilate(img, image_dilate, kernel_lm);
-    Mat1b local_max = (img >= image_dilate);
-    vector<Point> v;
-    for (int y = 0; y < local_max.rows; y++) {
-        for (int x = 0; x < local_max.cols; x++) {
-            if ((int)local_max.at<uchar>(y,x) == 255) {
-                for (int j = 1; (int)local_max.at<uchar>(y+j,x) == 255; j++) {
-                    local_max.at<uchar>(y,x) = 0;
-                    j++;
-                }
-                for (int j = 1; (int)local_max.at<uchar>(y,x+j) == 255; j++) {
-                    local_max.at<uchar>(y,x) = 0;
-                    j++;
-                }
-            }
-        }
+    Mat img = src.clone(), imgBrushfire;
+
+    imgBrushfire = brushfire_img( img );    // Get brushfire grid
+
+    // Get walls
+    vector<Point> walls;
+    for (int y = 0; y < imgBrushfire.rows; y++)
+        for (int x = 0; x < imgBrushfire.cols; x++)
+            if ( (int)imgBrushfire.at<uchar>(y,x) == 0 )
+                walls.push_back( Point(x,y) );
+
+    // Detected rooms
+    Mat imgDilate, kernel = Mat::ones( Size(25,25), 1u);
+    dilate( imgBrushfire, imgDilate, kernel );
+    imgDilate = ( imgBrushfire >= imgDilate );
+
+    // Remove walls
+    for ( auto& point : walls)
+        imgDilate.at<uchar>( point ) = 0;
+
+    // Remove outside floor plan
+    for (int y = 0; y < imgDilate.rows; y++)
+    {
+        imgDilate.at<uchar>( y, 0) = 0;
+        imgDilate.at<uchar>( y, imgDilate.cols-1 ) = 0;
+    }
+    for (int x = 0; x < imgDilate.cols; x++)
+    {
+        imgDilate.at<uchar>( 0, x ) = 0;
+        imgDilate.at<uchar>( imgDilate.rows-1, x ) = 0;
     }
 
-    for (int y = 0; y < local_max.rows; y++) {
-        for (int x = 0; x < local_max.cols; x++) {
-            if ((int)local_max.at<uchar>(y,x) == 255) {
-                Point p(x,y);
-                v.push_back(p);
-            }
+    // Find contours
+    vector<vector<Point>> contours;
+    findContours( imgDilate, contours, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0,0) );
+
+    // Get centers of contours
+    vector<Point> centers( contours.size() );
+    for (size_t i = 0; i < contours.size(); i++)
+    {
+        Point p;
+
+        if ( contours[i].size() > 2 )
+        {
+            Moments mu = moments( contours[i] );
+            p.x = (int)( mu.m10/mu.m00 );
+            p.y = (int)( mu.m01/mu.m00 );
         }
+        else if ( contours[i].size() == 2 )
+        {
+            Point start = contours[i][0], end = contours[i][1];
+            p.x = (start.x + (end.x - start.x)/2);
+            p.y = (start.y + (end.y - start.y)/2);
+        }
+        else
+        {
+            p.x = contours[i][0].x;
+            p.y = contours[i][0].y;
+        }
+
+        centers[i] = p;
     }
 
-    remove_points_in_corners(v, img);
-
-    return v;
+    return centers;
 }
 
 // --------------------------------------------------------------
+
+vector<Point> Map::squareFindCenters( const cv::Mat &src )
+{
+    // Convert source image to binary image
+    Mat img;
+    cvtColor( src, img, CV_BGR2GRAY );
+    threshold( img, img, 40, 255, THRESH_BINARY );
+
+    vector<Point> centers;
+    for (int y = 5; y < img.rows-5; y++)
+    {
+        for (int x = 5; x < img.cols-5; x++)
+        {
+            if ( (int)img.at<uchar>(y,x) == 255 )
+            {
+                makeRectangle( img, Point(x,y), centers );
+            }
+        }
+    }
+
+    return centers;
+}
+
+// --------------------------------------------------------------
+
+void Map::makeRectangle( cv::Mat &img,
+                         const cv::Point &p,
+                         vector<Point> &v )
+{
+    int width, height;
+
+    // Get width
+    for (int x = p.x; x < img.cols; x++)
+    {
+        if ( (int)img.at<uchar>(p.y, x) == 0 )
+        {
+            width = x;
+            break;
+        }
+    }
+
+    // Get height
+    for (int y = p.y; y < img.rows; y++)
+    {
+        if ( (int)img.at<uchar>(y, p.x) == 0 )
+        {
+            height = y;
+            break;
+        }
+    }
+
+    int area = (width - p.x) * (height - p.y);
+    if (area >= 100)
+    {
+        Point point( (p.x + width)/2, (p.y + height)/2 );
+
+        while(img.at<uchar>(point) == 0)
+        {
+            width--;
+            point.x = (p.x + width)/2;
+        }
+
+        v.push_back( Point( (p.x + width)/2, (p.y + height)/2 ) );
+    }
+
+//    // TEST
+//    Mat drawing;
+//    cvtColor( img, drawing, CV_GRAY2BGR );
+//    drawing.at<Vec3b>( v[ v.size()-1 ] ) = Vec3b(0,0,255);
+//    print_map( drawing, "C" );
+//    cv::waitKey(0);
+
+    for (int y = p.y ; (y < height+2) && (y < img.rows); y++ )
+        for (int x = p.x; (x < width+2) && (x < img.cols); x++)
+            img.at<uchar>( y, x ) = 0;
+}
+
+// ----------------------------------------------------------
 
 void Map::binarize_img( cv::Mat &img )
 {
@@ -831,46 +941,30 @@ void Map::find_neighbors( std::vector<Point> &v,
                           const int &y)
 {
     Point p;
-    if ((int)img.at<uchar>(x-1,y-1)==255) {
-        p.x=x-1;
-        p.y=y-1;
-        v.push_back(p);
-    }
-    if ((int)img.at<uchar>(x,y-1)==255) {
-        p.x=x;
-        p.y=y-1;
-        v.push_back(p);
-    }
-    if ((int)img.at<uchar>(x+1,y-1)==255) {
-        p.x=x+1;
-        p.y=y-1;
-        v.push_back(p);
-    }
-    if ((int)img.at<uchar>(x-1,y)==255) {
-        p.x=x-1;
-        p.y=y;
-        v.push_back(p);
-    }
-    if ((int)img.at<uchar>(x+1,y)==255) {
-        p.x=x+1;
-        p.y=y;
-        v.push_back(p);
-    }
-    if ((int)img.at<uchar>(x-1,y+1)==255) {
-        p.x=x-1;
-        p.y=y+1;
-        v.push_back(p);
-    }
-    if ((int)img.at<uchar>(x,y+1)==255) {
-        p.x=x;
-        p.y=y+1;
-        v.push_back(p);
-    }
-    if ((int)img.at<uchar>(x+1,y+1)==255) {
-        p.x=x+1;
-        p.y=y+1;
-        v.push_back(p);
-    }
+
+    if ((int)img.at<uchar>(x-1,y-1)==255)
+        v.push_back( Point( x-1, y-1 ));
+
+    if ((int)img.at<uchar>(x,y-1)==255)
+        v.push_back( Point( x, y-1 ));
+
+    if ((int)img.at<uchar>(x+1,y-1)==255)
+        v.push_back( Point( x+1, y-1 ));
+
+    if ((int)img.at<uchar>(x-1,y)==255)
+        v.push_back( Point( x-1, y ) );
+
+    if ((int)img.at<uchar>(x+1,y)==255)
+        v.push_back( Point( x+1, y ) );
+
+    if ((int)img.at<uchar>(x-1,y+1)==255)
+        v.push_back( Point( x-1, y+1 ) );
+
+    if ((int)img.at<uchar>(x,y+1)==255)
+        v.push_back( Point( x, y+1 ) );
+
+    if ((int)img.at<uchar>(x+1,y+1)==255)
+        v.push_back( Point( x+1, y+1 ) );
 }
 
 // -----------------------------------------------------------
@@ -878,24 +972,21 @@ void Map::find_neighbors( std::vector<Point> &v,
 void Map::make_brushfire_grid( cv::Mat &img )
 {
     vector<Point> neighbors;
-    for (int y = 0; y < img.cols; y++) {
-        for (int x = 0; x < img.rows; x++) {
-            if ((int)img.at<uchar>(x,y) == 0) {
+    for (int y = 0; y < img.cols; y++)
+        for (int x = 0; x < img.rows; x++)
+            if ((int)img.at<uchar>(x,y) == 0)
                 find_neighbors(neighbors, img, x, y);
-            }
-        }
-    }
 
     int color = 1;
-    while (!neighbors.empty())
+    while ( !neighbors.empty() )
     {
         vector<Point> new_neighbors;
-        for (size_t i = 0; i < neighbors.size(); i++) {
-            if (img.at<uchar>(neighbors[i].x,neighbors[i].y)==255) {
+        for (size_t i = 0; i < neighbors.size(); i++)
+            if (img.at<uchar>(neighbors[i].x,neighbors[i].y)==255)
+            {
                 find_neighbors(new_neighbors, img, neighbors[i].x, neighbors[i].y);
                 img.at<uchar>(neighbors[i].x,neighbors[i].y) = color;
             }
-        }
 
         color++;
         neighbors = new_neighbors;
@@ -907,31 +998,31 @@ void Map::make_brushfire_grid( cv::Mat &img )
 void Map::remove_points_in_corners( std::vector<Point> &v,
                                     const cv::Mat &img)
 {
-    for (size_t i = 0; i < v.size(); i++) {
-        if ((int)img.at<uchar>(v[i].y-1,v[i].x-1)==0) {
+    for (size_t i = 0; i < v.size(); i++)
+    {
+        if ( (int)img.at<uchar>(v[i].y-1,v[i].x-1) == 0 )
             v.erase(v.begin()+i);
-        }
-        if ((int)img.at<uchar>(v[i].y,v[i].x-1)==0) {
+
+        if ( (int)img.at<uchar>(v[i].y,v[i].x-1) == 0 )
             v.erase(v.begin()+i);
-        }
-        if ((int)img.at<uchar>(v[i].y+1,v[i].x-1)==0) {
+
+        if ( (int)img.at<uchar>(v[i].y+1,v[i].x-1) == 0 )
             v.erase(v.begin()+i);
-        }
-        if ((int)img.at<uchar>(v[i].y-1,v[i].x)==0) {
+
+        if ( (int)img.at<uchar>(v[i].y-1,v[i].x) == 0 )
             v.erase(v.begin()+i);
-        }
-        if ((int)img.at<uchar>(v[i].y+1,v[i].x)==0) {
+
+        if ( (int)img.at<uchar>(v[i].y+1,v[i].x) == 0 )
             v.erase(v.begin()+i);
-        }
-        if ((int)img.at<uchar>(v[i].y-1,v[i].x+1)==0) {
+
+        if ( (int)img.at<uchar>(v[i].y-1,v[i].x+1) == 0 )
             v.erase(v.begin()+i);
-        }
-        if ((int)img.at<uchar>(v[i].y,v[i].x+1)==0) {
+
+        if ( (int)img.at<uchar>(v[i].y,v[i].x+1) == 0)
             v.erase(v.begin()+i);
-        }
-        if ((int)img.at<uchar>(v[i].y+1,v[i].x+1)==0) {
+
+        if ( (int)img.at<uchar>(v[i].y+1,v[i].x+1) == 0)
             v.erase(v.begin()+i);
-        }
     }
 }
 

@@ -17,6 +17,8 @@ std::vector<cv::Point> A_Star::get_path(const cv::Mat &road_map,
     // Map for displaying a_star
     map_a_star = big_map.clone();
 
+    open_list.clear();
+
     map = road_map.clone();
     map.at<Vec3b>( start ) = Vec3b( 255, 0, 0 );    // Start point = blue
     map.at<Vec3b>( goal ) = Vec3b( 0, 255, 0 );     // End point  = green
