@@ -58,9 +58,7 @@ std::vector<cv::Point> A_Star::get_path(const cv::Mat &road_map,
 
     std::vector<cv::Point> result;
     for ( auto& p : path )
-    {
         result.push_back( Point( p->x, p->y ) );
-    }
 
     return result;
 }
@@ -95,6 +93,7 @@ int A_Star::compute_g(const Map_Node *node1, const Map_Node *node2) // Good as l
 {
     int dx = abs( node1->x - node2->x );
     int dy = abs( node1->y - node2->y );
+  
     if ( dx > dy )
         return G_SKEW * dy + G_DIRECT * ( dx - dy ); // Distance between adjecent pixels
     else
@@ -178,7 +177,6 @@ std::vector<Map_Node *> A_Star::find()
         {
             if ( ( n->f() <= node->f() ) && ( n->h < node->h ) ) // Find a better choice
                 node = n;
-        }
 
         open_list.erase( remove( open_list.begin(), open_list.end(), node ), open_list.end() );
 
@@ -195,7 +193,7 @@ std::vector<Map_Node *> A_Star::find()
         for ( auto& n : neighbor_nodes )
         {
             if ( ( n->flag == NODE_FLAG_CLOSED ) ||
-                 ( n->type == NODE_TYPE_OBSTACLE ))
+                 ( n->type == NODE_TYPE_OBSTACLE ) )
                 continue;
 
             int g = node->g + compute_g( n, node);
@@ -242,7 +240,8 @@ std::vector<Map_Node *> A_Star::find()
 
 // -----------------------------------------------------------------------
 
-void A_Star::draw_path( const std::vector<Map_Node *> path ) {
+void A_Star::draw_path( const std::vector<Map_Node *> path ) 
+{
     for ( auto& n : path )
         map_a_star.at<Vec3b>( n->y, n->x ) = Vec3b(0,0,255);
 }
@@ -451,20 +450,22 @@ vector<double> A_Star::getResults()
 
 // -----------------------------------------------------------------------
 
-void A_Star::draw_open_list() {
-    for ( auto& o : open_list ) {
+void A_Star::draw_open_list() 
+{
+    for ( auto& o : open_list ) 
+    {
         Map_Node *n = o;
+      
         if ( ( n == start_node ) || ( n == goal_node ) )
             continue;
+      
         map_a_star.at<Vec3b>(n->y, n->x) = Vec3b(210,210,210);
     }
 }
 
 // -----------------------------------------------------------------------
 
-Mat A_Star::get_a_star() {
-    return map_a_star;
-}
+Mat A_Star::get_a_star() { return map_a_star; }
 
 
 Point A_Star::findWayToRoadMap(Mat roadmap, vector<Point> roadmapPoints, Point entryExitPoint)
