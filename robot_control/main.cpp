@@ -5,13 +5,14 @@
 #include <opencv2/opencv.hpp>
 #include "fl/Headers.h"
 #include "fuzzycontroller.h"
+#include "path_planning.h"
 
 #include <iostream>
 
 #include <math.h>
 //#include "circledetection.h"
 
-static boost::mutex mutex;
+static boost::mutex mutex_cam;
 float arr[7] = { 0 };
 coordinate robot;
 double robot_oz;
@@ -83,9 +84,9 @@ void cameraCallback(ConstImageStampedPtr& msg) {
 	im = im.clone();
 	cvtColor(im, im, CV_BGR2RGB);
 
-	mutex.lock();
+    mutex_cam.lock();
 	imshow("camera", im);
-	mutex.unlock();
+    mutex_cam.unlock();
 }
 
 void lidarCallback(ConstLaserScanStampedPtr &msg) {
@@ -148,9 +149,9 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 	arr[5] = c_angle;
 	arr[6] = c_range;
 
-	mutex.lock();
+    mutex_cam.lock();
 	cv::imshow("lidar", im);
-	mutex.unlock();
+    mutex_cam.unlock();
 }
 
 int main(int _argc, char **_argv) {
@@ -219,9 +220,6 @@ int main(int _argc, char **_argv) {
 
 		coordinate goal;    // TEST
 
-        goal.x = 4;        // TEST
-        goal.y = -3;         // TEST
-
 
 		controller->calcRelativeVectorToGoal(robot, goal);          // TEST
 		_vec ans = controller->getRelativeVectorToGoal();         // TEST
@@ -233,13 +231,35 @@ int main(int _argc, char **_argv) {
 		double time = 0;
 		double relang = 0;
 
-        controller->setPath(PATH_L);
+        cv::Point startii(0,0);
+        cv::Point goalii(-3,3);
+
+        goal.x = goalii.x;        // TEST
+        goal.y = goalii.y;        // TEST
+
+        goalii.x = round( ( 7   + goalii.x ) * 20/14  );
+        goalii.y = round( ( 5.5 - goalii.y ) * 15/11  );
+
+        startii.x = round( ( 7   + startii.x ) * 20/14  );
+        startii.y = round( ( 5.5 - startii.y ) * 15/11  );
+
+        Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
+
+        Mat mapclone = small_map.clone();
+
+        mapclone.at<Vec3b>(startii) = Vec3b(0, 255, 0);
+        mapclone.at<Vec3b>(goalii) = Vec3b(0, 0, 255);
+        resize(mapclone, mapclone, mapclone.size()*10,0,0,INTER_NEAREST);
+        imshow("Tekst",mapclone);
+
+        Path_planning* plann = new Path_planning;
+        controller->setPath(plann->way_around_obstacle(startii, goalii, small_map));
 
 	// Loop
     while (true)
     {
 		gazebo::common::Time::MSleep(10);   // MSleep(10) = 10 [ms] sleep.
-
+        std::cout << plann->way_around_obstacle(startii, goalii, small_map) << std::endl;
 		count++;
 		time += 0.010;
 
@@ -291,6 +311,10 @@ int main(int _argc, char **_argv) {
 		gazebo::msgs::Pose msg;
 		gazebo::msgs::Set(&msg, pose);
 		movementPublisher->Publish(msg);
+
+        mutex_cam.lock();
+        int key = cv::waitKey(1);
+        mutex_cam.unlock();
 
 	}
 
