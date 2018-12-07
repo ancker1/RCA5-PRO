@@ -108,16 +108,18 @@ FuzzyController::FuzzyController()
     rules.push_back("if RelDist is Zero then Direction is F and Speed is Stop");
 
     /*  CASE: PATH is R  */
+        /* ALL FAR CASES */
     rules.push_back("if Path is R and Distance is F and RelAngle is L and RelDist is Large then Direction is VL");
     rules.push_back("if Path is R and Distance is F and RelAngle is R and RelDist is Large then Direction is VR");
     rules.push_back("if Path is R and Distance is F and RelAngle is F and RelDist is Large then Speed is Fast and Direction is F");
 
-        /* NEAR OBSTACLE */
+        /* ALL MEDIUM CASES */
+            /* Speed is always Slow */
     rules.push_back("if Path is R and Distance is M and RelDist is Large then Speed is Slow");
-
+            /* Direction is dependent on obstacle location */
     rules.push_back("if Path is R and Distance is M and Obstacle is R and RelDist is Large then Direction is VR");
     rules.push_back("if Path is R and Distance is M and Obstacle is F and RelDist is Large then Direction is VR");
-    rules.push_back("if Path is R and Distance is M and Obstacle is L and RelAngle is L and RelDist is Large then Direction is VR");
+    rules.push_back("if Path is R and Distance is M and Obstacle is L and RelDist is Large then Direction is VR");
     rules.push_back("if Path is R and Distance is M and Obstacle is OKL and RelAngle is L and RelDist is Large then Direction is VL");
 
 
@@ -125,10 +127,16 @@ FuzzyController::FuzzyController()
     rules.push_back("if Path is R and Distance is C and Obstacle is R and RelDist is Large then Direction is VR");
     rules.push_back("if Path is R and Distance is C and Obstacle is F and RelDist is Large then Direction is VR");
     rules.push_back("if Path is R and Distance is C and Obstacle is L and RelDist is Large then Direction is VR");
-
+        /* Obstacle near : clear */
     rules.push_back("if Path is R and Obstacle is OKL and RelAngle is F and RelDist is Large then Speed is Fast");
-
     rules.push_back("if Path is R and Distance is C and Obstacle is OKL and RelAngle is L and RelDist is Large then Direction is VL and Speed is Slow");
+    rules.push_back("if Path is R and Distance is C and Obstacle is OKL and RelAngle is R and RelDist is Large then Direction is VR and Speed is Slow");
+
+        /* Obstacle is OKR */
+    rules.push_back("if Path is R and Obstacle is OKR and RelAngle is F and RelDist is Large then Speed is Fast");
+
+
+
 
     for( std::string s : rules )
         mamdani->addRule(Rule::parse(s, engine));
