@@ -16,7 +16,7 @@ int Path_planning::way_around_obstacle( cv::Point start,
     threshold(img, img, 127, 255, CV_THRESH_BINARY);
 
     // Convert gazebo coordinates to image coordinates
-
+    //convertToImageCoordinates(start, goal);
 
     if (obstacle_detected(start, goal, img))
     {

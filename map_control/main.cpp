@@ -17,6 +17,7 @@
 #include "path_planning.h"
 #include "Voronoi_Diagram.h"
 #include "A_Star.h"
+#include "DetectRooms.h"
 
 using namespace std;
 using namespace cv;
@@ -24,7 +25,7 @@ using namespace cv;
 Vec3b red(0,0,255), black(0,0,0), white(255,255,255), blue(255,0,0);
 RNG rng(12345);
 
-void print_map(Mat &map, string s)
+void printMap(Mat &map, string s)
 {
     Mat resizeMap;
     resize( map, resizeMap, map.size()*10, 0, 0, INTER_NEAREST);
@@ -44,21 +45,6 @@ int main( ) {
     Mat big_map2 = cv::imread( "../map_control/big_floor_test.png", IMREAD_COLOR );
     Mat big_map3 = cv::imread( "../map_control/big_floor_test2.png", IMREAD_COLOR );
     Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
-
-    Mat src = small_map.clone();
-
-    Point start(2, 2), end(8,8);
-
-    src.at<Vec3b>(start) = Vec3b(0,255,0);
-    src.at<Vec3b>(end) = Vec3b(0, 0, 255);
-
-    print_map(src, "test");
-
-    Path_planning *pp = new Path_planning();
-
-    int result = pp->way_around_obstacle(start, end, small_map);
-
-    cout << result << endl;
 
     waitKey(0);
     return 0;
