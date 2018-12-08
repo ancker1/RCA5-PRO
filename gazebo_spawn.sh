@@ -80,6 +80,7 @@ Examples:
   gazebo_spawn -dl  Spawn robot random i lower-left region
   gazebo_spawn -x 1 y 4  Spawn robot in chosen x-y position
 _EOF_
+exit 1
 fi
 
 #Generating random y position based on selected region (Up or down)
