@@ -259,7 +259,7 @@ int main(int _argc, char **_argv) {
     while (true)
     {
 		gazebo::common::Time::MSleep(10);   // MSleep(10) = 10 [ms] sleep.
-        std::cout << plann->way_around_obstacle(startii, goalii, small_map) << std::endl;
+        //std::cout << plann->way_around_obstacle(startii, goalii, small_map) << std::endl;
 		count++;
 		time += 0.010;
 
@@ -278,8 +278,8 @@ int main(int _argc, char **_argv) {
 		_vec ans = controller->getRelativeVectorToGoal();         // ^ should calculate the rel dist and angle directly.
 
 
-        std::cout << "R-G: " << ans.angle << std::endl;
-        std::cout << "Robot: " << robot_oz << std::endl;
+       // std::cout << "R-G: " << ans.angle << std::endl;
+       // std::cout << "Robot: " << robot_oz << std::endl;
 
 
 

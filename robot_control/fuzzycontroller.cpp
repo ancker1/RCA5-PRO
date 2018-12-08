@@ -10,12 +10,13 @@ FuzzyController::FuzzyController()
     path->setName("Path");
     path->setDescription("Which way to go around obstacle");
     path->setEnabled(true);
-    path->setRange(0, 4);
+    path->setRange(0, 5);
     path->setLockValueInRange(false);
     path->addTerm(new Rectangle("R",    0, 1));
     path->addTerm(new Rectangle("L",    1, 2));
     path->addTerm(new Rectangle("S",    2, 3));
     path->addTerm(new Rectangle("NON",  3, 4));
+    path->addTerm(new Rectangle("C",    4, 5));
     engine->addInputVariable(path);
 
     rel_angle = new InputVariable;
@@ -187,6 +188,12 @@ FuzzyController::FuzzyController()
     rules.push_back("if Path is S and Obstacle is OKL and RelAngle is F and RelDist is Large then Speed is Fast");
     rules.push_back("if Path is S and Obstacle is OKR and RelDist is Large then Speed is Go");
 
+
+
+    /* CASE: PATH is C -> Collect marble */
+    rules.push_back("if Path is C and RelAngle is L and RelDist is Large then Direction is VL");
+    rules.push_back("if Path is C and RelAngle is R and RelDist is Large then Direction is VR");
+    rules.push_back("if Path is C and RelAngle is F and RelDist is Large then Speed is Go");
 
 
 
