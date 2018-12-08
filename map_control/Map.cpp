@@ -271,7 +271,7 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         tie(answer,closest) = getClosestPointLeft(samex, nonSamex, nonSamex[i]);
         if(answer == "No Point")
         {
-            cout << "Ingen til venstre for i punktet: " << nonSamex[i] << endl;
+            //cout << "Ingen til venstre for i punktet: " << nonSamex[i] << endl;
         }
         else if(answer == "Non Same x")
         {
@@ -300,7 +300,7 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         tie(answer,closest) = getClosestPointRight(samex, nonSamex, nonSamex[i]);
         if(answer == "No Point")
         {
-            cout << "Ingen til højre for i punktet: " << nonSamex[i] << endl;
+            //cout << "Ingen til højre for i punktet: " << nonSamex[i] << endl;
         }
         else if(answer == "Non Same x")
         {
@@ -340,7 +340,7 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         tie(answer,closest) = getClosestPointLeft(samex, nonSamex, samex[i]);
         if(answer == "No Point")
         {
-            cout << "Ingen til venstre for i punktet: " << samex[i] << endl;
+            //cout << "Ingen til venstre for i punktet: " << samex[i] << endl;
         }
         else if(answer == "Non Same x" || answer == "Same x")
         {
@@ -364,7 +364,7 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         tie(answer,closest) = getClosestPointRight(samex, nonSamex, samex[i]);
         if(answer == "No Point")
         {
-            cout << "Ingen til højre for i punktet: " << samex[i] << endl;
+            //cout << "Ingen til højre for i punktet: " << samex[i] << endl;
         }
         else if(answer == "Non Same x" || answer == "Same x")
         {
@@ -400,8 +400,7 @@ vector<Cell> Map::calculateCells(vector<Point> upperTrap, vector<Point> lowerTra
         i++;
     }
 
-
-//    drawCellsPath("t",detectedCells);
+    //drawCellsPath("t",detectedCells);
     return detectedCells;
 }
 
@@ -760,66 +759,179 @@ Map::~Map()
 
 }
 
-vector<Point> Map::astar(vector<Cellpoint> cellpoints, Point startCellPoint, Point goalCellPoint) // Start and Goal Cells need to be on the Cell list
+/****************************************************
+ *  BUSHFIRE
+ * *************************************************/
+
+Mat Map::brushfire_img( const cv::Mat &img )
 {
+    Mat result = img.clone();
 
-    vector<Point> path;
-    vector<Cellpoint> tempCellspoint;
-    vector<Cellpoint> aStarPath;
+    binarize_img( result );
 
-    aStarPath.push_back(findCellPointFromPoint(cellpoints, startCellPoint)); // Starting Cellpoint
-    //path.push_back(startCellPoint); // Starting Point
+    make_brushfire_grid( result );
 
-    //Init heauristic with distance from point to goal
-    for(size_t i = 0; i < cellpoints.size(); i++)
-    {
-        cellpoints[i].calculateHeuristicdist(goalCellPoint);
-    }
-
-    Cellpoint tempCellpoint ;
-    // Sidder Fast Her
-
-    return path;
+    return result;
 }
 
-Cellpoint Map::findCellPointFromPoint(vector<Cellpoint> cellpoints, Point point)
-{
-    for(size_t i = 0; i < cellpoints.size(); i++)
-    {
-        if(cellpoints[i].getOnCell() == point)
-            return cellpoints[i];
-    }
-}
+// --------------------------------------------------
 
-Cellpoint Map::findSmallestCombinedHeuristic(vector<Cellpoint> cellpoints)
+vector<Point> Map::find_centers( const cv::Mat &img )
 {
-    Cellpoint tempCellp = cellpoints[0];
-    for(size_t i = 0; i < cellpoints.size(); i++)
-    {
-        if(tempCellp.getHeuristicdist() > cellpoints[i].getCombinedHeuristic())
-            tempCellp = cellpoints[i];
-    }
-    return tempCellp;
-}
-
-Cell Map::findClosestCellFromStart(vector<Cell> cells, Point start, int &cellNumber) // MAKE IT WORK
-{
-    Cell closestCell = cells[0].getAllCellPoints()[0];
-    int closestDist = abs(sqrt(pow(cells[0].getAllCellPoints()[0].getOnCell().x,2)+pow(cells[0].getAllCellPoints()[0].getOnCell().y,2))-sqrt(pow(start.x,2)+pow(start.y,2)));
-    for(size_t i = 0; i < cells.size(); i++)
-    {
-        for(size_t j = 0; j < cells[i].getAllCellPoints().size(); j++)
-        {
-            if(!obstacleDetectedWithLine(start, cells[i].getAllCellPoints()[j].getOnCell()))
-            {
-                if(closestDist > abs(sqrt(pow(cells[i].getAllCellPoints()[j].getOnCell().x,2)+pow(cells[i].getAllCellPoints()[j].getOnCell().y,2))-sqrt(pow(start.x,2)+pow(start.y,2))))
-                {
-                    closestCell = cells[i].getAllCellPoints()[j];
-                    closestDist = abs(sqrt(pow(cells[i].getAllCellPoints()[j].getOnCell().x,2)+pow(cells[i].getAllCellPoints()[j].getOnCell().y,2))-sqrt(pow(start.x,2)+pow(start.y,2)));
-                    cellNumber = j;
+    Mat1b kernel_lm( Size(5,5), 1u);
+    Mat image_dilate;
+    dilate(img, image_dilate, kernel_lm);
+    Mat1b local_max = (img >= image_dilate);
+    vector<Point> v;
+    for (int y = 0; y < local_max.rows; y++) {
+        for (int x = 0; x < local_max.cols; x++) {
+            if ((int)local_max.at<uchar>(y,x) == 255) {
+                for (int j = 1; (int)local_max.at<uchar>(y+j,x) == 255; j++) {
+                    local_max.at<uchar>(y,x) = 0;
+                    j++;
+                }
+                for (int j = 1; (int)local_max.at<uchar>(y,x+j) == 255; j++) {
+                    local_max.at<uchar>(y,x) = 0;
+                    j++;
                 }
             }
         }
     }
-    return closestCell;
+
+    for (int y = 0; y < local_max.rows; y++) {
+        for (int x = 0; x < local_max.cols; x++) {
+            if ((int)local_max.at<uchar>(y,x) == 255) {
+                Point p(x,y);
+                v.push_back(p);
+            }
+        }
+    }
+
+    remove_points_in_corners(v, img);
+
+    return v;
 }
+
+// --------------------------------------------------------------
+
+void Map::binarize_img( cv::Mat &img )
+{
+    Mat gray;
+    cvtColor(img, gray, CV_RGB2GRAY);
+    threshold(gray, img, 128.0, 255.0, THRESH_BINARY);
+    img = img > 128;
+}
+
+// --------------------------------------------------------------
+
+void Map::find_neighbors( std::vector<Point> &v,
+                          const cv::Mat &img,
+                          const int &x,
+                          const int &y)
+{
+    Point p;
+    if ((int)img.at<uchar>(x-1,y-1)==255) {
+        p.x=x-1;
+        p.y=y-1;
+        v.push_back(p);
+    }
+    if ((int)img.at<uchar>(x,y-1)==255) {
+        p.x=x;
+        p.y=y-1;
+        v.push_back(p);
+    }
+    if ((int)img.at<uchar>(x+1,y-1)==255) {
+        p.x=x+1;
+        p.y=y-1;
+        v.push_back(p);
+    }
+    if ((int)img.at<uchar>(x-1,y)==255) {
+        p.x=x-1;
+        p.y=y;
+        v.push_back(p);
+    }
+    if ((int)img.at<uchar>(x+1,y)==255) {
+        p.x=x+1;
+        p.y=y;
+        v.push_back(p);
+    }
+    if ((int)img.at<uchar>(x-1,y+1)==255) {
+        p.x=x-1;
+        p.y=y+1;
+        v.push_back(p);
+    }
+    if ((int)img.at<uchar>(x,y+1)==255) {
+        p.x=x;
+        p.y=y+1;
+        v.push_back(p);
+    }
+    if ((int)img.at<uchar>(x+1,y+1)==255) {
+        p.x=x+1;
+        p.y=y+1;
+        v.push_back(p);
+    }
+}
+
+// -----------------------------------------------------------
+
+void Map::make_brushfire_grid( cv::Mat &img )
+{
+    vector<Point> neighbors;
+    for (int y = 0; y < img.cols; y++) {
+        for (int x = 0; x < img.rows; x++) {
+            if ((int)img.at<uchar>(x,y) == 0) {
+                find_neighbors(neighbors, img, x, y);
+            }
+        }
+    }
+
+    int color = 1;
+    while (!neighbors.empty())
+    {
+        vector<Point> new_neighbors;
+        for (size_t i = 0; i < neighbors.size(); i++) {
+            if (img.at<uchar>(neighbors[i].x,neighbors[i].y)==255) {
+                find_neighbors(new_neighbors, img, neighbors[i].x, neighbors[i].y);
+                img.at<uchar>(neighbors[i].x,neighbors[i].y) = color;
+            }
+        }
+
+        color++;
+        neighbors = new_neighbors;
+    }
+}
+
+// --------------------------------------------------------
+
+void Map::remove_points_in_corners( std::vector<Point> &v,
+                                    const cv::Mat &img)
+{
+    for (size_t i = 0; i < v.size(); i++) {
+        if ((int)img.at<uchar>(v[i].y-1,v[i].x-1)==0) {
+            v.erase(v.begin()+i);
+        }
+        if ((int)img.at<uchar>(v[i].y,v[i].x-1)==0) {
+            v.erase(v.begin()+i);
+        }
+        if ((int)img.at<uchar>(v[i].y+1,v[i].x-1)==0) {
+            v.erase(v.begin()+i);
+        }
+        if ((int)img.at<uchar>(v[i].y-1,v[i].x)==0) {
+            v.erase(v.begin()+i);
+        }
+        if ((int)img.at<uchar>(v[i].y+1,v[i].x)==0) {
+            v.erase(v.begin()+i);
+        }
+        if ((int)img.at<uchar>(v[i].y-1,v[i].x+1)==0) {
+            v.erase(v.begin()+i);
+        }
+        if ((int)img.at<uchar>(v[i].y,v[i].x+1)==0) {
+            v.erase(v.begin()+i);
+        }
+        if ((int)img.at<uchar>(v[i].y+1,v[i].x+1)==0) {
+            v.erase(v.begin()+i);
+        }
+    }
+}
+
+// -------------------------------------------------------
