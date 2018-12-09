@@ -63,7 +63,7 @@ int main( ) {
     for ( auto& p : points )
        src.at<Vec3b>( p ) = red;
     print_map(src, "Voronoi Diagram"  );
-    */
+
     // Boustrophedon
     Mat src1 = big_map.clone();
     cvtColor(src1, src1, CV_BGR2GRAY);
@@ -81,20 +81,14 @@ int main( ) {
     //print_map(src2, "Critical Points Boustrophedon Diagram"  );
     vector<Cell> t = Boustrophedon1.calculateCells(upper, lower);
     Mat img_Boustrophedon = Boustrophedon1.drawCellsPath("Boustrophedon", t);
-
+*/
     Mat cornersMap, Cellpath;
-    Boustrophedon boust(big_map);
+    Boustrophedon boust(small_map);
     vector<vector<Point>> corners;
     Cellpath = boust.drawCellsPath(boust.calculateCells());
     resize(Cellpath,Cellpath,Cellpath.size()*10,0,0,INTER_NEAREST);
-    imshow("t", Cellpath);
-/*
-    corners.push_back(boust.getLowerMidpoints());
-    corners.push_back(boust.getUpperMidpoints());
-    cornersMap = boust.drawNShowPoints(corners);
-    resize(cornersMap,cornersMap,cornersMap.size()*10,0,0,INTER_NEAREST);
-    imshow("t",cornersMap);
-*/
+    imshow("Cellpath", Cellpath);
+
     waitKey(0);
 
 
