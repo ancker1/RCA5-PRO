@@ -18,6 +18,7 @@
 #include "Voronoi_Diagram.h"
 #include "A_Star.h"
 #include "DetectRooms.h"
+#include "Boustrophedon.h"
 
 #include <random>
 using namespace std;
@@ -42,12 +43,13 @@ void draw_pixel_red(vector<Point> &v, Mat &img)
 }
 
 int main( ) {
+
     Vec3b red(0,0,255), black(0,0,0), white(255,255,255), blue(255,0,0);
     Mat big_map = cv::imread( "../map_control/big_floor_plan.png", IMREAD_COLOR);
     Mat big_map2 = cv::imread( "../map_control/big_floor_test.png", IMREAD_COLOR );
     Mat big_map3 = cv::imread( "../map_control/big_floor_test2.png", IMREAD_COLOR );
     Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
-
+/*
     A_Star *a = new A_Star(big_map);
     Mat src = big_map.clone(), dst;
 
@@ -61,26 +63,41 @@ int main( ) {
     for ( auto& p : points )
        src.at<Vec3b>( p ) = red;
     print_map(src, "Voronoi Diagram"  );
+    */
     // Boustrophedon
     Mat src1 = big_map.clone();
     cvtColor(src1, src1, CV_BGR2GRAY);
-    Map Boustrophedon(src1);
-    vector<Point> detectedCorners = Boustrophedon.cornerDetection();
-    Boustrophedon.trapezoidalLines(detectedCorners);
-    vector<Point> upper = Boustrophedon.getUpperTrapezoidalGoals();
-    vector<Point> lower = Boustrophedon.getLowerTrapezoidalGoals();
+    Map Boustrophedon1(src1);
+    vector<Point> detectedCorners = Boustrophedon1.cornerDetection();
+    Boustrophedon1.trapezoidalLines(detectedCorners);
+    vector<Point> upper = Boustrophedon1.getUpperTrapezoidalGoals();
+    vector<Point> lower = Boustrophedon1.getLowerTrapezoidalGoals();
 
     Mat src2 = big_map.clone(); // Draw points on
     for ( auto& p : upper )
        src2.at<Vec3b>( p ) = red;
     for ( auto& p : lower )
        src2.at<Vec3b>( p ) = red;
-    print_map(src2, "Critical Points Boustrophedon Diagram"  );
-    vector<Cell> t = Boustrophedon.calculateCells(upper, lower);
-    Mat img_Boustrophedon = Boustrophedon.drawCellsPath("Boustrophedon", t);
+    //print_map(src2, "Critical Points Boustrophedon Diagram"  );
+    vector<Cell> t = Boustrophedon1.calculateCells(upper, lower);
+    Mat img_Boustrophedon = Boustrophedon1.drawCellsPath("Boustrophedon", t);
 
-
+    Mat cornersMap, Cellpath;
+    Boustrophedon boust(big_map);
+    vector<vector<Point>> corners;
+    Cellpath = boust.drawCellsPath(boust.calculateCells());
+    resize(Cellpath,Cellpath,Cellpath.size()*10,0,0,INTER_NEAREST);
+    imshow("t", Cellpath);
+/*
+    corners.push_back(boust.getLowerMidpoints());
+    corners.push_back(boust.getUpperMidpoints());
+    cornersMap = boust.drawNShowPoints(corners);
+    resize(cornersMap,cornersMap,cornersMap.size()*10,0,0,INTER_NEAREST);
+    imshow("t",cornersMap);
+*/
     waitKey(0);
+
+
     return 0;
 
 }

@@ -36,7 +36,8 @@ const int NODE_TYPE_END = 3;
 const int G_DIRECT = 10;
 const int G_SKEW = 14;
 
-class Map_Node {
+class Map_Node
+{
     public:
         int x = -1, y = -1, h = 0, g = 0;
         int type = NODE_TYPE_ZERO, flag = NODE_FLAG_UNDEFINED;
@@ -59,7 +60,8 @@ class Map_Node {
         }
 };
 
-class Map_Size {
+class Map_Size
+{
     public:
         unsigned long width = 0;
         unsigned long height = 0;
@@ -74,7 +76,8 @@ class Map_Size {
         }
 };
 
-class A_Star {
+class A_Star
+{
     public:
         A_Star();
         A_Star(const cv::Mat &draw);

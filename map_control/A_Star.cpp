@@ -17,7 +17,8 @@ A_Star::A_Star(const cv::Mat &draw)
 
 std::vector<cv::Point> A_Star::get_path(const cv::Mat &road_map,
                                         const cv::Point &start,
-                                        const cv::Point &goal) {
+                                        const cv::Point &goal)
+{
     open_list.clear();
     map = road_map.clone();
     map.at<Vec3b>( start ) = Vec3b( 255, 0, 0 );    // Start point = blue
@@ -177,7 +178,7 @@ std::vector<Map_Node *> A_Star::find()
         {
             if ( ( n->f() <= node->f() ) && ( n->h < node->h ) ) // Find a better choice
                 node = n;
-
+        }
         open_list.erase( remove( open_list.begin(), open_list.end(), node ), open_list.end() );
 
         node->flag = NODE_FLAG_CLOSED;
@@ -216,8 +217,8 @@ std::vector<Map_Node *> A_Star::find()
 
         if ( open_list.size() <= 0 )
             break;
-    }
 
+    }
     if ( reversed_ptr == 0 ) // Havent found goal
     {
         //cout << "Target node is unreachable." << endl;
@@ -234,13 +235,13 @@ std::vector<Map_Node *> A_Star::find()
 
         reverse( path.begin(), path.end() );
     }
-
     return path;
+
 }
 
 // -----------------------------------------------------------------------
 
-void A_Star::draw_path( const std::vector<Map_Node *> path ) 
+void A_Star::draw_path(const std::vector<Map_Node *> path )
 {
     for ( auto& n : path )
         map_a_star.at<Vec3b>( n->y, n->x ) = Vec3b(0,0,255);
