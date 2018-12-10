@@ -231,6 +231,9 @@ int main(int _argc, char **_argv) {
 		double time = 0;
 		double relang = 0;
 
+
+        /* GENERATE RANDOM START AND GOAL HERE */
+
         cv::Point startii(0,0);
         cv::Point goalii(-3,3);
 
