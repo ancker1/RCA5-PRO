@@ -8,6 +8,9 @@
 #include "opencv2/imgproc.hpp"
 #include "opencv2/ximgproc.hpp"
 
+#include <fstream>
+#include <string>
+#include <thread>
 #include <iostream>
 #include <vector>
 
@@ -17,8 +20,6 @@ using namespace cv;
 /***************************************
  * Constants
  ***************************************/
-const Mat big_map = cv::imread( "../map_control/big_floor_plan.png", IMREAD_COLOR);
-const Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
 
 const int ALLOW_VERTEX_PASSTHROUGH = 1;
 const int DRAW_OPEN_LIST = 1;
@@ -35,7 +36,8 @@ const int NODE_TYPE_END = 3;
 const int G_DIRECT = 10;
 const int G_SKEW = 14;
 
-class Map_Node {
+class Map_Node
+{
     public:
         int x = -1, y = -1, h = 0, g = 0;
         int type = NODE_TYPE_ZERO, flag = NODE_FLAG_UNDEFINED;
@@ -58,7 +60,8 @@ class Map_Node {
         }
 };
 
-class Map_Size {
+class Map_Size
+{
     public:
         unsigned long width = 0;
         unsigned long height = 0;
@@ -73,10 +76,11 @@ class Map_Size {
         }
 };
 
-class A_Star {
+class A_Star
+{
     public:
         A_Star();
-
+        A_Star(const cv::Mat &draw);
         /**
          * @brief get_path
          * @param road_map =>
@@ -91,6 +95,16 @@ class A_Star {
 
         Mat get_a_star();
 
+        // Experiment functions
+        vector<double> findAstarPathLengthsForRoadmap(Mat roadmap); // Takes too long time therefor made as threads in main
+        vector<Point> calculateRoadmapPoints(Mat roadmap);
+        vector<Point> calculateTestPoints(Mat roadmap, vector<Point> roadmapPoints);
+        vector<double> getResults();
+        void calculateDistThread(Mat roadmap, vector<Point> testPoints, vector<Point> roadmapPoints, int threadNumber, int amountOfThreads); // is not used because of threads in qt
+        vector<double> findAstarPathLengthsForRoadmapRandom(Mat roadmap, vector<Point> roadmapPoints ,vector<Point> startPoints, vector<Point> endPoints);
+        vector<Point> checkInvalidTestPoints(Mat roadmap, vector<Point> roadmapPoints, vector<Point> checkpoints);
+        vector<Point> findNRemoveDiff(vector<Point> testPoint1, vector<Point> testPoint2);
+        Point findWayToRoadMap(Mat roadmap, vector<Point> roadmapPoints, Point entryExitPoint);
         ~A_Star();
 
     private:
@@ -99,6 +113,10 @@ class A_Star {
         Map_Node *start_node, *goal_node;
         Map_Size map_size;
         vector<Map_Node> map_data;
+        // Experiments results
+        vector<double> results;
+        void print_map( const cv::Mat &img,
+                        const string &s);
 
         /**
          * @brief manhatten_distance
@@ -165,6 +183,12 @@ class A_Star {
          * @param path
          */
         void draw_path( const std::vector<Map_Node *> path );
+        
+        // Experiment functions
+        vector<Point> get_points(LineIterator &it);
+        bool obstacleDetectedWithLine(Mat roadmap, Point start, Point end);
+        double calculateDiagonalDist(Point p1, Point p2);
+
 };
 
 #endif // A_STAR_H

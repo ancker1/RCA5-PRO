@@ -51,8 +51,8 @@ public:
     Mat drawCellsPath(string pictureText, vector<Cell> cells);
 
     //PLANNNING ALGORITHM
-    vector<Point> astar(vector<Cellpoint> cellpoints, Point startCellPoint, Point goalCellPoint); // MAKE IT WORk
 
+    vector<Point> astar(vector<Cellpoint> cellpoints, Point startCellPoint, Point goalCellPoint); // MAKE IT WORK
     ~Map();
 
 private:
@@ -81,6 +81,7 @@ private:
     Cellpoint findCellPointFromPoint(vector<Cellpoint> cellpoints, Point point);
     Cellpoint findSmallestCombinedHeuristic(vector<Cellpoint> cellpoints);
     Cell findClosestCellFromStart(vector<Cell> cells, Point start, int &cellNumber);
+
 };
 
 #endif // MAP_H
