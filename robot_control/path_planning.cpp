@@ -6,6 +6,15 @@ Path_planning::Path_planning() {}
 Path_planning::~Path_planning() {}
 
 double Path_planning::way_around_obstacle(Point start, Point goal, Mat &src) {
+
+    Mat copy = src.clone();
+    start.x = start.x *2;
+    start.y = start.y *2;
+    goal.x = goal.x *2;
+    goal.y = goal.y *2;
+    copy.at<Vec3b>(start) = Vec3b(0,255,0);
+    copy.at<Vec3b>(goal) = Vec3b(0,0,255);
+    cv::imshow("pat", copy);
     Mat img;
     cvtColor(src, img, CV_BGR2GRAY);
     threshold(img, img, 127, 255, CV_THRESH_BINARY);
@@ -15,7 +24,7 @@ double Path_planning::way_around_obstacle(Point start, Point goal, Mat &src) {
         vector<Point> v = get_points(it);
         Point start_left = get_p_before_obstacle(v, img);
         Point start_right = get_p_before_obstacle(v, img);
-        for (int i = 0; i < 30; i++) {
+        for (int i = 0; i < 1000; i++) {
             if ( !obstacle_detected(start_left, goal, img) )
                 return PATH_L;
             else if ( !obstacle_detected(start_right, goal, img) )

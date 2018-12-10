@@ -118,6 +118,6 @@ then
 fi
 
 #Choses random and/or manuel
-echo $posx $posy $dir 
+echo $posx $posy $dir
 gz model -m marble -d #Delete marbles
 gz model -m pioneer2dx -x $posx -y $posy -Y $dir 

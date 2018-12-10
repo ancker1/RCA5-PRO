@@ -8,6 +8,7 @@
 #include "path_planning.h"
 
 #include <iostream>
+#include <random>
 
 #include <math.h>
 //#include "circledetection.h"
@@ -154,6 +155,55 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
     mutex_cam.unlock();
 }
 
+
+void init_robot(cv::Point2f * start, float * orient, cv::Point2f * goal, gazebo::transport::PublisherPtr movP)
+{
+    /* GENERATE RANDOM START AND GOAL HERE */
+    // Generate a pose
+    ignition::math::Pose3d pose(double(0), 0, 0, 0, 0, double(0));
+    // Convert to a pose message
+    gazebo::msgs::Pose msg;
+    gazebo::msgs::Set(&msg, pose);
+    movP->Publish(msg);
+
+
+    /* Test PATH = R */
+        /* Start: -6 < x < 2 , 1 < y < 4*/
+    std::default_random_engine generator;
+    generator.seed(time(NULL));
+    std::uniform_real_distribution<float> distribution(-6.0, 2.0);
+    start->x = distribution(generator);
+    distribution.param(std::uniform_real_distribution<float>::param_type(-4.0, 4.0));
+    start->y = distribution(generator);
+    distribution.param(std::uniform_real_distribution<float>::param_type(-3.14, 3.14));
+    *orient = distribution(generator);
+    distribution.param(std::uniform_real_distribution<float>::param_type(3.1, 5.9));
+    goal->x = distribution(generator);
+    distribution.param(std::uniform_real_distribution<float>::param_type(-4, 4.0));
+    goal->y =  distribution(generator);
+
+    std::string command = "/home/mikkel/Desktop/RCA5-PRO/gazebo_spawn.sh";
+    command += " -x ";
+    command += std::to_string(start->x);
+    command += " -y ";
+    command += std::to_string(start->y);
+    command += " -t ";
+    command += std::to_string(*orient);
+    std::cout << command << endl;
+    //command += " -x -2 -y 2 -t 1.57";
+    system(command.c_str());
+
+    while( !(  robot.x > start->x - 0.1 && robot.x < start->x + 0.1 && robot.y < start->y + 0.1 && robot.y > start->y - 0.1 ) )
+    {
+        std::cout << "x" << start->x << std::endl;
+        std::cout << "x" << robot.x << std::endl;
+        std::cout << "y" << start->y << std::endl;
+        std::cout << "y" << robot.y << std::endl;
+    }
+
+}
+
+
 int main(int _argc, char **_argv) {
 
 
@@ -194,12 +244,7 @@ int main(int _argc, char **_argv) {
     float angle_min = arr[1];
     float range_min = arr[2];
     float range_max = arr[3];
-/*
-    std::cout << "angle_max: " << angle_max << std::endl;
-    std::cout << "angle_min: " << angle_min << std::endl;
-    std::cout << "range_min: " << range_min << std::endl;
-    std::cout << "range_max: " << range_max << std::endl;
-*/
+
 
     float left_border = M_PI/6;
     float left_border2 = M_PI/2;
@@ -232,10 +277,11 @@ int main(int _argc, char **_argv) {
         double relang = 0;
 
 
-        /* GENERATE RANDOM START AND GOAL HERE */
-
-        cv::Point startii(0,0);
-        cv::Point goalii(-3,3);
+        cv::Point2f startii;
+        float orientation;
+        cv::Point2f goalii;
+        /*   */
+        init_robot(&startii, &orientation, &goalii, movementPublisher);
 
         goal.x = goalii.x;        // TEST
         goal.y = goalii.y;        // TEST
@@ -247,9 +293,8 @@ int main(int _argc, char **_argv) {
         startii.y = round( ( 5.5 - startii.y ) * 15/11  );
 
         Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
-
+        resize(small_map, small_map, small_map.size()*2,0,0,INTER_NEAREST);
         Mat mapclone = small_map.clone();
-
         mapclone.at<Vec3b>(startii) = Vec3b(0, 255, 0);
         mapclone.at<Vec3b>(goalii) = Vec3b(0, 0, 255);
         resize(mapclone, mapclone, mapclone.size()*10,0,0,INTER_NEAREST);
@@ -306,7 +351,29 @@ int main(int _argc, char **_argv) {
         dir = controller->getDirection();
 
 
+        /*************************************************************/
+        /*       TEST                                                */
+        /*************************************************************/
+        if ( ans.length < 0.2 )
+        {
+            // New file
+            init_robot(&startii, &orientation, &goalii, movementPublisher);
+            goal.x = goalii.x;        // TEST
+            goal.y = goalii.y;        // TEST
 
+            goalii.x = round( ( 7   + goalii.x ) * 20/14  );
+            goalii.y = round( ( 5.5 - goalii.y ) * 15/11  );
+
+            startii.x = round( ( 7   + startii.x ) * 20/14  );
+            startii.y = round( ( 5.5 - startii.y ) * 15/11  );
+
+            controller->setPath(plann->way_around_obstacle(startii, goalii, small_map));
+        }
+
+
+        /*************************************************************/
+        /*       SEND TO GAZEBO                                      */
+        /*************************************************************/
         // Generate a pose
         ignition::math::Pose3d pose(double(speed), 0, 0, 0, 0, double(dir));
 
