@@ -358,8 +358,12 @@ vector<double> A_Star::findAstarPathLengthsForRoadmap(Mat roadmap) // takes too 
         {
             tempDist = 0;
             aStarPath = get_path(roadmap, startPointOnRoadmap, endPointOnRoadmap);
-            tempDist = calculateDiagonalDist(testPointStart, startPointOnRoadmap); // From start to start on roadmap
-            tempDist += calculateDiagonalDist(testPointEnd, endPointOnRoadmap); // From goal to goal on roadmap
+            //tempDist = calculateDiagonalDist(testPointStart, startPointOnRoadmap); // From start to start on roadmap
+            //tempDist += calculateDiagonalDist(testPointEnd, endPointOnRoadmap); // From goal to goal on roadmap
+            LineIterator itStart(roadmap, testPointStart, startPointOnRoadmap); // From start to start on roadmap
+            LineIterator itEnd(roadmap, testPointEnd, endPointOnRoadmap); // From goal to goal on roadmap
+            tempDist += itStart.count;
+            tempDist += itEnd.count;
             tempDist += aStarPath.size(); // Path length of astar
             pathLengths.push_back(tempDist);
             // Go towards each other
@@ -402,6 +406,60 @@ vector<double> A_Star::findAstarPathLengthsForRoadmap(Mat roadmap) // takes too 
     return pathLengths;
 }
 
+Mat A_Star::showPath(Mat smallworld, Mat roadmap, vector<Point> roadmapPoints, Point startPoints, Point endPoints)
+{
+    Mat tempMap = smallworld.clone();
+    Point startPointOnRoadmap;
+    Point endPointOnRoadmap;
+    vector<Point> aStarPath;
+    double tempDist = 0;
+    if( !obstacleDetectedWithLine( roadmap, startPoints, endPoints ) )// Direct path no use of A_Star
+    {
+        //line(tempMap, startPoints, endPoints, Scalar(0,0,255), 1, 8, 0); // Draw line from start point to start point on graph
+        // For checking Distance
+        LineIterator it( roadmap, startPoints, endPoints, 8 );
+        std::vector<cv::Point> lines( it.count );
+        for (int i = 0; i < it.count; i++, it++)
+        {
+            tempMap.at<Vec3b>( Point( it.pos() )) = Vec3b(0,0,255);
+            lines.push_back( Point( it.pos() ) );
+        }
+        tempDist = lines.size();
+    }
+    else
+    {
+        startPointOnRoadmap = findWayToRoadMap(roadmap, roadmapPoints, startPoints);
+        endPointOnRoadmap = findWayToRoadMap(roadmap, roadmapPoints, endPoints);
+        if(startPointOnRoadmap != endPointOnRoadmap)
+        {
+            aStarPath = get_path(roadmap, startPointOnRoadmap, endPointOnRoadmap);
+            for ( auto& p : aStarPath )
+               tempMap.at<Vec3b>( p ) = Vec3b(0,0,255);
+            line(tempMap, startPointOnRoadmap, startPoints, Scalar(255,0,0), 1, 8, 0); // Draw line from start point to start point on graph
+            line(tempMap, endPointOnRoadmap, endPoints, Scalar(0,255,0), 1, 8, 0); // Draw line from end point to end point on graph
+            // For checking Distance
+            LineIterator itStart(roadmap, startPoints, startPointOnRoadmap); // From start to start on roadmap
+            LineIterator itEnd(roadmap, endPoints, endPointOnRoadmap); // From goal to goal on roadmap
+            tempDist += itStart.count;
+            tempDist += itEnd.count;
+            tempDist += aStarPath.size(); // Path length of astar
+        }
+        else // If equal to eachother the aStarPath = 0
+        {
+            line(tempMap, startPointOnRoadmap, startPoints, Scalar(255,0,0), 1, 8, 0); // Draw line from start point to start point on graph
+            line(tempMap, endPointOnRoadmap, endPoints, Scalar(0,255,0), 1, 8, 0); // Draw line from end point to end point on graph
+
+            // For checking Distance
+            LineIterator itStart(roadmap, startPoints, startPointOnRoadmap); // From start to start on roadmap
+            LineIterator itEnd(roadmap, endPoints, endPointOnRoadmap); // From goal to goal on roadmap
+            tempDist += itStart.count;
+            tempDist += itEnd.count;
+        }
+    }
+    cout << "Dist: " << tempDist << endl;
+    return tempMap;
+}
+
 vector<double> A_Star::findAstarPathLengthsForRoadmapRandom(Mat roadmap, vector<Point> roadmapPoints, vector<Point> startPoints, vector<Point> endPoints)
 {
     vector<double> pathLengths;
@@ -428,15 +486,23 @@ vector<double> A_Star::findAstarPathLengthsForRoadmapRandom(Mat roadmap, vector<
             if(startPointOnRoadmap != endPointOnRoadmap)
             {
                 aStarPath = get_path(roadmap, startPointOnRoadmap, endPointOnRoadmap);
-                tempDist = calculateDiagonalDist(startPoints[i], startPointOnRoadmap); // From start to start on roadmap
-                tempDist += calculateDiagonalDist(endPoints[i], endPointOnRoadmap); // From goal to goal on roadmap
+                //tempDist = calculateDiagonalDist(startPoints[i], startPointOnRoadmap); // From start to start on roadmap
+                //tempDist += calculateDiagonalDist(endPoints[i], endPointOnRoadmap); // From goal to goal on roadmap
+                LineIterator itStart(roadmap, startPoints[i], startPointOnRoadmap); // From start to start on roadmap
+                LineIterator itEnd(roadmap, endPoints[i], endPointOnRoadmap); // From goal to goal on roadmap
+                tempDist += itStart.count;
+                tempDist += itEnd.count;
                 tempDist += aStarPath.size(); // Path length of astar
                 pathLengths.push_back(tempDist);
             }
             else // If equal to eachother the aStarPath = 0
             {
-                tempDist = calculateDiagonalDist(startPoints[i], startPointOnRoadmap); // From start to start on roadmap
-                tempDist += calculateDiagonalDist(endPoints[i], endPointOnRoadmap); // From goal to goal on roadmap
+                //tempDist = calculateDiagonalDist(startPoints[i], startPointOnRoadmap); // From start to start on roadmap
+                //tempDist += calculateDiagonalDist(endPoints[i], endPointOnRoadmap); // From goal to goal on roadmap
+                LineIterator itStart(roadmap, startPoints[i], startPointOnRoadmap); // From start to start on roadmap
+                LineIterator itEnd(roadmap, endPoints[i], endPointOnRoadmap); // From goal to goal on roadmap
+                tempDist += itStart.count;
+                tempDist += itEnd.count;
                 pathLengths.push_back(tempDist);
             }
         }
