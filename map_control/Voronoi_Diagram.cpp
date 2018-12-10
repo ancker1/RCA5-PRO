@@ -67,18 +67,24 @@ void Voronoi_Diagram::skeletinize( const cv::Mat &input,
     Mat gray;
     cv::cvtColor( input, gray, CV_BGR2GRAY );
     cv::threshold( gray, gray, 127, 255, CV_THRESH_BINARY );
-    for (int y = 0; y < gray.rows; y++) {
+
+    for (int y = 0; y < gray.rows; y++)
+    {
         gray.at<uchar>(y, 0) = 0;
         gray.at<uchar>(y, gray.cols-1) = 0;
     }
-    for (int x = 0; x < gray.cols; x++) {
+    for (int x = 0; x < gray.cols; x++)
+    {
         gray.at<uchar>(0, x) = 0;
         gray.at<uchar>(gray.rows-1, x) = 0;
     }
+
     Mat skel( gray.size(), CV_8UC1, Scalar(0) ), temp, eroded, element;
     element = cv::getStructuringElement( MORPH_CROSS, Size(3,3) );
     bool done = false;
-    do {
+
+    do
+    {
         erode( gray, eroded, element );
         dilate( eroded, temp, element );
         subtract( gray, temp, temp );
@@ -87,6 +93,7 @@ void Voronoi_Diagram::skeletinize( const cv::Mat &input,
         done = ( cv::countNonZero( gray ) == 0 );
     }
     while ( done == false );
+
     output_img = skel.clone();
 }
 
@@ -161,6 +168,62 @@ void Voronoi_Diagram::print_map( const cv::Mat &img,
     convertScaleAbs(img, resizeMap, 255);
     resize( resizeMap, resizeMap, img.size()*10, 0, 0, INTER_NEAREST);
     imshow(s, resizeMap);
+}
+
+// -------------------------------------------------------------------
+
+void Voronoi_Diagram::imageSegmentation(const Mat &src, Mat &dst)
+{
+    Mat img = src.clone();
+
+    // Create a binary image from source image
+    Mat imgBinary;
+    cvtColor( img, imgBinary, COLOR_BGR2GRAY );
+    threshold( imgBinary, imgBinary, 127, 255, THRESH_BINARY );
+
+    // Perform the distance transform algorithm
+    Mat imgDist;
+    distanceTransform( imgBinary, imgDist, DIST_L2, 3 );
+
+    // Normalize the distance image for range = { 0.0, 1.0 }
+    normalize( imgDist, imgDist, 0, 1.0, NORM_MINMAX );
+
+    // Threshold to obtain the peaks
+    threshold( imgDist, imgDist, 0.4, 1.0, THRESH_BINARY );
+
+    // Dilate the dist image
+    Mat kernel1 = Mat::ones( 1, 2, CV_8U );
+    dilate( imgDist, imgDist, kernel1 );
+
+    // Create the CV_8U version of the distance image
+    Mat imgDist8u;
+    imgDist.convertTo( imgDist8u, CV_8U );
+
+    // Find total markers
+    vector<vector<Point>> contours;
+    findContours( imgDist8u, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE );
+
+    // Create the marker image for the watershed algorithm
+    Mat markers = Mat::zeros( imgDist.size(), CV_32S );
+
+    // Draw the markers
+    for (size_t i = 0; i < contours.size(); i++)
+        drawContours( markers, contours, (int)i, Scalar( ((int)i)+1, -1 ) );
+
+    // Perform the watershed algorithm
+    watershed( img, markers );
+
+    // Fill labeled objects with random colors
+    dst = src.clone();
+    for (int y = 0; y < markers.rows; y++)
+        for (int x = 0; x < markers.cols; x++)
+            if ( dst.at<Vec3b>(y,x) != Vec3b(0,0,0) )
+            {
+                if ( markers.at<int>(y,x) != -1 )
+                    dst.at<Vec3b>(y,x) = Vec3b(0,0,255);
+                else
+                    dst.at<Vec3b>(y,x) = Vec3b(0,0,0);
+            }
 }
 
 // -------------------------------------------------------------------

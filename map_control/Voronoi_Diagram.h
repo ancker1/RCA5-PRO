@@ -69,6 +69,13 @@ class Voronoi_Diagram {
          */
         void get_skeletinize_img( const cv::Mat &src, cv::Mat &dst );
 
+        /**
+         * @brief imageSegmentation
+         * @param src
+         * @param dst
+         */
+        void imageSegmentation( const cv::Mat &src, cv::Mat &dst );
+
     protected:
         /**
          * @brief voronoi
