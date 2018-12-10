@@ -14,7 +14,12 @@ double Path_planning::way_around_obstacle(Point start, Point goal, Mat &src) {
     goal.y = goal.y *2;
     copy.at<Vec3b>(start) = Vec3b(0,255,0);
     copy.at<Vec3b>(goal) = Vec3b(0,0,255);
-    cv::imshow("pat", copy);
+    //cv::imshow("pat", copy);
+
+    Mat mapclone = copy.clone();
+    resize(mapclone, mapclone, mapclone.size()*5,0,0,INTER_NEAREST);
+    imshow("Tekst",mapclone);
+
     Mat img;
     cvtColor(src, img, CV_BGR2GRAY);
     threshold(img, img, 127, 255, CV_THRESH_BINARY);

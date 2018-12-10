@@ -20,6 +20,8 @@ double robot_oz;
 //Mat map;
 int detections[4];
 
+std::default_random_engine generator(time(NULL));
+
 void statCallback(ConstWorldStatisticsPtr& _msg) {
     (void)_msg;
 
@@ -156,6 +158,7 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 }
 
 
+
 void init_robot(cv::Point2f * start, float * orient, cv::Point2f * goal, gazebo::transport::PublisherPtr movP)
 {
     /* GENERATE RANDOM START AND GOAL HERE */
@@ -169,17 +172,16 @@ void init_robot(cv::Point2f * start, float * orient, cv::Point2f * goal, gazebo:
 
     /* Test PATH = R */
         /* Start: -6 < x < 2 , 1 < y < 4*/
-    std::default_random_engine generator;
-    generator.seed(time(NULL));
-    std::uniform_real_distribution<float> distribution(-6.0, 2.0);
+
+    std::uniform_real_distribution<float> distribution(-6.0, 1.9);
     start->x = distribution(generator);
-    distribution.param(std::uniform_real_distribution<float>::param_type(-4.0, 4.0));
+    distribution.param(std::uniform_real_distribution<float>::param_type(-1.0, -4.0));
     start->y = distribution(generator);
     distribution.param(std::uniform_real_distribution<float>::param_type(-3.14, 3.14));
     *orient = distribution(generator);
-    distribution.param(std::uniform_real_distribution<float>::param_type(3.1, 5.9));
+    distribution.param(std::uniform_real_distribution<float>::param_type(3.2, 5.8));
     goal->x = distribution(generator);
-    distribution.param(std::uniform_real_distribution<float>::param_type(-4, 4.0));
+    distribution.param(std::uniform_real_distribution<float>::param_type(-1.0, -4.0));
     goal->y =  distribution(generator);
 
     std::string command = "/home/mikkel/Desktop/RCA5-PRO/gazebo_spawn.sh";
@@ -283,6 +285,21 @@ int main(int _argc, char **_argv) {
         /*   */
         init_robot(&startii, &orientation, &goalii, movementPublisher);
 
+        int fuzzy_iterator = 0;
+        string filex;
+        filex = "/home/mikkel/Documents/fuzzytest/ft";
+        filex += std::to_string(fuzzy_iterator);
+        filex += ".txt";
+
+        string filey;
+        filey = "/home/mikkel/Documents/fuzzytest/ft";
+        filey += std::to_string(fuzzy_iterator);
+        filey += ".txt";
+
+
+        std::vector<float> pos_x;
+        std::vector<float> pos_y;
+
         goal.x = goalii.x;        // TEST
         goal.y = goalii.y;        // TEST
 
@@ -337,7 +354,9 @@ int main(int _argc, char **_argv) {
                                                     // Comment out when not using GO_TO_GOAL
         std::cout << "Obstacle: " << controller->getAngleToClosestObstacle()     << std::endl               // Comment out when not using GO_TO_GOAL
                   << "Distance: " << controller->getDistanceToClosestObstacle()  << std::endl               // Comment out when not using GO_TO_GOAL
-                  << "RelDist: "  << controller->getRelativeDistanceToGoal()     << std::endl;// Comment out when not using GO_TO_GOAL
+                  << "RelDist: "  << controller->getRelativeDistanceToGoal()     << std::endl// Comment out when not using GO_TO_GOAL
+                  << "Speed:" << speed << std::endl
+                  << "Dir:" << dir << std::endl;
         controller->setRelativeAngleToGoal(relang);                 // Comment out when not using GO_TO_GOAL
         controller->setRelativeDistanceToGoal(ans.length);          // Comment out when not using GO_TO_GOAL
 
@@ -354,9 +373,33 @@ int main(int _argc, char **_argv) {
         /*************************************************************/
         /*       TEST                                                */
         /*************************************************************/
-        if ( ans.length < 0.2 )
+        if ( ans.length < 0.35 )
         {
             // New file
+            fuzzy_iterator++;
+            filex = "/home/mikkel/Documents/fuzzytest/ftx";
+            filex += std::to_string(fuzzy_iterator);
+            filex += ".txt";
+
+            filey = "/home/mikkel/Documents/fuzzytest/fty";
+            filey += std::to_string(fuzzy_iterator);
+            filey += ".txt";
+
+            ofstream datax;
+            ofstream datay;
+            datax.open(filex);
+            datay.open(filey);
+            for( int i = 0; i < pos_x.size(); i++ )
+            {
+                datax << pos_x[i] << endl;
+                datay << pos_y[i] << endl;
+            }
+            datax.close();
+            datay.close();
+
+            pos_x.clear();
+            pos_y.clear();
+
             init_robot(&startii, &orientation, &goalii, movementPublisher);
             goal.x = goalii.x;        // TEST
             goal.y = goalii.y;        // TEST
@@ -370,6 +413,15 @@ int main(int _argc, char **_argv) {
             controller->setPath(plann->way_around_obstacle(startii, goalii, small_map));
         }
 
+        /*************************************************************/
+        /*                        PRINT DATA                         */
+        /*************************************************************/
+        if (count >= 10)
+        {
+            pos_x.push_back(robot.x);
+            pos_y.push_back(robot.y);
+            count = 0;
+        }
 
         /*************************************************************/
         /*       SEND TO GAZEBO                                      */

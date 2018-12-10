@@ -71,8 +71,8 @@ FuzzyController::FuzzyController()
     Speed->setAggregation(new Maximum);
     Speed->setDefuzzifier(new Centroid(100));
     Speed->setDefaultValue(0);
-    Speed->addTerm(new Ramp("Fast", 0.8, 1.5));
-    Speed->addTerm(new Triangle("Go", 0.4, 0.7, 1));
+    Speed->addTerm(new Triangle("Fast", 1.3, 1.5));
+    Speed->addTerm(new Triangle("Go", 0.5, 1.0, 1.3));
     Speed->addTerm(new Triangle("Slow", 0.01, 0.3, 0.5));
     Speed->addTerm(new Ramp("Stop", 0.01, 0));
     engine->addOutputVariable(Speed);
