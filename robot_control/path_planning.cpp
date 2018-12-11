@@ -38,7 +38,8 @@ double Path_planning::way_around_obstacle(Point start, Point goal, Mat &src) {
             go_left(start_left, img);
             go_right(start_right, img);
         }
-        return PATH_NON;
+        return PATH_L;
+        //return PATH_NON;
     }
     else
         return PATH_S;

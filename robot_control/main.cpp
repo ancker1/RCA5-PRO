@@ -173,16 +173,30 @@ void init_robot(cv::Point2f * start, float * orient, cv::Point2f * goal, gazebo:
     /* Test PATH = R */
         /* Start: -6 < x < 2 , 1 < y < 4*/
 
+/*
     std::uniform_real_distribution<float> distribution(-6.0, 1.9);
     start->x = distribution(generator);
-    distribution.param(std::uniform_real_distribution<float>::param_type(-1.0, -4.0));
+    distribution.param(std::uniform_real_distribution<float>::param_type(4.0, -4.0));
     start->y = distribution(generator);
     distribution.param(std::uniform_real_distribution<float>::param_type(-3.14, 3.14));
     *orient = distribution(generator);
     distribution.param(std::uniform_real_distribution<float>::param_type(3.2, 5.8));
     goal->x = distribution(generator);
-    distribution.param(std::uniform_real_distribution<float>::param_type(-1.0, -4.0));
+    distribution.param(std::uniform_real_distribution<float>::param_type(4.0, -4.0));
     goal->y =  distribution(generator);
+*/
+
+    std::uniform_real_distribution<float> distribution(-3.0, -5.0);
+    start->x = distribution(generator);
+    distribution.param(std::uniform_real_distribution<float>::param_type(-3.0, 3.0));
+    start->y = distribution(generator);
+    distribution.param(std::uniform_real_distribution<float>::param_type(-3.14, 3.14));
+    *orient = distribution(generator);
+    distribution.param(std::uniform_real_distribution<float>::param_type(4.0, 5.5));
+    goal->x = distribution(generator);
+    distribution.param(std::uniform_real_distribution<float>::param_type(-3.0, 3.0));
+    goal->y =  distribution(generator);
+
 
     std::string command = "/home/mikkel/Desktop/RCA5-PRO/gazebo_spawn.sh";
     command += " -x ";
@@ -282,6 +296,7 @@ int main(int _argc, char **_argv) {
         cv::Point2f startii;
         float orientation;
         cv::Point2f goalii;
+        cv::Point2f start_pos;
         /*   */
         init_robot(&startii, &orientation, &goalii, movementPublisher);
 
@@ -300,6 +315,9 @@ int main(int _argc, char **_argv) {
         std::vector<float> pos_x;
         std::vector<float> pos_y;
 
+        start_pos = startii;
+
+
         goal.x = goalii.x;        // TEST
         goal.y = goalii.y;        // TEST
 
@@ -309,7 +327,8 @@ int main(int _argc, char **_argv) {
         startii.x = round( ( 7   + startii.x ) * 20/14  );
         startii.y = round( ( 5.5 - startii.y ) * 15/11  );
 
-        Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
+    //    Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
+        Mat small_map = cv::imread( "../models/starworld/meshes/floor_plan.png", IMREAD_COLOR );
         resize(small_map, small_map, small_map.size()*2,0,0,INTER_NEAREST);
         Mat mapclone = small_map.clone();
         mapclone.at<Vec3b>(startii) = Vec3b(0, 255, 0);
@@ -370,10 +389,42 @@ int main(int _argc, char **_argv) {
         dir = controller->getDirection();
 
 
+
+
+        /*************************************************************/
+        /*                        PRINT DATA                         */
+        /*************************************************************/
+        if (count >= 10)
+        {
+            pos_x.push_back(robot.x);
+            pos_y.push_back(robot.y);
+            count = 0;
+        }
+
+        /*************************************************************/
+        /*       SEND TO GAZEBO                                      */
+        /*************************************************************/
+        // Generate a pose
+        ignition::math::Pose3d pose(double(speed), 0, 0, 0, 0, double(dir));
+
+        // Convert to a pose message
+        gazebo::msgs::Pose msg;
+        gazebo::msgs::Set(&msg, pose);
+        movementPublisher->Publish(msg);
+
+        mutex_cam.lock();
+        int key = cv::waitKey(1);
+        mutex_cam.unlock();
+
         /*************************************************************/
         /*       TEST                                                */
         /*************************************************************/
-        if ( ans.length < 0.35 )
+
+        std::cout << "Start:" << "( " << start_pos.x << ", " << start_pos.y << " )" << std::endl;
+        std::cout << "Goal:" << "( " << goal.x << ", " << goal.y << " )" << std::endl;
+
+
+        if ( ans.length < 0.35 || key == key_up )
         {
             // New file
             fuzzy_iterator++;
@@ -412,31 +463,6 @@ int main(int _argc, char **_argv) {
 
             controller->setPath(plann->way_around_obstacle(startii, goalii, small_map));
         }
-
-        /*************************************************************/
-        /*                        PRINT DATA                         */
-        /*************************************************************/
-        if (count >= 10)
-        {
-            pos_x.push_back(robot.x);
-            pos_y.push_back(robot.y);
-            count = 0;
-        }
-
-        /*************************************************************/
-        /*       SEND TO GAZEBO                                      */
-        /*************************************************************/
-        // Generate a pose
-        ignition::math::Pose3d pose(double(speed), 0, 0, 0, 0, double(dir));
-
-        // Convert to a pose message
-        gazebo::msgs::Pose msg;
-        gazebo::msgs::Set(&msg, pose);
-        movementPublisher->Publish(msg);
-
-        mutex_cam.lock();
-        int key = cv::waitKey(1);
-        mutex_cam.unlock();
 
     }
 
