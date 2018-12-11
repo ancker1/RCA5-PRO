@@ -448,7 +448,6 @@ Mat A_Star::showPath(Mat smallworld, Mat roadmap, vector<Point> roadmapPoints, P
         {
             line(tempMap, startPointOnRoadmap, startPoints, Scalar(255,0,0), 1, 8, 0); // Draw line from start point to start point on graph
             line(tempMap, endPointOnRoadmap, endPoints, Scalar(0,255,0), 1, 8, 0); // Draw line from end point to end point on graph
-
             // For checking Distance
             LineIterator itStart(roadmap, startPoints, startPointOnRoadmap); // From start to start on roadmap
             LineIterator itEnd(roadmap, endPoints, endPointOnRoadmap); // From goal to goal on roadmap
