@@ -235,7 +235,6 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 							findBoundaries(target_hull, target_top, target_right, target_bottom, target_left);
 
 							target_images[j].r	= std::max(target_bottom.y - target_top.y, target_right.x - target_left.x) / 2;
-							target_images[j].d	= MARBLE_RADIUS_M / tan(IMAGE_FOV * target_images[j].r / image.cols);
 						}
 					}
 
@@ -387,19 +386,21 @@ void CircleDetection::drawCircles(Mat& image, vector<circleInfo>& circles) {
 
 		// Display angle and distance to marbles
 		putText(image, format("%5.2f", circles[i].angle), Point(circles[i].x0 - 20, circles[i].y0 - circles[i].r - 20),
-						FONT_HERSHEY_SIMPLEX, 0.4, Scalar(0, 0, 255), 1, LINE_AA);
+						FONT_HERSHEY_SIMPLEX, 0.4, Scalar(255, 255, 255), 1, LINE_AA);
 		putText(image, format("%5.2f", circles[i].d), Point(circles[i].x0 - 20, circles[i].y0 - circles[i].r - 10),
-						FONT_HERSHEY_SIMPLEX, 0.4, Scalar(0, 0, 255), 1, LINE_AA);
+						FONT_HERSHEY_SIMPLEX, 0.4, Scalar(255, 255, 255), 1, LINE_AA);
 	}
 }
 
 void CircleDetection::calcCirclePositions(vector<circleInfo>& spottedCircles, Mat& image, Mat& map, double x_robot, double y_robot, double angle_robot) {
+	const double f		= float(image.cols) / (2. * tan(IMAGE_FOV / 2.));
 	const int h_shift = map.rows / 2;
 	const int w_shift = map.cols / 2;
 
 	// Calculate distance to marble, angle to circle center and coordinates of marbles
 	for (unsigned int i = 0; i < spottedCircles.size(); i++) {
-		spottedCircles[i].d			= MARBLE_RADIUS_M / tan(IMAGE_FOV * spottedCircles[i].r / image.cols);
+		spottedCircles[i].d			= MARBLE_RADIUS_M * f / spottedCircles[i].r;
+		//spottedCircles[i].d			= MARBLE_RADIUS_M / tan(IMAGE_FOV * spottedCircles[i].r / image.cols);
 
 		if (ERASE_ABOVE < spottedCircles[i].d) {
 			spottedCircles.erase(spottedCircles.begin() + i);
@@ -460,82 +461,28 @@ void CircleDetection::mergeMarbles(vector<circleInfo>& circles, vector<circleInf
 	}
 }
 
-void CircleDetection::mapMarbles(Mat& map, vector<circleInfo>& g_circles, vector<circleInfo>& h_circles, vector<circleInfo>& h_spottedCircles, vector<circleInfo>& spr_circles, vector<circleInfo>& spr_spottedCircles, vector<circleInfo>& circles, vector<circleInfo>& spottedCircles) {
+void CircleDetection::mapMarbles(Mat& map, vector<circleInfo>& circles, vector<circleInfo>& spottedCircles) {
 	static Mat map_orig;
 	if (!map_orig.data) {
 		map_orig = map.clone();
 	}
 
-	const Vec3b dot_colors[3]		= {Vec3b(255, 127, 127), Vec3b(127, 255, 127), Vec3b(255, 127, 255)};
-	const Scalar circ_colors[4] = {Scalar(255, 0, 0), Scalar(0, 0, 255), Scalar(0, 255, 0), Scalar(255, 0, 255)};
-
-	// Dot spotted circles
-	/*for (unsigned int i = 0; i < h_spottedCircles.size(); i++) {
-		map_orig.at<Vec3b>(Point(h_spottedCircles[i].map_x, h_spottedCircles[i].map_y)) = dot_colors[0];
-	}
-
-	// Dot spotted circles
-	for (unsigned int i = 0; i < spr_spottedCircles.size(); i++) {
-		map_orig.at<Vec3b>(Point(spr_spottedCircles[i].map_x, spr_spottedCircles[i].map_y)) = dot_colors[1];
-	}
-
-	// Dot spotted circles
-	for (unsigned int i = 0; i < spottedCircles.size(); i++) {
-		map_orig.at<Vec3b>(Point(spottedCircles[i].map_x, spottedCircles[i].map_y)) = dot_colors[2];
-	}*/
-
-	map = map_orig.clone();
-
-	putText(map, format("Actual: %d", g_circles.size()), Point(10, 25), FONT_HERSHEY_SIMPLEX, 0.5, circ_colors[0]);
-
-	// Circle marbles
-	for (unsigned int i = 0; i < g_circles.size(); i++) {
-		circle(map, Point(int(round(g_circles[i].map_x)), int(round(g_circles[i].map_y))), int(ceil(MARBLE_RADIUS_P)), circ_colors[0], 2);
-	}
-
-	putText(map, format("Hough: %d", h_circles.size()), Point(10, 40), FONT_HERSHEY_SIMPLEX, 0.5, circ_colors[1]);
-
-	// Circle marbles
-	for (unsigned int i = 0; i < h_circles.size(); i++) {
-		putText(map, format("%d", h_circles[i].n), Point(h_circles[i].map_x, h_circles[i].map_y - 10), FONT_HERSHEY_SIMPLEX, 0.3, circ_colors[1]);
-		circle(map, Point(int(round(h_circles[i].map_x)), int(round(h_circles[i].map_y))), int(ceil(MARBLE_RADIUS_P)), circ_colors[1]);
-	}
-
-	putText(map, format("SPR: %d", spr_circles.size()), Point(10, 55), FONT_HERSHEY_SIMPLEX, 0.5, circ_colors[2]);
-
-	// Circle marbles
-	for (unsigned int i = 0; i < spr_circles.size(); i++) {
-		putText(map, format("%d", spr_circles[i].n), Point(spr_circles[i].map_x, spr_circles[i].map_y + 10), FONT_HERSHEY_SIMPLEX, 0.3, circ_colors[2]);
-		circle(map, Point(int(round(spr_circles[i].map_x)), int(round(spr_circles[i].map_y))), int(ceil(MARBLE_RADIUS_P)), circ_colors[2]);
-	}
-
-	putText(map, format("Modded SPR: %d", circles.size()), Point(10, 70), FONT_HERSHEY_SIMPLEX, 0.5, circ_colors[3]);
-
-	// Circle marbles
-	for (unsigned int i = 0; i < circles.size(); i++) {
-		putText(map, format("%d", circles[i].n), Point(circles[i].map_x + 10, circles[i].map_y), FONT_HERSHEY_SIMPLEX, 0.3, circ_colors[3]);
-		circle(map, Point(int(round(circles[i].map_x)), int(round(circles[i].map_y))), int(ceil(MARBLE_RADIUS_P)), circ_colors[3]);
-	}
-
-
-
-	/* CORRECT CODE
 	// Dot spotted circles
 	for (unsigned int i = 0; i < spottedCircles.size(); i++) {
 		map_orig.at<Vec3b>(Point(spottedCircles[i].map_x, spottedCircles[i].map_y)) = Vec3b(127, 0, 0);
 	}
 
 	map = map_orig.clone();
-	putText(map, format("%d circles!", circles.size()), Point(20, 40 + 10 * circles[0].algo), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 0, 0);
+	putText(map, format("%d circles!", circles.size()), Point(20, 40), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 0, 0));
 
 	// Circle marbles
 	for (unsigned int i = 0; i < circles.size(); i++) {
 		putText(map, format("%d", circles[i].n), Point(circles[i].map_x + 10, circles[i].map_y), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 0, 0));
 		circle(map, Point(int(round(circles[i].map_x)), int(round(circles[i].map_y))), int(round(MARBLE_RADIUS_P)), Scalar(255, 0, 0));
-	}*/
+	}
 }
 
-double CircleDetection::error(vector<circleInfo> &spottedCircles, vector<circleInfo> &g_circles) {
+/*double CircleDetection::error(vector<circleInfo> &spottedCircles, vector<circleInfo> &g_circles) {
 	for (unsigned int i = 0; i < spottedCircles.size(); i++) {
 		double min_d = DBL_MAX;
 		for (unsigned int j = 0; j < g_circles.size(); j++) {
@@ -547,4 +494,4 @@ double CircleDetection::error(vector<circleInfo> &spottedCircles, vector<circleI
 	}
 
 	return -1;
-}
+}*/

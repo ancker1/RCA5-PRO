@@ -76,119 +76,20 @@ void cameraCallback(ConstImageStampedPtr& msg) {
 	const char *data   = msg->image().data().c_str();
 	cv::Mat     im(int(height), int(width), CV_8UC3, const_cast<char *>(data));
 
-	static vector<circleInfo> g_circles;
-	if (g_circles.empty()) {
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = -23.012800;
-		g_circles[g_circles.size() - 1].map_y = -7.302660;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = -13.204500;
-		g_circles[g_circles.size() - 1].map_y = -21.795400;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = 9.727870;
-		g_circles[g_circles.size() - 1].map_y = -13.224000;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = -15.406200;
-		g_circles[g_circles.size() - 1].map_y = 8.608350;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = 12.738000;
-		g_circles[g_circles.size() - 1].map_y = 1.017760;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = -22.296800;
-		g_circles[g_circles.size() - 1].map_y = 13.679100;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = 24.768400;
-		g_circles[g_circles.size() - 1].map_y = -10.048700;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = -31.299400;
-		g_circles[g_circles.size() - 1].map_y = 1.089590;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = -8.881620;
-		g_circles[g_circles.size() - 1].map_y = 6.703360;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = 1.470190;
-		g_circles[g_circles.size() - 1].map_y = -13.739300;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = -5.166110;
-		g_circles[g_circles.size() - 1].map_y = -19.252900;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = -29.747200;
-		g_circles[g_circles.size() - 1].map_y = -4.606750;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = 30.763600;
-		g_circles[g_circles.size() - 1].map_y = 13.046700;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = 22.635500;
-		g_circles[g_circles.size() - 1].map_y = 16.109500;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = 6.910670;
-		g_circles[g_circles.size() - 1].map_y = -12.045200;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = -14.677000;
-		g_circles[g_circles.size() - 1].map_y = -6.956180;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = -14.137900;
-		g_circles[g_circles.size() - 1].map_y = -20.387100;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = -30.211900;
-		g_circles[g_circles.size() - 1].map_y = 16.560600;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = 21.987800;
-		g_circles[g_circles.size() - 1].map_y = -5.655060;
-		g_circles.push_back(circleInfo());
-		g_circles[g_circles.size() - 1].map_x = 20.138100;
-		g_circles[g_circles.size() - 1].map_y = 17.396600;
-
-		for (int i = 0; i < g_circles.size(); i++) {
-			g_circles[i].map_x = map.cols / 2 + g_circles[i].map_x * M_TO_PIX;
-			g_circles[i].map_y = map.rows / 2 - g_circles[i].map_y * M_TO_PIX;
-		}
-	}
-
-
-
-
-	//double h_err = 0;
-	//double spr_err = 0;
-	//double mod_err = 0;
-
-	vector<circleInfo> h_spottedCircles = cd.detectCircles(im, CD_HOUGH);
-	if (!h_spottedCircles.empty()) {
-		cd.calcCirclePositions(h_spottedCircles, im, map, robot.x, robot.y, robot_oz);
-		cd.mergeMarbles(h_circles, h_spottedCircles);
-		//h_err = cd.error(h_spottedCircles, g_circles);
-	}
-
-	vector<circleInfo> spr_spottedCircles = cd.detectCircles(im, CD_SPR);
-	if (!spr_spottedCircles.empty()) {
-		cd.calcCirclePositions(spr_spottedCircles, im, map, robot.x, robot.y, robot_oz);
-		cd.mergeMarbles(spr_circles, spr_spottedCircles);
-		//spr_err = cd.error(spr_spottedCircles, g_circles);
-	}
-
 	vector<circleInfo> spottedCircles = cd.detectCircles(im, CD_SPR_MOD);
 	if (!spottedCircles.empty()) {
 		cd.calcCirclePositions(spottedCircles, im, map, robot.x, robot.y, robot_oz);
+		cd.drawCircles(im, spottedCircles);
 		cd.mergeMarbles(circles, spottedCircles);
-		//mod_err = cd.error(spottedCircles, g_circles);
 	}
-
-	double d = sqrt(pow(g_circles[0].map_x - (map.cols / 2 + M_TO_PIX * robot.x), 2) + pow(g_circles[0].map_y - (map.rows / 2 - M_TO_PIX * robot.y), 2));
-
-	/*putText(im, format("d = %5.2f", d), Point(20, 20), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));
-	putText(im, format("Hough error: %f", h_err), Point(20, 40), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));
-	putText(im, format("SPR error: %f", spr_err), Point(20, 60), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));
-	putText(im, format("Modded SPR error: %f", mod_err), Point(20, 80), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));*/
-
-	//cd.drawCircles(im, spottedCircles);
-	cd.mapMarbles(map, g_circles, h_circles, h_spottedCircles, spr_circles, spr_spottedCircles, circles, spottedCircles);
+	//cd.mapMarbles(map, circles, spottedCircles);
 
 	im = im.clone();
 	cvtColor(im, im, CV_BGR2RGB);
 
 	mutex.lock();
 	imshow("camera", im);
-	imshow("map", map);
+	//imshow("map", map);
 	mutex.unlock();
 }
 
@@ -253,7 +154,7 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 	arr[6] = c_range;
 
 	mutex.lock();
-	//cv::imshow("lidar", im);
+	cv::imshow("lidar", im);
 	mutex.unlock();
 }
 

@@ -57,8 +57,8 @@ public:
 	void								drawCircles(Mat& image, vector<circleInfo>& circles);
 	void								calcCirclePositions(vector<circleInfo>& spottedCircles, Mat& image, Mat& map, double x_robot, double y_robot, double angle_robot);
 	void								mergeMarbles(vector<circleInfo>& circles, vector<circleInfo> spottedCircles);
-	void								mapMarbles(Mat& map, vector<circleInfo>& g_circles, vector<circleInfo>& h_circles, vector<circleInfo>& h_spottedCircles, vector<circleInfo>& spr_circles, vector<circleInfo>& spr_spottedCircles, vector<circleInfo>& circles, vector<circleInfo>& spottedCircles);
-	double							error(vector<circleInfo>& spottedCircles, vector<circleInfo>& g_circles);
+	void								mapMarbles(Mat& map, vector<circleInfo>& circles, vector<circleInfo>& spottedCircles);
+	//double							error(vector<circleInfo>& spottedCircles, vector<circleInfo>& g_circles);
 
 private:
 };
