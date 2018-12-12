@@ -18,7 +18,7 @@ load('../build-map_control-Desktop-Debug/voronoi_length_test_rand_bigMap.txt');
 avg = movmean(Boustrophedon_length_test_rand_bigMap, 50); % Moving average over 50 points
 figure('Name','Random start- and- end points Big_Map_1');
 hold on
-title('Length in pixels versus Sample number, Sample = 5991'); % Random number generate = 10000
+title('Length in pixels versus Sample number, Samples = 5991'); % Random number generate = 10000
 a = plot(0:size(voronoi_length_test_rand_bigMap)-1, Boustrophedon_length_test_rand_bigMap)
 plot(0:size(voronoi_length_test_rand_bigMap)-1, voronoi_length_test_rand_bigMap)
 plot(0:size(avg)-1, avg)
