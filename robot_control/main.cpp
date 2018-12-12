@@ -170,33 +170,24 @@ void init_robot(cv::Point2f * start, float * orient, cv::Point2f * goal, gazebo:
     movP->Publish(msg);
 
 
-    /* Test PATH = R */
-        /* Start: -6 < x < 2 , 1 < y < 4*/
-
-/*
-    std::uniform_real_distribution<float> distribution(-6.0, 1.9);
+    /*************************************************************/
+    /*       Define Start and Goal area                          */
+    /*************************************************************/
+    std::uniform_real_distribution<float> distribution(-1.0, 1.0);
     start->x = distribution(generator);
-    distribution.param(std::uniform_real_distribution<float>::param_type(4.0, -4.0));
-    start->y = distribution(generator);
-    distribution.param(std::uniform_real_distribution<float>::param_type(-3.14, 3.14));
-    *orient = distribution(generator);
-    distribution.param(std::uniform_real_distribution<float>::param_type(3.2, 5.8));
-    goal->x = distribution(generator);
-    distribution.param(std::uniform_real_distribution<float>::param_type(4.0, -4.0));
-    goal->y =  distribution(generator);
-*/
-
-    std::uniform_real_distribution<float> distribution(-3.0, -5.0);
-    start->x = distribution(generator);
-    distribution.param(std::uniform_real_distribution<float>::param_type(-3.0, 3.0));
+    distribution.param(std::uniform_real_distribution<float>::param_type(-0.5, 0.5));
     start->y = distribution(generator);
     distribution.param(std::uniform_real_distribution<float>::param_type(-3.14, 3.14));
     *orient = distribution(generator);
     distribution.param(std::uniform_real_distribution<float>::param_type(4.0, 5.5));
     goal->x = distribution(generator);
-    distribution.param(std::uniform_real_distribution<float>::param_type(-3.0, 3.0));
+    distribution.param(std::uniform_real_distribution<float>::param_type(-1.0, 1.0));
     goal->y =  distribution(generator);
 
+
+    /*************************************************************/
+    /*       Restart Environment                                 */
+    /*************************************************************/
 
     std::string command = "/home/mikkel/Desktop/RCA5-PRO/gazebo_spawn.sh";
     command += " -x ";
@@ -208,6 +199,10 @@ void init_robot(cv::Point2f * start, float * orient, cv::Point2f * goal, gazebo:
     std::cout << command << endl;
     //command += " -x -2 -y 2 -t 1.57";
     system(command.c_str());
+
+    /*************************************************************/
+    /*       Wait for robot to be placed at chosen start         */
+    /*************************************************************/
 
     while( !(  robot.x > start->x - 0.1 && robot.x < start->x + 0.1 && robot.y < start->y + 0.1 && robot.y > start->y - 0.1 ) )
     {
@@ -327,8 +322,8 @@ int main(int _argc, char **_argv) {
         startii.x = round( ( 7   + startii.x ) * 20/14  );
         startii.y = round( ( 5.5 - startii.y ) * 15/11  );
 
-    //    Mat small_map = cv::imread( "../map_control/floor_plan.png", IMREAD_COLOR );
-        Mat small_map = cv::imread( "../models/starworld/meshes/floor_plan.png", IMREAD_COLOR );
+    //    Mat small_map = cv::imread( "../models/smallworld/meshes/floor_plan.png", IMREAD_COLOR );
+        Mat small_map = cv::imread( "../models/vworld/meshes/floor_plan.png", IMREAD_COLOR );
         resize(small_map, small_map, small_map.size()*2,0,0,INTER_NEAREST);
         Mat mapclone = small_map.clone();
         mapclone.at<Vec3b>(startii) = Vec3b(0, 255, 0);
