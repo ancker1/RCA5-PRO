@@ -75,22 +75,19 @@ void cameraCallback(ConstImageStampedPtr& msg) {
 	std::size_t width  = msg->image().width();
 	std::size_t height = msg->image().height();
 	const char *data   = msg->image().data().c_str();
-	cv::Mat     im(int(height), int(width), CV_8UC3, const_cast<char *>(data));
-
-				vector<circleInfo> spottedCircles = cd.detectCircles(im, CD_SPR_MOD);
+    cv::Mat     im(int(height), int(width), CV_8UC3, const_cast<char *>(data));
+                vector<circleInfo> spottedCircles = cd.detectCircles(im, CD_SPR_MOD);
 	if (!spottedCircles.empty()) {
 		cd.calcCirclePositions(spottedCircles, im, map, robot.x, robot.y, robot_oz);
 		cd.drawCircles(im, spottedCircles);
 		cd.mergeMarbles(circles, spottedCircles);
 	}
-				//cd.mapMarbles(map, circles, spottedCircles);
 
-	im = im.clone();
-	cvtColor(im, im, CV_BGR2RGB);
-
+    //cd.mapMarbles(map, circles, spottedCircles);
+    cvtColor(im, im, CV_BGR2RGB);
 	mutex.lock();
-	imshow("camera", im);
-	//imshow("map", map);
+    imshow("camera", im);
+    //imshow("map", map);
 	mutex.unlock();
 }
 
@@ -160,12 +157,12 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 }
 
 int main(int _argc, char **_argv) {
-
+/*
 	map = imread("../../map_control/big_floor_plan.png");
 	if (!map.data) return 1;
 	resize(map, map, map.size() * MAP_ENLARGEMENT, 0, 0, INTER_NEAREST);
+*/
 
-	/*
 	// Load gazebo
 	gazebo::client::setup(_argc, _argv);
 
@@ -269,7 +266,6 @@ int main(int _argc, char **_argv) {
 		/*       Input variables of Fuzzy Controller is set          */
 		/*************************************************************/
 
-/*
 		controller->setDistanceToClosestObstacle(range);
 		controller->setAngleToClosestObstacle(angle);
 
@@ -314,7 +310,7 @@ int main(int _argc, char **_argv) {
 		/*       The following is used for testing purposes          */
 		/*************************************************************/
 
-/*
+
 		if (controller->is_at_goal())
 		{
 				controller->setPath(PATH_S);
@@ -387,9 +383,5 @@ int main(int _argc, char **_argv) {
 	}
 	// Make sure to shut everything down.
 	gazebo::client::shutdown();
-    */
 
-		std::string command = "../../gazebo_spawn.sh";
-		command = command + " " + "-x 1 -y 2";
-    system(command.c_str());
 }

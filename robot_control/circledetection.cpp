@@ -1,4 +1,5 @@
 #include "circledetection.h"
+#include "mutex"
 
 CircleDetection::CircleDetection() {}
 
@@ -87,16 +88,16 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 			vector<Vec3f> circles;
 
 			// Apply HoughCircles
-			HoughCircles(image_filtered,						// Input image
-									 circles,										// Vector with circle centers (a, b) and radii (r)
-									 HOUGH_GRADIENT,						// Detection method (only one available)
-									 1,													// Inverse ratio of resolution (??)
-									 image_filtered.cols / 15,	// Minimum distance between detected centers
-									 5,													// Canny edge detector upper threshold
-									 25,												// Center detection threshold
-									 0,													// Minimum radius of circles (0 = UNKNOWN)
-									 0													// Maximum radius of circles (0 = UNKNOWN)
-									 );
+            HoughCircles( image_filtered,                                // Input image
+                          circles,                                       // Vector with circle centers (a, b) and radii (r)
+                          HOUGH_GRADIENT,                                // Detection method (only one available)
+                          1,                                             // Inverse ratio of resolution (??)
+                          image_filtered.cols / 15,                      // Minimum distance between detected centers
+                          5,                                             // Canny edge detector upper threshold
+                          25,                                            // Center detection threshold
+                          0,                                             // Minimum radius of circles (0 = UNKNOWN)
+                          0);                                          	 // Maximum radius of circles (0 = UNKNOWN)
+
 
 			for (unsigned int i = 0; i < circles.size(); i++) {
 				circlevector.push_back(circleInfo());
