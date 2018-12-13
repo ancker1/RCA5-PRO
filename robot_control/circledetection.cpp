@@ -74,7 +74,8 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 	Mat image_filtered;
 
 	// Isolate marble
-	inRange(image, Scalar(0, 0, 40), Scalar(80, 90, 160), image_filtered);
+	cvtColor(image, image_filtered, CV_RGB2HLS);
+	inRange(image_filtered, Scalar(110, 20, 0), Scalar(130, 200, 255), image_filtered);
 	//inRange(image, Scalar(40, 0, 0), Scalar(160, 90, 80), image_filtered);
 
 	vector<circleInfo> circlevector;
@@ -382,8 +383,8 @@ void CircleDetection::drawCircles(Mat& image, vector<circleInfo>& circles) {
 	for (unsigned int i = 0; i < circles.size(); i++)
 	{
 		// Draw center and edge
-		circle(image, Point(circles[i].x0, circles[i].y0), 1,							Scalar(255, 255, 255), 1, LINE_AA);
-		circle(image, Point(circles[i].x0, circles[i].y0), circles[i].r,	Scalar(255, 255, 255), 1, LINE_AA);
+		//circle(image, Point(circles[i].x0, circles[i].y0), 1,							Scalar(255, 255, 255), 1, LINE_AA);
+		//circle(image, Point(circles[i].x0, circles[i].y0), circles[i].r,	Scalar(255, 255, 255), 1, LINE_AA);
 
 		// Display angle and distance to marbles
 		putText(image, format("%5.2f", circles[i].angle), Point(circles[i].x0 - 20, circles[i].y0 - circles[i].r - 20),

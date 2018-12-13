@@ -383,5 +383,9 @@ int main(int _argc, char **_argv) {
 	}
 	// Make sure to shut everything down.
 	gazebo::client::shutdown();
+		
 
+		std::string command = "../../gazebo_spawn.sh";
+		command = command + " " + "-x 1 -y 2";
+		system(command.c_str());
 }
