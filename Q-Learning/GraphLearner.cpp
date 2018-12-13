@@ -2,10 +2,17 @@
 
 // Test comment 
 
-GraphLearner::GraphLearner()
+GraphLearner::GraphLearner(float e, float b, float a, float g)
 {
 	srand(time(NULL));
 	init_environment();
+	
+
+	this->discount_factor = g;
+	this->learning_rate = a;
+	this->epsilon = e;
+	this->epsilon_decay = b;
+
 	epsilon_org = epsilon;
 }
 

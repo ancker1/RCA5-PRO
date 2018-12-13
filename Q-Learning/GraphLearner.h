@@ -30,7 +30,7 @@ static action actions[] = { GOTO0, GOTO1, GOTO2, GOTO3, GOTO4, GOTO5, GOTO6, GOT
 class GraphLearner
 {
 public:
-	GraphLearner();
+	GraphLearner(float, float, float, float);
 
 	void QLearning();
 
@@ -70,8 +70,8 @@ private:
 	LinkedList* Q = new LinkedList(*head);
 	
 
-	float discount_factor = 0.15;
-	float learning_rate = 0.8;
+	float discount_factor = 0.20;
+	float learning_rate = 0.3;
 	float epsilon = 0.1;
 	float epsilon_org;
 	float epsilon_decay = 0.9990;
