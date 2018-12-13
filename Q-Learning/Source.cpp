@@ -28,7 +28,6 @@ int main()
 	float g = 0.2;
 	run_mem(e, decay, a, g);
 	std::cout << "Memory test: DONE." << std::endl;
-	return 0;
 
 
 	float epsilons[3] =		{ 0.010, 0.10, 0.20 };
