@@ -19,22 +19,21 @@ GraphLearner::GraphLearner(float e, float b, float a, float g)
 
 void GraphLearner::QLearning()
 {
-	for (int j = 0; j < 100; j++)
+	for (int j = 0; j < 100; j++)	// Used to iterate over 100 times -> Split over 5 threads -> 500 total iterations to mean over for plots.
 	{
-		Q = new LinkedList(*new LinkNode(0, 0, 0, 0));
-		epsilon = epsilon_org;
-		for (int i = 0; i < 10000; i++)
+		Q = new LinkedList(*new LinkNode(0, 0, 0, 0));	// Create new Q-values for each iterations
+		epsilon = epsilon_org;	// Set epislon to original (epsilon will change during the iteration if the decay is not equal to 1.0)
+		for (int i = 0; i < 10000; i++)	// Amount of episodes to process.
 		{
 
 			graph.Init();			// Will place current node at starting node.
-			//graph.PrintDistribution();
 
 			cstate.current_node = graph.GetCurrentNode();	// Load current node into cstate.
 			cstate.visited_nodes = (char)1;
 
-			float sum_r = 0; // TEST
-			int steps = 0;
-			float change = 0;
+			float sum_r = 0; // Used for plot
+			int steps = 0;	// Used for plot
+			float change = 0;	// Used for plot
 			
 			while ((int)cstate.visited_nodes != VISITED_ALL && steps <= AMOUNT_STEPS)	// Should be after x time units.. / moves / all rooms visited
 			{
@@ -44,24 +43,24 @@ void GraphLearner::QLearning()
 
 				sum_r += reward;	// Used for plot
 
-				int node = cstate.current_node->GetValue();
-				float q_val = Q->GetValue(node, cstate.visited_nodes, a);
-				float updated_Q = q_val + learning_rate*(reward + discount_factor*GetHighestActionValue(nstate) - q_val);
-				Q->SetValue(node, cstate.visited_nodes, a, updated_Q);
+				int node = cstate.current_node->GetValue();					// Get the current node position.
+				float q_val = Q->GetValue(node, cstate.visited_nodes, a);	// Get the current Q-Value.
+				float updated_Q = q_val + learning_rate*(reward + discount_factor*GetHighestActionValue(nstate) - q_val);		// Calculate the new Q-Value.
+				Q->SetValue(node, cstate.visited_nodes, a, updated_Q);		// Set the Q-Value
 
 				cstate = nstate;
 				
-				steps++;	// Used for plot
-				change = abs(q_val - updated_Q);
+				steps++;									// Used for plot
+				change = abs(q_val - updated_Q);			// See how much The Q-Value changed.
 			}
-			epsilon = epsilon*epsilon_decay;
-			xplot.push_back(epsilon);
-			yplot.push_back(sum_r);
+			epsilon = epsilon*epsilon_decay;		// Epsilon decay
+			xplot.push_back(Q->GetSize());			// Used for plot
+			yplot.push_back(sum_r);					// Used for plot
 			//GetRewardSum();
-			zplot.push_back(change / steps);
+			zplot.push_back(change / steps);		// Used for plot
 
 		}
-		std::cout << j << std::endl;
+		std::cout << j << std::endl;				// Used to keep track of the iteration index.
 		
 }
 	//Q2->print_data();
