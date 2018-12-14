@@ -155,15 +155,15 @@ int main( ) {
 
     resize(img_Boustrophedon,img_Boustrophedon,img_Boustrophedon.size()*10,0,0,INTER_NEAREST);
     imwrite("Boustrophedon_roadmap_bigmap1.png", img_Boustrophedon);
-/*
+
     // Writing Results:
-    string file = "voronoi_length_test_rand_bigMap3.txt";
+    string file = "voronoi_length_test_rand_bigMap.txt";
     ofstream myFile;
     myFile.open(file);
     for(size_t i = 0; i < sorted_voronoi_length.size(); i++)
         myFile << sorted_voronoi_length[i] << "\n";
     myFile.close();
-    file = "Boustrophedon_length_test_rand_bigMap3.txt";
+    file = "Boustrophedon_length_test_rand_bigMap.txt";
     myFile.open(file);
     for(size_t i = 0; i < sorted_boustrophedon_length.size(); i++)
         myFile << sorted_boustrophedon_length[i] << "\n";
@@ -171,13 +171,13 @@ int main( ) {
 
     //Plot best and worst case map for Big_Map Boustro best at 3991 Voro best at 4598
     int indexToCheck = 4598;
-    Mat BoustroIndexPath = a->showPath(big_map, img_Boustrophedon, roadmapPoints_boustrophedon, sorted_start_points[indexToCheck], sorted_end_points[indexToCheck]);
-    Mat VoroIndexPath = a->showPath(big_map, src, roadmapPoints_voronoi, sorted_start_points[indexToCheck], sorted_end_points[indexToCheck]);
+    Mat BoustroIndexPath = a->showPath(big_map1, img_Boustrophedon, roadmapPoints_boustrophedon, sorted_start_points[indexToCheck], sorted_end_points[indexToCheck]);
+    Mat VoroIndexPath = a->showPath(big_map1, src, roadmapPoints_voronoi, sorted_start_points[indexToCheck], sorted_end_points[indexToCheck]);
     resize(BoustroIndexPath,BoustroIndexPath,BoustroIndexPath.size()*10,0,0,INTER_NEAREST);
     resize(VoroIndexPath,VoroIndexPath,VoroIndexPath.size()*10,0,0,INTER_NEAREST);
-    imwrite("Boustro_worst_index_4598.png", BoustroIndexPath);
-    imwrite("Voro_best_index_4598.png", VoroIndexPath);
-*/
+    imshow("Boustro_worst_index_4598.png", BoustroIndexPath);
+    imshow("Voro_best_index_4598.png", VoroIndexPath);
+
     waitKey(0);
 
     return 0;
