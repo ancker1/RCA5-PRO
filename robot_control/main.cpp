@@ -19,6 +19,7 @@ double robot_oz;
 Mat map;
 CircleDetection cd;
 vector<circleInfo> circles;
+//vector<circleInfo> hough_circles, tm_circles;
 
 void statCallback(ConstWorldStatisticsPtr& _msg) {
 	(void)_msg;
@@ -75,16 +76,118 @@ void cameraCallback(ConstImageStampedPtr& msg) {
 	std::size_t width  = msg->image().width();
 	std::size_t height = msg->image().height();
 	const char *data   = msg->image().data().c_str();
-    cv::Mat     im(int(height), int(width), CV_8UC3, const_cast<char *>(data));
-                vector<circleInfo> spottedCircles = cd.detectCircles(im, CD_SPR_MOD);
-	if (!spottedCircles.empty()) {
-		cd.calcCirclePositions(spottedCircles, im, map, robot.x, robot.y, robot_oz);
-		cd.drawCircles(im, spottedCircles);
-		cd.mergeMarbles(circles, spottedCircles);
+	cv::Mat im(int(height), int(width), CV_8UC3, const_cast<char *>(data));
+
+	// Map test
+	/*static vector<circleInfo> gazebo_circs;
+	if (gazebo_circs.empty()) {
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = 3.428680;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = 8.054530;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = -19.618000;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = 4.817180;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = 21.593500;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = -4.619010;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = -15.506500;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = -20.041000;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = -12.976700;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = -18.674800;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = -30.749800;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = 10.583100;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = 15.432400;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = 21.910100;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = -10.047900;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = 19.703400;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = -1.537490;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = 1.010860;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = 7.680640;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = 17.754700;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = 13.043300;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = -14.968400;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = -10.675000;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = 8.170800;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = -18.736400;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = -13.622700;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = -24.405900;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = 3.436480;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = -11.185400;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = -12.799300;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = -21.312400;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = 17.508700;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = 32.293500;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = -19.840200;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = -25.618900;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = 0.386578;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = -14.228000;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = 18.676100;
+		gazebo_circs.push_back(circleInfo());
+		gazebo_circs[gazebo_circs.size() - 1].map_x = -18.648300;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = -6.125670;
+
+		for (int i = 0; i < gazebo_circs.size(); i++) {
+			gazebo_circs[i].map_x = map.cols / 2 + gazebo_circs[i].map_x * M_TO_PIX;
+			gazebo_circs[i].map_y = map.rows / 2 - gazebo_circs[i].map_y * M_TO_PIX;
+		}
 	}
 
-    //cd.mapMarbles(map, circles, spottedCircles);
-    cvtColor(im, im, CV_BGR2RGB);
+	double error_hough, error_sf, error_tm;
+	vector<circleInfo> circ_hough = cd.detectCircles(im, CD_HOUGH);
+	if (!circ_hough.empty()) {
+		cd.calcCirclePositions(circ_hough, im, map, robot.x, robot.y, robot_oz);
+		//cd.drawCircles(im, circ_hough);
+		cd.mergeMarbles(hough_circles, circ_hough);
+
+		//error_hough = cd.error(circ_hough, gazebo_circs);
+	}
+
+	vector<circleInfo> circ_tm = cd.detectCircles(im, CD_TEMPLATE_MATCHING);
+	if (!circ_tm.empty()) {
+		cd.calcCirclePositions(circ_tm, im, map, robot.x, robot.y, robot_oz);
+		//cd.drawCircles(im, circ_hough);
+		cd.mergeMarbles(tm_circles, circ_tm);
+
+		//error_tm = cd.error(circ_tm, gazebo_circs);
+	}*/
+
+	vector<circleInfo> spottedCircles = cd.detectCircles(im, CD_TEMPLATE_MATCHING);
+
+	if (!spottedCircles.empty()) {
+		cd.calcCirclePositions(spottedCircles, im, map, robot.x, robot.y, robot_oz);
+		//cd.drawCircles(im, spottedCircles);
+		cd.mergeMarbles(circles, spottedCircles);
+
+		//error_sf = cd.error(spottedCircles, gazebo_circs);
+	}
+
+	cd.mapMarbles(map, /*gazebo_circs, hough_circles, circ_hough, tm_circles, circ_tm,*/ circles, spottedCircles);
+
+	// Distance test
+	/*putText(im, format("D: %5.2f", sqrt(pow(19.136600 - robot.x, 2) + pow(-1.046060 - robot.y, 2))), Point(40, 20), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255));
+	putText(im, format("Hough: %5.2f", error_hough), Point(40, 40), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255));
+	putText(im, format("TM: %5.2f", error_tm), Point(40, 60), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255));
+	putText(im, format("Square Fit: %5.2f", error_sf), Point(40, 80), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255));*/
+
+	im = im.clone();
+	cvtColor(im, im, CV_BGR2RGB);
+
 	mutex.lock();
     imshow("camera", im);
     //imshow("map", map);
@@ -151,9 +254,9 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 	arr[5] = c_angle;
 	arr[6] = c_range;
 
-	mutex.lock();
+	/*mutex.lock();
 	cv::imshow("lidar", im);
-	mutex.unlock();
+	mutex.unlock();*/
 }
 
 int main(int _argc, char **_argv) {
@@ -195,7 +298,7 @@ int main(int _argc, char **_argv) {
 	controlMessage.mutable_reset()->set_all(true);
 	worldPublisher->WaitForConnection();
 	worldPublisher->Publish(controlMessage);
-
+/*
 	float angle_max = arr[0];
 	float angle_min = arr[1];
 	float range_min = arr[2];
@@ -212,7 +315,7 @@ int main(int _argc, char **_argv) {
 	float right_border = -M_PI/6;
 	float right_border2 = -M_PI/2;
 	float range_border = 0.35;
-
+*/
 	const int key_left  = 81;
 	const int key_up    = 82;
 	const int key_down  = 84;
@@ -256,6 +359,11 @@ int main(int _argc, char **_argv) {
 	while (true) {
 		gazebo::common::Time::MSleep(10);   // MSleep(10) = 10 [ms] sleep.
 
+		// Map test
+		/*cout << "Hough count:  " << hough_circles.size() << endl;
+		cout << "TM count: " << tm_circles.size() << endl;
+		cout << "Square count: " << circles.size() << endl;*/
+
 		count++;
 		time += 0.010;
 
@@ -273,8 +381,8 @@ int main(int _argc, char **_argv) {
 		_vec ans = controller->getRelativeVectorToGoal();         // ^ should calculate the rel dist and angle directly.
 
 
-		std::cout << "ang. bw: " << ans.angle << std::endl;
-		std::cout << "robot orient: " << robot_oz << std::endl;
+		/*std::cout << "ang. bw: " << ans.angle << std::endl;
+		std::cout << "robot orient: " << robot_oz << std::endl;*/
 
 
 
@@ -288,9 +396,9 @@ int main(int _argc, char **_argv) {
 				relang = ans.angle - robot_oz;
 
 													// Comment out when not using GO_TO_GOAL
-		std::cout << "Obstacle: " << controller->getAngleToClosestObstacle() << std::endl               // Comment out when not using GO_TO_GOAL
+		/*std::cout << "Obstacle: " << controller->getAngleToClosestObstacle() << std::endl               // Comment out when not using GO_TO_GOAL
 							<< "Distance: " << controller->getDistanceToClosestObstacle() << std::endl               // Comment out when not using GO_TO_GOAL
-							<< "RelDist: " << controller->getRelativeDistanceToGoal() << std::endl;// Comment out when not using GO_TO_GOAL
+							<< "RelDist: " << controller->getRelativeDistanceToGoal() << std::endl;// Comment out when not using GO_TO_GOAL*/
 		controller->setRelativeAngleToGoal(relang);                 // Comment out when not using GO_TO_GOAL
 		controller->setRelativeDistanceToGoal(ans.length);          // Comment out when not using GO_TO_GOAL
 
@@ -305,7 +413,8 @@ int main(int _argc, char **_argv) {
 							<< "RelDist: "  << controller->getRelativeDistanceToGoal() << std::endl;
 
 		std::cout << "Dir: " << dir << std::endl;
-		*/
+*/
+
 		/*************************************************************/
 		/*       The following is used for testing purposes          */
 		/*************************************************************/
@@ -360,8 +469,8 @@ int main(int _argc, char **_argv) {
 						std::cout << "FAIL" << std::endl;
 				xTXT.close();
 				yTXT.close();
-
-				std::cout << "ALT" << std::endl;
+/*
+				std::cout << "ALT" << std::endl;*/
 				tTXT.open("t.txt", std::ios_base::app);
 				lTXT.open("l.txt", std::ios_base::app);
 				aTXT.open("a.txt", std::ios_base::app);
@@ -383,9 +492,12 @@ int main(int _argc, char **_argv) {
 	}
 	// Make sure to shut everything down.
 	gazebo::client::shutdown();
-		
 
-		std::string command = "../../gazebo_spawn.sh";
+
+	//imshow("Map", map);
+	//waitKey(0);
+
+		/*std::string command = "../../gazebo_spawn.sh";
 		command = command + " " + "-x 1 -y 2";
-		system(command.c_str());
+		system(command.c_str());*/
 }
