@@ -176,7 +176,7 @@ std::vector<Map_Node *> A_Star::find()
         node = open_list.at(0); // Default value
         for ( auto& n : open_list)
         {
-            if ( ( n->f() <= node->f() ) && ( n->h < node->h ) ) // Find a better choice
+            if ( ( n->f() <= node->f() ) ) // Find a better choice
                 node = n;
         }
         open_list.erase( remove( open_list.begin(), open_list.end(), node ), open_list.end() );
