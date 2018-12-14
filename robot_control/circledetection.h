@@ -16,15 +16,17 @@ using std::endl;
 #include <cmath>
 
 #define ERASE_ABOVE					25 // [m]
-#define TARGET_IMAGES_NO		100
-#define TARGET_IMAGES_SCALE	0.01 // Apparently resize doesn't like 1 / TARGET_IMAGES_NO
-#define MAP_ENLARGEMENT			5
-#define M_TO_PIX						MAP_ENLARGEMENT * 10 / 7
+#define TARGET_IMAGES_NO		10
+#define TARGET_IMAGES_SCALE	0.1 // Apparently resize doesn't like 1 / TARGET_IMAGES_NO
+#define MAP_ENLARGEMENT			10
+#define M_TO_PIX						MAP_ENLARGEMENT * 10. / 7.
 #define MARBLE_RADIUS_M			0.5f
 #define MARBLE_RADIUS_P			MARBLE_RADIUS_M * M_TO_PIX
 #define IMAGE_FOV						1.047f
+#define TEMPLATE_MARGIN			10
+#define TEMPLATE_THRESHOLD	0.8f
 
-enum detection_algorithm {CD_HOUGH, CD_SPR, CD_SPR_MOD};
+enum detection_algorithm {CD_HOUGH, CD_NOT_SPR, CD_SQUARE_FIT, CD_TEMPLATE_MATCHING};
 enum circle_side {LEFT, RIGHT};
 
 struct circleInfo {
@@ -57,7 +59,7 @@ public:
 	void								drawCircles(Mat& image, vector<circleInfo>& circles);
 	void								calcCirclePositions(vector<circleInfo>& spottedCircles, Mat& image, Mat& map, double x_robot, double y_robot, double angle_robot);
 	void								mergeMarbles(vector<circleInfo>& circles, vector<circleInfo> spottedCircles);
-	void								mapMarbles(Mat& map, vector<circleInfo>& circles, vector<circleInfo>& spottedCircles);
+	void								mapMarbles(Mat& map, /*vector<circleInfo>& g_circles, vector<circleInfo>& h_circles, vector<circleInfo>& tm_circles,*/ vector<circleInfo>& circles, vector<circleInfo>& spottedCircles);
 	//double							error(vector<circleInfo>& spottedCircles, vector<circleInfo>& g_circles);
 
 private:

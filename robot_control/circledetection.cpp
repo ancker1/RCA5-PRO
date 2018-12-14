@@ -108,8 +108,8 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 		}
 		break;
 
-	case CD_SPR:
-	case CD_SPR_MOD:
+	case CD_NOT_SPR:
+	case CD_SQUARE_FIT:
 		{
 			vector<vector<Point>>	contours;
 			vector<Vec4i>					hierarchy;
@@ -192,6 +192,7 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 						if (image_filtered.at<uchar>(bounding_rect.y + row, bounding_rect.x + col) != 0) {
 							if (col == bounding_rect.width && bounding_rect.width % 2 == 1) continue;
 							col < bounding_rect.width / 2 ? left_area++ : right_area++;
+							hull_area++;
 						}
 					}
 				}
@@ -205,17 +206,19 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 				putText(image, format("Ratio = %5.3f",	ratio),				Point(bounding_rect.x, bounding_rect.y), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(255, 255, 255));
 				rectangle(image, bounding_rect, Scalar(255, 255, 255));*/
 
-				if (algo == CD_SPR && 0.9 < ratio && ratio < 1.1) {
+				if (algo == CD_NOT_SPR && 0.9 < ratio && ratio < 1.1) {
 					static vector<targetImage> target_images;
 					if (target_images.empty()) {
 						target_images.push_back(targetImage());
-						target_images[0].img = imread("../SPR_target.png", IMREAD_COLOR);
+						target_images[0].img = imread("../target.png", IMREAD_COLOR);
 
 						if (!target_images[0].img.data) {
 							return circlevector;
 						}
 
-						inRange(target_images[0].img, Scalar(40, 0, 0), Scalar(160, 90, 80), target_images[0].img);
+
+						cvtColor(target_images[0].img, target_images[0].img, CV_BGR2HLS);
+						inRange(target_images[0].img, Scalar(110, 20, 0), Scalar(130, 200, 255), target_images[0].img);
 
 						for (unsigned int j = 1; j < TARGET_IMAGES_NO; j++) {
 							target_images.push_back(targetImage());
@@ -254,14 +257,14 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 					circlevector[circlevector.size() - 1].x0	= bounding_rect.x + bounding_rect.width / 2;
 					circlevector[circlevector.size() - 1].y0	= bounding_rect.y + bounding_rect.height / 2;
 
-				} else if (algo == CD_SPR_MOD) {
+				} else if (algo == CD_SQUARE_FIT) {
 					circlevector.push_back(circleInfo());
 
 					// Is circle?
 					if (/*(0.95 <= circularity && circularity <= 1.01) ||*/ (0.9 <= ratio && ratio <= 1.05)) {
 
 						// ONE CIRCLE
-						circlevector[circlevector.size() - 1].r		= bounding_rect.height / 2;
+						circlevector[circlevector.size() - 1].r		= max(bounding_rect.height, bounding_rect.width) / 2;
 						circlevector[circlevector.size() - 1].x0	= bounding_rect.x + bounding_rect.width / 2;
 						circlevector[circlevector.size() - 1].y0	= bounding_rect.y + bounding_rect.height / 2;
 
@@ -356,6 +359,74 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 		}
 		break;
 
+	case CD_TEMPLATE_MATCHING:
+			{
+			static vector<Mat> target_images;
+			static vector<Mat> matching_spaces;
+
+			GaussianBlur(image_filtered, image_filtered, Size(5, 5), 2);
+
+			if (target_images.empty()) {
+				target_images.push_back(Mat());
+				target_images[0] = imread("../target.png");
+
+				if (!target_images[0].data) {
+					return circlevector;
+				}
+
+				resize(target_images[0], target_images[0], Size(230, 230), 0, 0, CV_INTER_AREA);
+				cvtColor(target_images[0], target_images[0], CV_BGR2HLS);
+				inRange(target_images[0], Scalar(110, 20, 0), Scalar(130, 200, 255), target_images[0]);
+
+				for (unsigned int j = 1; j < TARGET_IMAGES_NO; j++) {
+					target_images.push_back(Mat());
+					float scale = 1 - TARGET_IMAGES_SCALE * j;
+					resize(target_images[0], target_images[j], Size(), scale, scale, CV_INTER_AREA);
+				}
+
+				// Create matching space
+				for (unsigned int j = 0; j < TARGET_IMAGES_NO; j++) {
+					matching_spaces.push_back(Mat());
+					GaussianBlur(target_images[j], target_images[j], Size(5, 5), 2);
+					matching_spaces[j].create(Size(image_filtered.cols - target_images[j].cols + 1, image_filtered.rows - target_images[j].rows + 1), CV_32FC1);
+				}
+			}
+
+			Mat ignore_parts = Mat::zeros(image.rows, image.cols, CV_8U);
+
+			for (int no = 0; no < TARGET_IMAGES_NO; no++) {
+				// Do normalized cross correlation for current target image
+				Mat dilated, thresholded_matching_space, local_maxima;
+				matchTemplate(image_filtered, target_images[no], matching_spaces[no], CV_TM_CCORR_NORMED);
+
+				// Threshold matching space at 95%
+				threshold(matching_spaces[no], thresholded_matching_space, TEMPLATE_THRESHOLD, 255, THRESH_BINARY);
+				thresholded_matching_space.convertTo(thresholded_matching_space, CV_8U);
+
+				// Find local maxima (by dilating matching space and find differences
+				dilate(matching_spaces[no], dilated, Mat());
+				compare(matching_spaces[no], dilated, local_maxima, CMP_EQ);
+
+				// thresholded matching space AND local maxima = isolates pixels both ABOVE THRESHOLD and is LOCAL MAXIMA
+				bitwise_and(local_maxima, thresholded_matching_space, local_maxima);
+
+				for (int row = 0; row < local_maxima.rows; row++) {
+					for (int col = 0; col < local_maxima.cols; col++) {
+						if (ignore_parts.at<uchar>(row, col) == 0 && local_maxima.at<uchar>(row, col) == 255) {
+							circlevector.push_back(circleInfo());
+							circlevector[circlevector.size() - 1].x0 = row + target_images[no].rows / 2;
+							circlevector[circlevector.size() - 1].y0 = col + target_images[no].cols / 2;
+							circlevector[circlevector.size() - 1].r = target_images[no].cols / 2;
+
+							// Every time a circle is detected, a rectangle with size of target image is placed, so no more circles can be spotted in that area
+							rectangle(ignore_parts, Rect(col - TEMPLATE_MARGIN < 0 ? 0 : col - TEMPLATE_MARGIN, row - TEMPLATE_MARGIN < 0 ? 0 : row - TEMPLATE_MARGIN, target_images[no].cols + TEMPLATE_MARGIN, target_images[no].rows + TEMPLATE_MARGIN), 255, CV_FILLED);
+						}
+					}
+				}
+			}
+		}
+		break;
+
 	default:;
 	}
 
@@ -403,10 +474,10 @@ void CircleDetection::calcCirclePositions(vector<circleInfo>& spottedCircles, Ma
 		spottedCircles[i].d			= MARBLE_RADIUS_M * f / spottedCircles[i].r;
 		//spottedCircles[i].d			= MARBLE_RADIUS_M / tan(IMAGE_FOV * spottedCircles[i].r / image.cols);
 
-		if (ERASE_ABOVE < spottedCircles[i].d) {
+		/*if (ERASE_ABOVE < spottedCircles[i].d) {
 			spottedCircles.erase(spottedCircles.begin() + i);
 			continue;
-		}
+		}*/
 
 		spottedCircles[i].angle	= IMAGE_FOV * (0.5 - float(spottedCircles[i].x0) / image.cols);
 		spottedCircles[i].map_x	= w_shift + M_TO_PIX * (spottedCircles[i].d * cos(angle_robot + spottedCircles[i].angle) + x_robot);
@@ -460,13 +531,50 @@ void CircleDetection::mergeMarbles(vector<circleInfo>& circles, vector<circleInf
 			break;
 		}
 	}
+
 }
 
-void CircleDetection::mapMarbles(Mat& map, vector<circleInfo>& circles, vector<circleInfo>& spottedCircles) {
+void CircleDetection::mapMarbles(Mat& map, /*vector<circleInfo>& g_circles, vector<circleInfo>& h_circles, vector<circleInfo>& tm_circles,*/ vector<circleInfo>& circles, vector<circleInfo>& spottedCircles) {
 	static Mat map_orig;
 	if (!map_orig.data) {
 		map_orig = map.clone();
 	}
+
+	/*
+	const Scalar circ_colors[4] = {Scalar(255, 0, 0), Scalar(0, 0, 255), Scalar(0, 255, 0), Scalar(255, 0, 255)};
+
+	map = map_orig.clone();
+
+	//putText(map, format("Actual: %d", g_circles.size()), Point(10, 25), FONT_HERSHEY_SIMPLEX, 0.5, circ_colors[0]);
+	// Circle marbles
+	for (unsigned int i = 0; i < g_circles.size(); i++) {
+		circle(map, Point(int(round(g_circles[i].map_x)), int(round(g_circles[i].map_y))), int(ceil(MARBLE_RADIUS_P)), circ_colors[0], 2);
+	}
+
+	//putText(map, format("Hough: %d", h_circles.size()), Point(10, 40), FONT_HERSHEY_SIMPLEX, 0.5, circ_colors[1]);
+	// Circle marbles
+	for (unsigned int i = 0; i < h_circles.size(); i++) {
+		putText(map, format("%d", h_circles[i].n), Point(h_circles[i].map_x, h_circles[i].map_y - 10), FONT_HERSHEY_SIMPLEX, 0.3, circ_colors[1]);
+		circle(map, Point(int(round(h_circles[i].map_x)), int(round(h_circles[i].map_y))), int(ceil(MARBLE_RADIUS_P)), circ_colors[1]);
+	}
+
+	//putText(map, format("Hough: %d", h_circles.size()), Point(10, 40), FONT_HERSHEY_SIMPLEX, 0.5, circ_colors[1]);
+	// Circle marbles
+	for (unsigned int i = 0; i < tm_circles.size(); i++) {
+		putText(map, format("%d", tm_circles[i].n), Point(tm_circles[i].map_x, tm_circles[i].map_y - 10), FONT_HERSHEY_SIMPLEX, 0.3, circ_colors[2]);
+		circle(map, Point(int(round(tm_circles[i].map_x)), int(round(tm_circles[i].map_y))), int(ceil(MARBLE_RADIUS_P)), circ_colors[2]);
+	}
+
+	//putText(map, format("Square Fit: %d", circles.size()), Point(10, 55), FONT_HERSHEY_SIMPLEX, 0.5, circ_colors[3]);
+	// Circle marbles
+	for (unsigned int i = 0; i < circles.size(); i++) {
+		putText(map, format("%d", circles[i].n), Point(circles[i].map_x + 10, circles[i].map_y), FONT_HERSHEY_SIMPLEX, 0.3, circ_colors[3]);
+		circle(map, Point(int(round(circles[i].map_x)), int(round(circles[i].map_y))), int(ceil(MARBLE_RADIUS_P)), circ_colors[3]);
+	}*/
+
+
+
+
 
 	// Dot spotted circles
 	for (unsigned int i = 0; i < spottedCircles.size(); i++) {
@@ -487,7 +595,7 @@ void CircleDetection::mapMarbles(Mat& map, vector<circleInfo>& circles, vector<c
 	for (unsigned int i = 0; i < spottedCircles.size(); i++) {
 		double min_d = DBL_MAX;
 		for (unsigned int j = 0; j < g_circles.size(); j++) {
-			double d = sqrt(pow(spottedCircles[i].map_x - g_circles[j].map_x, 2) + pow(spottedCircles[i].map_y - g_circles[j].map_y, 2));
+			double d = sqrt(pow(0.7 * (spottedCircles[i].map_x - g_circles[j].map_x), 2) + pow(0.7 * (spottedCircles[i].map_y - g_circles[j].map_y), 2));
 			min_d = std::min(d, min_d);
 		}
 
