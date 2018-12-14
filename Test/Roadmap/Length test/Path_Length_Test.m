@@ -104,3 +104,4 @@ Equal = sum(Boustrophedon_length_test_rand_bigMap3-voronoi_length_test_rand_bigM
 BigMap3_EQPercent = Equal/size(voronoi_length_test_rand_bigMap3,1)*100
 BigMap3_BoustPercent = Boust/size(voronoi_length_test_rand_bigMap3,1)*100
 BigMap3_VoroPercent = Voro/size(voronoi_length_test_rand_bigMap3,1)*100
+

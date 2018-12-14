@@ -77,7 +77,6 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 	cvtColor(image, image_filtered, CV_RGB2HLS);
 	inRange(image_filtered, Scalar(110, 20, 0), Scalar(130, 200, 255), image_filtered);
 	//inRange(image, Scalar(40, 0, 0), Scalar(160, 90, 80), image_filtered);
-
 	vector<circleInfo> circlevector;
 
 	switch (algo) {

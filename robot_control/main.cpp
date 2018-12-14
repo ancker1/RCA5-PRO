@@ -7,12 +7,12 @@
 #include "fuzzycontroller.h"
 
 #include <iostream>
-#include <string>
+#include <random>
 
 #include <math.h>
-#include "circledetection.h"
+//#include "circledetection.h"
 
-static boost::mutex mutex;
+static boost::mutex mutex_cam;
 float arr[7] = { 0 };
 coordinate robot;
 double robot_oz;
@@ -21,55 +21,57 @@ CircleDetection cd;
 vector<circleInfo> circles;
 //vector<circleInfo> hough_circles, tm_circles;
 
-void statCallback(ConstWorldStatisticsPtr& _msg) {
-	(void)_msg;
+std::default_random_engine generator(time(NULL));
 
-	// Dump the message contents to stdout.
-	//  std::cout << _msg->DebugString();
-	//  std::cout << std::flush;
+void statCallback(ConstWorldStatisticsPtr& _msg) {
+    (void)_msg;
+
+    // Dump the message contents to stdout.
+    //  std::cout << _msg->DebugString();
+    //  std::cout << std::flush;
 }
 
 void poseCallback(ConstPosesStampedPtr& _msg) {
-	// Dump the message contents to stdout.
-	//  std::cout << _msg->DebugString();
+    // Dump the message contents to stdout.
+    //  std::cout << _msg->DebugString();
 
-	for (int i = 0; i < _msg->pose_size(); i++) {
-		if (_msg->pose(i).name() == "pioneer2dx") {
-			std::cout << std::setprecision(2) << std::fixed << std::setw(6)
-								<< _msg->pose(i).position().x() << std::setw(6)
-								<< _msg->pose(i).position().y() << std::setw(6) << std::endl;
-									 /*
-								<< _msg->pose(i).position().z() << std::setw(6)
-								<< _msg->pose(i).orientation().w() << std::setw(6)
-								<< _msg->pose(i).orientation().x() << std::setw(6)
-								<< _msg->pose(i).orientation().y() << std::setw(6)
-								<< _msg->pose(i).orientation().z() << std::endl;
-								*/
-			//std::cout << "_________________________________" << std::endl;
-			//std::cout << "X: " << _msg->pose(i).position().x() << std::endl << "Y: " << _msg->pose(i).position().y() << std::endl << "Z: " << _msg->pose(i).position().z() << std::endl;
-			//std::cout << "O_X: " << _msg->pose(i).orientation().x() << std::endl << "O_Y: " << _msg->pose(i).orientation().y() << std::endl << "O_Z: " << _msg->pose(i).orientation().z() << std::endl << "O_W: " << _msg->pose(i).orientation().w() << std::endl;
-		//std::cout << "O_Z: " << _msg->pose(i).orientation().z() << std::endl;
-		//std::cout << "O_W: " << _msg->pose(i).orientation().w() << std::endl;
+    for (int i = 0; i < _msg->pose_size(); i++) {
+        if (_msg->pose(i).name() == "pioneer2dx") {
+        //	std::cout << std::setprecision(2) << std::fixed << std::setw(6)
+        //						<< _msg->pose(i).position().x() << std::setw(6)
+        //						<< _msg->pose(i).position().y() << std::setw(6) << std::endl;
+                                     /*
+                                << _msg->pose(i).position().z() << std::setw(6)
+                                << _msg->pose(i).orientation().w() << std::setw(6)
+                                << _msg->pose(i).orientation().x() << std::setw(6)
+                                << _msg->pose(i).orientation().y() << std::setw(6)
+                                << _msg->pose(i).orientation().z() << std::endl;
+                                */
+            //std::cout << "_________________________________" << std::endl;
+            //std::cout << "X: " << _msg->pose(i).position().x() << std::endl << "Y: " << _msg->pose(i).position().y() << std::endl << "Z: " << _msg->pose(i).position().z() << std::endl;
+            //std::cout << "O_X: " << _msg->pose(i).orientation().x() << std::endl << "O_Y: " << _msg->pose(i).orientation().y() << std::endl << "O_Z: " << _msg->pose(i).orientation().z() << std::endl << "O_W: " << _msg->pose(i).orientation().w() << std::endl;
+        //std::cout << "O_Z: " << _msg->pose(i).orientation().z() << std::endl;
+        //std::cout << "O_W: " << _msg->pose(i).orientation().w() << std::endl;
 
-		double x = double(_msg->pose(i).orientation().x());
-		double y = double(_msg->pose(i).orientation().y());
-		double z = double(_msg->pose(i).orientation().z());
-		double w = double(_msg->pose(i).orientation().w());
+        double x = double(_msg->pose(i).orientation().x());
+        double y = double(_msg->pose(i).orientation().y());
+        double z = double(_msg->pose(i).orientation().z());
+        double w = double(_msg->pose(i).orientation().w());
 
-		double siny_cosp = 2*(w*z+x*y);
-		double cosy_cosp = 1-2*(y*y+z*z);
+        double siny_cosp = 2*(w*z+x*y);
+        double cosy_cosp = 1-2*(y*y+z*z);
 
-		double yaw = atan2(siny_cosp,cosy_cosp); // Convert quaternion to roll-pitch-yaw.
-		robot_oz = yaw; // Testing purposes.     MAKE A CLASS CALLED ROBOT?
-		//std::cout << "yaw: " << yaw << std::endl;  // This is the rotation about the z-axis. Going from -Pi to Pi.
-		//std::cout << "x: " << _msg->pose(i).position().x() << std::endl;
-		//std::cout << "y: " << _msg->pose(i).position().y() << std::endl;
-		robot.x = double(_msg->pose(i).position().x()); // This will get the current coordinate of the robot
-		robot.y = double(_msg->pose(i).position().y()); // This will get the current coordinate of the robot
+        double yaw = atan2(siny_cosp,cosy_cosp); // Convert quaternion to roll-pitch-yaw.
+        robot_oz = yaw; // Testing purposes.     MAKE A CLASS CALLED ROBOT?
+        //std::cout << "yaw: " << yaw << std::endl;  // This is the rotation about the z-axis. Going from -Pi to Pi.
+        //std::cout << "x: " << _msg->pose(i).position().x() << std::endl;
+        //std::cout << "y: " << _msg->pose(i).position().y() << std::endl;
+        robot.x = double(_msg->pose(i).position().x()); // This will get the current coordinate of the robot
+        robot.y = double(_msg->pose(i).position().y()); // This will get the current coordinate of the robot
 
 
-		}
-	}
+        }
+    }
 }
 
 void cameraCallback(ConstImageStampedPtr& msg) {
@@ -259,6 +261,52 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 	mutex.unlock();*/
 }
 
+
+
+void init_robot(cv::Point2f * start, float * orient, cv::Point2f * goal, gazebo::transport::PublisherPtr movP)
+{
+    /* GENERATE RANDOM START AND GOAL HERE */
+    // Generate a pose
+    ignition::math::Pose3d pose(double(0), 0, 0, 0, 0, double(0));
+    // Convert to a pose message
+    gazebo::msgs::Pose msg;
+    gazebo::msgs::Set(&msg, pose);
+    movP->Publish(msg);
+
+    std::uniform_real_distribution<float> distribution(-3.0, -5.0);
+    start->x = distribution(generator);
+    distribution.param(std::uniform_real_distribution<float>::param_type(-3.0, 3.0));
+    start->y = distribution(generator);
+    distribution.param(std::uniform_real_distribution<float>::param_type(-3.14, 3.14));
+    *orient = distribution(generator);
+    distribution.param(std::uniform_real_distribution<float>::param_type(4.0, 5.5));
+    goal->x = distribution(generator);
+    distribution.param(std::uniform_real_distribution<float>::param_type(-3.0, 3.0));
+    goal->y =  distribution(generator);
+
+
+    std::string command = "/home/mikkel/Documents/git_workspace/RCA5-PRO/gazebo_spawn.sh";
+    command += " -x ";
+    command += std::to_string(start->x);
+    command += " -y ";
+    command += std::to_string(start->y);
+    command += " -t ";
+    command += std::to_string(*orient);
+    std::cout << command << std::endl;
+    //command += " -x -2 -y 2 -t 1.57";
+    system(command.c_str());
+
+    while( !(  robot.x > start->x - 0.1 && robot.x < start->x + 0.1 && robot.y < start->y + 0.1 && robot.y > start->y - 0.1 ) )
+    {
+        std::cout << "x" << start->x << std::endl;
+        std::cout << "x" << robot.x << std::endl;
+        std::cout << "y" << start->y << std::endl;
+        std::cout << "y" << robot.y << std::endl;
+    }
+
+}
+
+
 int main(int _argc, char **_argv) {
 /*
 	map = imread("../../map_control/big_floor_plan.png");
@@ -266,30 +314,27 @@ int main(int _argc, char **_argv) {
 	resize(map, map, map.size() * MAP_ENLARGEMENT, 0, 0, INTER_NEAREST);
 */
 
-	// Load gazebo
-	gazebo::client::setup(_argc, _argv);
 
-	// Create our node for communication
-	gazebo::transport::NodePtr node(new gazebo::transport::Node());
-	node->Init();
+    // Load gazebo
+    gazebo::client::setup(_argc, _argv);
 
-	// Listen to Gazebo topics
-	gazebo::transport::SubscriberPtr statSubscriber =
-		node->Subscribe("~/world_stats", statCallback);
+    // Create our node for communication
+    gazebo::transport::NodePtr node(new gazebo::transport::Node());
+    node->Init();
+
+    // Listen to Gazebo topics
+    gazebo::transport::SubscriberPtr statSubscriber =
+        node->Subscribe("~/world_stats", statCallback);
 
 
-	gazebo::transport::SubscriberPtr poseSubscriber =
-		node->Subscribe("~/pose/info", poseCallback);
+    gazebo::transport::SubscriberPtr poseSubscriber =
+        node->Subscribe("~/pose/info", poseCallback);
 
-	gazebo::transport::SubscriberPtr cameraSubscriber =
-		node->Subscribe("~/pioneer2dx/camera/link/camera/image", cameraCallback);
+    gazebo::transport::SubscriberPtr cameraSubscriber =
+        node->Subscribe("~/pioneer2dx/camera/link/camera/image", cameraCallback);
 
-	gazebo::transport::SubscriberPtr lidarSubscriber =
-		node->Subscribe("~/pioneer2dx/hokuyo/link/laser/scan", lidarCallback);
-
-	// Publish to the robot vel_cmd topic
-	gazebo::transport::PublisherPtr movementPublisher =
-		node->Advertise<gazebo::msgs::Pose>("~/pioneer2dx/vel_cmd");
+    gazebo::transport::SubscriberPtr lidarSubscriber =
+        node->Subscribe("~/pioneer2dx/hokuyo/link/laser/scan", lidarCallback);
 
 	// Publish a reset of the world
 	gazebo::transport::PublisherPtr worldPublisher =
@@ -304,10 +349,10 @@ int main(int _argc, char **_argv) {
 	float range_min = arr[2];
 	float range_max = arr[3];
 
-	std::cout << "angle_max: " << angle_max << std::endl;
-	std::cout << "angle_min: " << angle_min << std::endl;
-	std::cout << "range_min: " << range_min << std::endl;
-	std::cout << "range_max: " << range_max << std::endl;
+    float angle_max = arr[0];
+    float angle_min = arr[1];
+    float range_min = arr[2];
+    float range_max = arr[3];
 
 
 	float left_border = M_PI/6;
