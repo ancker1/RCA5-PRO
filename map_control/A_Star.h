@@ -36,7 +36,8 @@ const int NODE_TYPE_END = 3;
 const int G_DIRECT = 10;
 const int G_SKEW = 14;
 
-class Map_Node {
+class Map_Node
+{
     public:
         int x = -1, y = -1, h = 0, g = 0;
         int type = NODE_TYPE_ZERO, flag = NODE_FLAG_UNDEFINED;
@@ -59,7 +60,8 @@ class Map_Node {
         }
 };
 
-class Map_Size {
+class Map_Size
+{
     public:
         unsigned long width = 0;
         unsigned long height = 0;
@@ -74,7 +76,8 @@ class Map_Size {
         }
 };
 
-class A_Star {
+class A_Star
+{
     public:
         A_Star();
         A_Star(const cv::Mat &draw);
@@ -98,6 +101,7 @@ class A_Star {
         vector<Point> calculateTestPoints(Mat roadmap, vector<Point> roadmapPoints);
         vector<double> getResults();
         void calculateDistThread(Mat roadmap, vector<Point> testPoints, vector<Point> roadmapPoints, int threadNumber, int amountOfThreads); // is not used because of threads in qt
+        Mat showPath(Mat smallworld, Mat roadmap, vector<Point> roadmapPoints, Point startPoints, Point endPoints);
         vector<double> findAstarPathLengthsForRoadmapRandom(Mat roadmap, vector<Point> roadmapPoints ,vector<Point> startPoints, vector<Point> endPoints);
         vector<Point> checkInvalidTestPoints(Mat roadmap, vector<Point> roadmapPoints, vector<Point> checkpoints);
         vector<Point> findNRemoveDiff(vector<Point> testPoint1, vector<Point> testPoint2);

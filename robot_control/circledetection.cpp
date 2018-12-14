@@ -11,7 +11,6 @@ vector<circleInfo>CircleDetection::detectCircles(Mat& image, detection_algorithm
 	// Isolate marble
 	inRange(image, Scalar(0, 0, 40), Scalar(80, 90, 160), image_filtered);
 	//inRange(image, Scalar(40, 0, 0), Scalar(160, 90, 80), image_filtered);
-
 	vector<circleInfo> circlevector;
 
 	switch (algo) {
