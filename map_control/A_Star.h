@@ -101,6 +101,7 @@ class A_Star
         vector<Point> calculateTestPoints(Mat roadmap, vector<Point> roadmapPoints);
         vector<double> getResults();
         void calculateDistThread(Mat roadmap, vector<Point> testPoints, vector<Point> roadmapPoints, int threadNumber, int amountOfThreads); // is not used because of threads in qt
+        Mat showPath(Mat smallworld, Mat roadmap, vector<Point> roadmapPoints, Point startPoints, Point endPoints);
         vector<double> findAstarPathLengthsForRoadmapRandom(Mat roadmap, vector<Point> roadmapPoints ,vector<Point> startPoints, vector<Point> endPoints);
         vector<Point> checkInvalidTestPoints(Mat roadmap, vector<Point> roadmapPoints, vector<Point> checkpoints);
         vector<Point> findNRemoveDiff(vector<Point> testPoint1, vector<Point> testPoint2);
