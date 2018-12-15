@@ -38,7 +38,7 @@
           </clip>
         </camera>
         <always_on>0</always_on>
-        <update_rate>3</update_rate>
+        <update_rate>1</update_rate>
         <visualize>true</visualize>
       </sensor>
     </link>

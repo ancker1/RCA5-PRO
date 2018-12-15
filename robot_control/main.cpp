@@ -1,4 +1,4 @@
-#include <gazebo/gazebo_client.hh>
+﻿#include <gazebo/gazebo_client.hh>
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/transport/transport.hh>
 
@@ -12,6 +12,8 @@
 #include <math.h>
 #include "circledetection.h"
 
+#include <fstream>
+
 static boost::mutex mutex;
 float arr[7] = { 0 };
 coordinate robot;
@@ -19,7 +21,13 @@ double robot_oz;
 Mat map;
 CircleDetection cd;
 vector<circleInfo> circles;
-//vector<circleInfo> hough_circles, tm_circles;
+vector<circleInfo> hough_circles, tm_circles;
+
+double error_hough, error_sf, error_tm;
+unsigned int n_hough, n_sf, n_tm;
+unsigned int iterations;
+const int no_of_ds = 39;
+double err_data[no_of_ds][7];
 
 void statCallback(ConstWorldStatisticsPtr& _msg) {
 	(void)_msg;
@@ -33,7 +41,7 @@ void poseCallback(ConstPosesStampedPtr& _msg) {
 	// Dump the message contents to stdout.
 	//  std::cout << _msg->DebugString();
 
-	for (int i = 0; i < _msg->pose_size(); i++) {
+	/*for (int i = 0; i < _msg->pose_size(); i++) {
 		if (_msg->pose(i).name() == "pioneer2dx") {
 			std::cout << std::setprecision(2) << std::fixed << std::setw(6)
 								<< _msg->pose(i).position().x() << std::setw(6)
@@ -51,7 +59,7 @@ void poseCallback(ConstPosesStampedPtr& _msg) {
 		//std::cout << "O_Z: " << _msg->pose(i).orientation().z() << std::endl;
 		//std::cout << "O_W: " << _msg->pose(i).orientation().w() << std::endl;
 
-		double x = double(_msg->pose(i).orientation().x());
+		/*double x = double(_msg->pose(i).orientation().x());
 		double y = double(_msg->pose(i).orientation().y());
 		double z = double(_msg->pose(i).orientation().z());
 		double w = double(_msg->pose(i).orientation().w());
@@ -66,10 +74,8 @@ void poseCallback(ConstPosesStampedPtr& _msg) {
 		//std::cout << "y: " << _msg->pose(i).position().y() << std::endl;
 		robot.x = double(_msg->pose(i).position().x()); // This will get the current coordinate of the robot
 		robot.y = double(_msg->pose(i).position().y()); // This will get the current coordinate of the robot
-
-
 		}
-	}
+	}*/
 }
 
 void cameraCallback(ConstImageStampedPtr& msg) {
@@ -79,124 +85,85 @@ void cameraCallback(ConstImageStampedPtr& msg) {
 	cv::Mat im(int(height), int(width), CV_8UC3, const_cast<char *>(data));
 
 	// Map test
-	/*static vector<circleInfo> gazebo_circs;
+	static double marble_x = 2;
+	vector<circleInfo> gazebo_circs;
 	if (gazebo_circs.empty()) {
 		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = 3.428680;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = 8.054530;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = -19.618000;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = 4.817180;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = 21.593500;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = -4.619010;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = -15.506500;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = -20.041000;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = -12.976700;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = -18.674800;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = -30.749800;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = 10.583100;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = 15.432400;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = 21.910100;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = -10.047900;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = 19.703400;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = -1.537490;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = 1.010860;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = 7.680640;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = 17.754700;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = 13.043300;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = -14.968400;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = -10.675000;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = 8.170800;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = -18.736400;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = -13.622700;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = -24.405900;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = 3.436480;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = -11.185400;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = -12.799300;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = -21.312400;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = 17.508700;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = 32.293500;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = -19.840200;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = -25.618900;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = 0.386578;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = -14.228000;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = 18.676100;
-		gazebo_circs.push_back(circleInfo());
-		gazebo_circs[gazebo_circs.size() - 1].map_x = -18.648300;
-		gazebo_circs[gazebo_circs.size() - 1].map_y = -6.125670;
+		gazebo_circs[gazebo_circs.size() - 1].map_x = marble_x;
+		gazebo_circs[gazebo_circs.size() - 1].map_y = 0.;
 
-		for (int i = 0; i < gazebo_circs.size(); i++) {
+		for (unsigned int i = 0; i < gazebo_circs.size(); i++) {
 			gazebo_circs[i].map_x = map.cols / 2 + gazebo_circs[i].map_x * M_TO_PIX;
 			gazebo_circs[i].map_y = map.rows / 2 - gazebo_circs[i].map_y * M_TO_PIX;
 		}
 	}
 
-	double error_hough, error_sf, error_tm;
+	if (iterations == 0) {
+		for (int i = 0; i < no_of_ds; i++) {
+			err_data[i][0] = i + 2;
+			for (int j = 1; j < 7; j++) {
+				err_data[i][j] = 0;
+			}
+		}
+	}
+
+	static double my_x = 0;
+
 	vector<circleInfo> circ_hough = cd.detectCircles(im, CD_HOUGH);
 	if (!circ_hough.empty()) {
-		cd.calcCirclePositions(circ_hough, im, map, robot.x, robot.y, robot_oz);
+		cd.calcCirclePositions(circ_hough, im, map, my_x, 0, 0);
 		//cd.drawCircles(im, circ_hough);
-		cd.mergeMarbles(hough_circles, circ_hough);
-
-		//error_hough = cd.error(circ_hough, gazebo_circs);
+		cd.avgerror(circ_hough, gazebo_circs, err_data[iterations % no_of_ds][1], err_data[iterations % no_of_ds][4]);
+		//cd.mergeMarbles(hough_circles, circ_hough);
 	}
 
 	vector<circleInfo> circ_tm = cd.detectCircles(im, CD_TEMPLATE_MATCHING);
 	if (!circ_tm.empty()) {
-		cd.calcCirclePositions(circ_tm, im, map, robot.x, robot.y, robot_oz);
+		cd.calcCirclePositions(circ_tm, im, map, my_x, 0, 0);
 		//cd.drawCircles(im, circ_hough);
-		cd.mergeMarbles(tm_circles, circ_tm);
-
-		//error_tm = cd.error(circ_tm, gazebo_circs);
-	}*/
-
-	vector<circleInfo> spottedCircles = cd.detectCircles(im, CD_TEMPLATE_MATCHING);
-
-	if (!spottedCircles.empty()) {
-		cd.calcCirclePositions(spottedCircles, im, map, robot.x, robot.y, robot_oz);
-		//cd.drawCircles(im, spottedCircles);
-		cd.mergeMarbles(circles, spottedCircles);
-
-		//error_sf = cd.error(spottedCircles, gazebo_circs);
+		cd.avgerror(circ_tm, gazebo_circs, err_data[iterations % no_of_ds][2], err_data[iterations % no_of_ds][5]);
+		//cd.mergeMarbles(tm_circles, circ_tm);
 	}
 
-	cd.mapMarbles(map, /*gazebo_circs, hough_circles, circ_hough, tm_circles, circ_tm,*/ circles, spottedCircles);
+	vector<circleInfo> spottedCircles = cd.detectCircles(im, CD_SQUARE_FIT);
+	if (!spottedCircles.empty()) {
+		cd.calcCirclePositions(spottedCircles, im, map, my_x, 0, 0);
+		//cd.drawCircles(im, spottedCircles);
+		cd.avgerror(spottedCircles, gazebo_circs, err_data[iterations % no_of_ds][3], err_data[iterations % no_of_ds][6]);
+		//cd.mergeMarbles(circles, spottedCircles);
+	}
+
+	//cd.mapMarbles(map, gazebo_circs, hough_circles, tm_circles, circles, spottedCircles);
 
 	// Distance test
-	/*putText(im, format("D: %5.2f", sqrt(pow(19.136600 - robot.x, 2) + pow(-1.046060 - robot.y, 2))), Point(40, 20), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255));
-	putText(im, format("Hough: %5.2f", error_hough), Point(40, 40), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255));
-	putText(im, format("TM: %5.2f", error_tm), Point(40, 60), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255));
-	putText(im, format("Square Fit: %5.2f", error_sf), Point(40, 80), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255));*/
+	/*putText(im, format("D: %5.2f", sqrt(pow(40 - robot.x, 2) + pow(0 - robot.y, 2))), Point(20, 20), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255));
+	putText(im, format("%2.0f, %2.0f", robot.x, robot.y), Point(20, 40), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255));
+	putText(im, format("Hough: %5.2f", error_hough), Point(20, 60), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255));
+	putText(im, format("TM: %5.2f", error_tm), Point(20, 80), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255));
+	putText(im, format("Square Fit: %5.2f", error_sf), Point(20, 100), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255));*/
 
 	im = im.clone();
 	cvtColor(im, im, CV_BGR2RGB);
 
-	mutex.lock();
-    imshow("camera", im);
-    //imshow("map", map);
-	mutex.unlock();
+	/*mutex.lock();
+	imshow("camera", im);
+	//imshow("map", map);
+	mutex.unlock();*/
+
+	std::printf("%2.0f: %5.2f, %5.2f, %5.2f, %3.0f, %3.0f, %3.0f\n", err_data[iterations % no_of_ds][0], err_data[iterations % no_of_ds][1], err_data[iterations % no_of_ds][2], err_data[iterations % no_of_ds][3], err_data[iterations % no_of_ds][4], err_data[iterations % no_of_ds][5], err_data[iterations % no_of_ds][6]);
+
+	iterations++;
+
+	//my_x = iterations % no_of_ds - 0.5 * (no_of_ds + 1) - 1;
+	marble_x = iterations % no_of_ds + 2;
+
+	std::string command = "(gz model -m marble_clone_19 -x " + std::to_string(marble_x) + " -y 0 -z 0.5)";
+	system(command.c_str());
 }
 
 void lidarCallback(ConstLaserScanStampedPtr &msg) {
 	//  std::cout << ">> " << msg->DebugString() << std::endl;
-	float angle_min = float(msg->scan().angle_min());
+	/*float angle_min = float(msg->scan().angle_min());
 
 	//  double angle_max = msg->scan().angle_max();
 	float angle_increment = float(msg->scan().angle_step());
@@ -254,17 +221,17 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 	arr[5] = c_angle;
 	arr[6] = c_range;
 
-	/*mutex.lock();
+	mutex.lock();
 	cv::imshow("lidar", im);
 	mutex.unlock();*/
 }
 
 int main(int _argc, char **_argv) {
-/*
+
 	map = imread("../../map_control/big_floor_plan.png");
 	if (!map.data) return 1;
 	resize(map, map, map.size() * MAP_ENLARGEMENT, 0, 0, INTER_NEAREST);
-*/
+
 
 	// Load gazebo
 	gazebo::client::setup(_argc, _argv);
@@ -274,18 +241,18 @@ int main(int _argc, char **_argv) {
 	node->Init();
 
 	// Listen to Gazebo topics
-	gazebo::transport::SubscriberPtr statSubscriber =
+	/*gazebo::transport::SubscriberPtr statSubscriber =
 		node->Subscribe("~/world_stats", statCallback);
 
 
 	gazebo::transport::SubscriberPtr poseSubscriber =
-		node->Subscribe("~/pose/info", poseCallback);
+		node->Subscribe("~/pose/info", poseCallback);*/
 
 	gazebo::transport::SubscriberPtr cameraSubscriber =
 		node->Subscribe("~/pioneer2dx/camera/link/camera/image", cameraCallback);
 
-	gazebo::transport::SubscriberPtr lidarSubscriber =
-		node->Subscribe("~/pioneer2dx/hokuyo/link/laser/scan", lidarCallback);
+/*gazebo::transport::SubscriberPtr lidarSubscriber =
+		node->Subscribe("~/pioneer2dx/hokuyo/link/laser/scan", lidarCallback);*/
 
 	// Publish to the robot vel_cmd topic
 	gazebo::transport::PublisherPtr movementPublisher =
@@ -315,14 +282,14 @@ int main(int _argc, char **_argv) {
 	float right_border = -M_PI/6;
 	float right_border2 = -M_PI/2;
 	float range_border = 0.35;
-*/
+
 	const int key_left  = 81;
 	const int key_up    = 82;
 	const int key_down  = 84;
-	const int key_right = 83;
+	const int key_right = 83;*/
 	const int key_esc   = 27;
 
-	float speed = 0.0;
+	/*float speed = 0.0;
 	float dir   = 0.0;
 
 		FuzzyController* controller = new FuzzyController(GO_TO_GOAL);
@@ -338,7 +305,7 @@ int main(int _argc, char **_argv) {
 	//  std::cout << "Vector length: " << ans.length << std::endl;  // TEST
 	//  std::cout << "Vector angle: " <<  ans.angle << std::endl;   // TEST
 
-		std::ofstream xTXT("x.txt");
+		/*std::ofstream xTXT("x.txt");
 		std::ofstream yTXT("y.txt");
 		std::ofstream tTXT("t.txt");
 		std::ofstream lTXT("l.txt");
@@ -347,22 +314,17 @@ int main(int _argc, char **_argv) {
 		yTXT.close();
 		tTXT.close();
 		lTXT.close();
-		aTXT.close();
+		aTXT.close();*/
 
 		int count = 0;
 		double time = 0;
 		double relang = 0;
 
-		controller->setPath(PATH_L);
+//		controller->setPath(PATH_L);
 
 	// Loop
 	while (true) {
 		gazebo::common::Time::MSleep(10);   // MSleep(10) = 10 [ms] sleep.
-
-		// Map test
-		/*cout << "Hough count:  " << hough_circles.size() << endl;
-		cout << "TM count: " << tm_circles.size() << endl;
-		cout << "Square count: " << circles.size() << endl;*/
 
 		count++;
 		time += 0.010;
@@ -374,7 +336,7 @@ int main(int _argc, char **_argv) {
 		/*       Input variables of Fuzzy Controller is set          */
 		/*************************************************************/
 
-		controller->setDistanceToClosestObstacle(range);
+		/*controller->setDistanceToClosestObstacle(range);
 		controller->setAngleToClosestObstacle(angle);
 
 		controller->calcRelativeVectorToGoal(robot, goal);          // Create method that takes robot orient, pos and goal pos.
@@ -386,7 +348,7 @@ int main(int _argc, char **_argv) {
 
 
 
-		if (robot_oz > 0 && ans.angle > 0)              // Optimize this.
+		/*if (robot_oz > 0 && ans.angle > 0)              // Optimize this.
 				relang = ans.angle - robot_oz;
 		else if (robot_oz > 0 && ans.angle < 0)
 				relang = ans.angle + robot_oz;
@@ -399,7 +361,7 @@ int main(int _argc, char **_argv) {
 		/*std::cout << "Obstacle: " << controller->getAngleToClosestObstacle() << std::endl               // Comment out when not using GO_TO_GOAL
 							<< "Distance: " << controller->getDistanceToClosestObstacle() << std::endl               // Comment out when not using GO_TO_GOAL
 							<< "RelDist: " << controller->getRelativeDistanceToGoal() << std::endl;// Comment out when not using GO_TO_GOAL*/
-		controller->setRelativeAngleToGoal(relang);                 // Comment out when not using GO_TO_GOAL
+		/*controller->setRelativeAngleToGoal(relang);                 // Comment out when not using GO_TO_GOAL
 		controller->setRelativeDistanceToGoal(ans.length);          // Comment out when not using GO_TO_GOAL
 
 		controller->process();
@@ -420,22 +382,22 @@ int main(int _argc, char **_argv) {
 		/*************************************************************/
 
 
-		if (controller->is_at_goal())
+		/*if (controller->is_at_goal())
 		{
 				controller->setPath(PATH_S);
 				goal.x = -7;        // TEST
 				goal.y = 12;         // TEST
 		}
 
-
+*/
 		mutex.lock();
 		int key = cv::waitKey(1);
 								mutex.unlock();
 
-		if (key == key_esc) {
+		if (key == key_esc || iterations == no_of_ds * 100) {
 			break;
 		}
-
+/*
 		if ((key == key_up) && (speed <= 1.2f)) speed += 0.05;
 		else if ((key == key_down) && (speed >= -1.2f)) speed -= 0.05;
 		else if ((key == key_right) && (dir <= 0.4f)) dir += 0.05;
@@ -471,7 +433,7 @@ int main(int _argc, char **_argv) {
 				yTXT.close();
 /*
 				std::cout << "ALT" << std::endl;*/
-				tTXT.open("t.txt", std::ios_base::app);
+/*				tTXT.open("t.txt", std::ios_base::app);
 				lTXT.open("l.txt", std::ios_base::app);
 				aTXT.open("a.txt", std::ios_base::app);
 				if (tTXT.is_open() && lTXT.is_open() && aTXT.is_open())
@@ -488,14 +450,30 @@ int main(int _argc, char **_argv) {
 				aTXT.close();
 		}
 
-
+*/
 	}
 	// Make sure to shut everything down.
 	gazebo::client::shutdown();
 
+	std::ofstream outfile("data.txt");
+	for (int i = 0; i < no_of_ds; i++) {
+		for (int j = 0; j < 7; j++) {
+			outfile << err_data[i][j] << " ";
+		}
+		outfile << std::endl;
+	}
+	outfile.close();
 
-	//imshow("Map", map);
-	//waitKey(0);
+	// Map test
+	/*cout << "Hough count:  " << hough_circles.size() << endl;
+	cout << "Err: " << error_hough << endl;
+	cout << "TM count: " << tm_circles.size() << endl;
+	cout << "Err: " << error_tm << endl;
+	cout << "Square count: " << circles.size() << endl;
+	cout << "Err: " << error_sf << endl;
+
+	imshow("Map", map);
+	waitKey(0);*/
 
 		/*std::string command = "../../gazebo_spawn.sh";
 		command = command + " " + "-x 1 -y 2";
