@@ -14,4 +14,4 @@
 
 ### The implemented Zhang-Suen algorithm
 
-![Image of zhang-suen](https://github.com/ancker1/RCA5-PRO/blob/master/Test/Roadmap/VoronoiDiagram/Implemented_Zhang-Suen.gif)
+![Image of zhang-suen](https://github.com/ancker1/RCA5-PRO/blob/master/Test/Roadmap/VoronoiDiagram/zhang-suen.gif)
